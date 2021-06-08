@@ -652,7 +652,6 @@ function g_Bot_GetCount(): Integer;
 implementation
 
 uses
-{$INCLUDE ../nogl/noGLuses.inc}
 {$IFDEF ENABLE_HOLMES}
   g_holmes,
 {$ENDIF}
