@@ -63,7 +63,7 @@ implementation
     if LoadedGL = true then
     begin
       {$IFDEF NOGL_INIT}
-        nogl_Quit
+        nogl_Quit;
       {$ENDIF}
       LoadedGL := false
     end
