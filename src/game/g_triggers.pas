@@ -103,7 +103,7 @@ implementation
 
 uses
   Math,
-  g_player, g_map, g_panel, g_gfx, g_game, r_gfx,
+  g_player, g_map, g_panel, g_gfx, g_game,
   g_console, g_monsters, g_items, g_phys, g_weapons,
   wadreader, e_log, g_language, e_res,
   g_options, g_net, g_netmsg, utils, xparser, xstreams;
@@ -776,7 +776,7 @@ begin
 
     TRIGGER_SHOT_EXPL:
       begin
-        r_GFX_OnceAnim(R_GFX_EXPLODE_ROCKET, wx - 64, wy - 64);
+        g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, wx - 64, wy - 64);
         Projectile := False;
         g_Weapon_Explode(wx, wy, 60, 0);
         snd := 'SOUND_WEAPON_EXPLODEROCKET';
@@ -784,7 +784,7 @@ begin
 
     TRIGGER_SHOT_BFGEXPL:
       begin
-        r_GFX_OnceAnim(R_GFX_EXPLODE_BFG, wx - 64, wy - 64);
+        g_GFX_QueueEffect(R_GFX_EXPLODE_BFG, wx - 64, wy - 64);
         Projectile := False;
         g_Weapon_BFG9000(wx, wy, 0);
         snd := 'SOUND_WEAPON_EXPLODEBFG';
@@ -875,17 +875,17 @@ begin
     case ST of
       EFFECT_TELEPORT: begin
         if not Silent then g_Sound_PlayExAt('SOUND_GAME_TELEPORT', X, Y);
-        r_GFX_OnceAnim(R_GFX_TELEPORT_FAST, X - 32, Y - 32);
+        g_GFX_QueueEffect(R_GFX_TELEPORT_FAST, X - 32, Y - 32);
         if Send and g_Game_IsServer and g_Game_IsNet then MH_SEND_Effect(X, Y, Byte(not Silent), NET_GFX_TELE);
       end;
       EFFECT_RESPAWN: begin
         if not Silent then g_Sound_PlayExAt('SOUND_ITEM_RESPAWNITEM', X, Y);
-        r_GFX_OnceAnim(R_GFX_ITEM_RESPAWN, X - 16, Y - 16);
+        g_GFX_QueueEffect(R_GFX_ITEM_RESPAWN, X - 16, Y - 16);
         if Send and g_Game_IsServer and g_Game_IsNet then MH_SEND_Effect(X-16, Y-16, Byte(not Silent), NET_GFX_RESPAWN);
       end;
       EFFECT_FIRE: begin
         if not Silent then g_Sound_PlayExAt('SOUND_FIRE', X, Y);
-        r_GFX_OnceAnim(R_GFX_FIRE, X - 32, Y - 128);
+        g_GFX_QueueEffect(R_GFX_FIRE, X - 32, Y - 128);
         if Send and g_Game_IsServer and g_Game_IsNet then MH_SEND_Effect(X-32, Y-128, Byte(not Silent), NET_GFX_FIRE);
       end;
     end;
@@ -1469,7 +1469,7 @@ begin
               case tgcEffect of
                 EFFECT_TELEPORT: begin
                   g_Sound_PlayExAt('SOUND_GAME_TELEPORT', tgcTX, tgcTY);
-                  r_GFX_OnceAnim(
+                  g_GFX_QueueEffect(
                     R_GFX_TELEPORT_FAST,
                     mon.Obj.X+mon.Obj.Rect.X+(mon.Obj.Rect.Width div 2)-32,
                     mon.Obj.Y+mon.Obj.Rect.Y+(mon.Obj.Rect.Height div 2)-32
@@ -1481,7 +1481,7 @@ begin
                 end;
                 EFFECT_RESPAWN: begin
                   g_Sound_PlayExAt('SOUND_ITEM_RESPAWNITEM', tgcTX, tgcTY);
-                  r_GFX_OnceAnim(
+                  g_GFX_QueueEffect(
                     R_GFX_ITEM_RESPAWN,
                     mon.Obj.X+mon.Obj.Rect.X+(mon.Obj.Rect.Width div 2)-16,
                     mon.Obj.Y+mon.Obj.Rect.Y+(mon.Obj.Rect.Height div 2)-16
@@ -1493,7 +1493,7 @@ begin
                 end;
                 EFFECT_FIRE: begin
                   g_Sound_PlayExAt('SOUND_FIRE', tgcTX, tgcTY);
-                  r_GFX_OnceAnim(
+                  g_GFX_QueueEffect(
                     R_GFX_FIRE,
                     mon.Obj.X+mon.Obj.Rect.X+(mon.Obj.Rect.Width div 2)-32,
                     mon.Obj.Y+mon.Obj.Rect.Y+mon.Obj.Rect.Height-128
@@ -1556,7 +1556,7 @@ begin
                   EFFECT_TELEPORT: begin
                     it := g_Items_ByIdx(iid);
                     g_Sound_PlayExAt('SOUND_GAME_TELEPORT', tgcTX, tgcTY);
-                    r_GFX_OnceAnim(
+                    g_GFX_QueueEffect(
                       R_GFX_TELEPORT_FAST,
                       it.Obj.X+it.Obj.Rect.X+(it.Obj.Rect.Width div 2)-32,
                       it.Obj.Y+it.Obj.Rect.Y+(it.Obj.Rect.Height div 2)-32
@@ -1569,7 +1569,7 @@ begin
                   EFFECT_RESPAWN: begin
                     it := g_Items_ByIdx(iid);
                     g_Sound_PlayExAt('SOUND_ITEM_RESPAWNITEM', tgcTX, tgcTY);
-                    r_GFX_OnceAnim(
+                    g_GFX_QueueEffect(
                       R_GFX_ITEM_RESPAWN,
                       it.Obj.X+it.Obj.Rect.X+(it.Obj.Rect.Width div 2)-16,
                       it.Obj.Y+it.Obj.Rect.Y+(it.Obj.Rect.Height div 2)-16
@@ -1582,7 +1582,7 @@ begin
                   EFFECT_FIRE: begin
                     it := g_Items_ByIdx(iid);
                     g_Sound_PlayExAt('SOUND_FIRE', tgcTX, tgcTY);
-                    r_GFX_OnceAnim(
+                    g_GFX_QueueEffect(
                       R_GFX_FIRE,
                       it.Obj.X+it.Obj.Rect.X+(it.Obj.Rect.Width div 2)-32,
                       it.Obj.Y+it.Obj.Rect.Y+it.Obj.Rect.Height-128
