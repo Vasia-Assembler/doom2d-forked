@@ -345,7 +345,7 @@ begin
 
   with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mvP1Model')) do
   begin
-    gPlayer1Settings.Model := Model.Name;
+    gPlayer1Settings.Model := Model.GetName();
     gPlayer1Settings.Color := Model.Color;
   end;
 
