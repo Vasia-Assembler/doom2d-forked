@@ -5909,16 +5909,16 @@ begin
   // animation
   anim := (FModel <> nil);
   utils.writeBool(st, anim);
-  if anim then FModel.AnimState.SaveState(st);
+  if anim then FModel.AnimState.SaveState(st, 0, False);
   // animation for mask (same as animation, compat with older saves)
   anim := (FModel <> nil);
   utils.writeBool(st, anim);
-  if anim then FModel.AnimState.SaveState(st);
+  if anim then FModel.AnimState.SaveState(st, 0, False);
 end;
 
 
 procedure TCorpse.LoadState (st: TStream);
-  var anim: Boolean; r, g, b: Byte; stub: TAnimationState;
+  var anim, blending: Boolean; r, g, b, alpha: Byte; stub: TAnimationState;
 begin
   assert(st <> nil);
 
@@ -5942,7 +5942,7 @@ begin
   anim := utils.readBool(st);
   if anim then
   begin
-    stub.LoadState(st);
+    stub.LoadState(st, alpha, blending);
     FModel.AnimState.CurrentFrame := Min(stub.CurrentFrame, FModel.AnimState.Length);
   end
   else
@@ -5952,7 +5952,7 @@ begin
   end;
   // animation for mask (same as animation, compat with older saves)
   anim := utils.readBool(st);
-  if anim then stub.LoadState(st);
+  if anim then stub.LoadState(st, alpha, blending);
   stub.Free;
 end;
 
