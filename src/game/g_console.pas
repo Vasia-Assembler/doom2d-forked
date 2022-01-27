@@ -102,8 +102,11 @@ var
 implementation
 
 uses
+  {$IFDEF ENABLE_MENU}
+    g_gui, g_menu,
+  {$ENDIF}
   {$IFNDEF HEADLESS}
-    g_gui, g_menu, g_touch,
+    g_touch,
   {$ENDIF}
   g_textures, e_input, g_game, g_gfx, g_player, g_items,
   SysUtils, g_basic, g_options, Math, e_res,
@@ -156,6 +159,7 @@ var
     rep: Boolean;
     down, up: SSArray;
   end;
+
   menu_toggled: BOOLEAN; (* hack for menu controls *)
 
 procedure g_Console_Switch;
@@ -886,7 +890,9 @@ begin
       else if gChatShow then
         g_Console_Chat_Switch
       else
+      begin
         KeyPress(VK_ESCAPE);
+      end;
       menu_toggled := True
     end;
   'toggleconsole':
@@ -1817,7 +1823,7 @@ function BindsAllowed (key: Integer): Boolean;
   var grab, active: Boolean;
 begin
   Result := False;
-  {$IFDEF HEADLESS}
+  {$IFDEF DISABLE_MENU}
     grab := False;
     active := False;
   {$ELSE}
@@ -1860,7 +1866,7 @@ end;
 procedure g_Console_ProcessBindRepeat (key: Integer);
   var i: Integer; active: Boolean;
 begin
-  {$IFDEF HEADLESS}
+  {$IFDEF DISABLE_MENU}
     active := False;
   {$ELSE}
     active := g_ActiveWindow <> nil;
