@@ -567,7 +567,7 @@ uses
   {$IFDEF ENABLE_MENU}
     g_menu,
   {$ENDIF}
-  {$IFNDEF HEADLESS}
+  {$IFDEF ENABLE_RENDER}
     r_render,
   {$ENDIF}
   {$IFDEF ENABLE_GFX}
