@@ -472,7 +472,7 @@ uses
   {$IFDEF ENABLE_RENDER}
     r_render,
   {$ENDIF}
-  {$IFNDEF HEADLESS}
+  {$IFDEF ENABLE_SYSTEM}
     g_system,
   {$ENDIF}
   e_res, g_window,
@@ -2586,7 +2586,7 @@ begin
 
   gExit := EXIT_QUIT;
 
-  {$IFNDEF HEADLESS}
+  {$IFDEF ENABLE_SYSTEM}
     sys_RequestQuit;
   {$ENDIF}
 end;
