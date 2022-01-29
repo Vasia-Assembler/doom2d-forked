@@ -110,12 +110,16 @@ var
 
 implementation
 
-uses
-  Math, g_map, g_player, g_gfx, g_sound, g_panel,
-  g_console, g_options, g_game,
-  g_triggers, MAPDEF, e_log, g_monsters, g_saveload,
-  g_language, g_netmsg, g_grid,
-  geom, binheap, hashtable, utils, xstreams;
+  uses
+    {$IFDEF ENABLE_GFX}
+      g_gfx,
+    {$ENDIF}
+    Math, g_map, g_player, g_sound, g_panel,
+    g_console, g_options, g_game,
+    g_triggers, MAPDEF, e_log, g_monsters, g_saveload,
+    g_language, g_netmsg, g_grid,
+    geom, binheap, hashtable, utils, xstreams
+  ;
 
 type
   TWaterPanel = record
@@ -1545,7 +1549,9 @@ begin
     stt := getTimeMicro()-stt;
     e_WriteLog(Format('*** new trace time: %u microseconds', [LongWord(stt)]), TMsgType.Notify);
     {$ENDIF}
-    g_GFX_Spark(wallHitX, wallHitY, 2+Random(2), 180+a, 0, 0);
+    {$IFDEF ENABLE_GFX}
+      g_GFX_Spark(wallHitX, wallHitY, 2+Random(2), 180+a, 0, 0);
+    {$ENDIF}
     if g_Game_IsServer and g_Game_IsNet then MH_SEND_Effect(wallHitX, wallHitY, 180+a, NET_GFX_SPARK);
   end
   else
@@ -2011,7 +2017,9 @@ end;
 
 procedure g_Weapon_bfghit(x, y: Integer);
 begin
-  g_GFX_QueueEffect(R_GFX_BFG_HIT, x - 32, y - 32);
+  {$IFDEF ENABLE_GFX}
+    g_GFX_QueueEffect(R_GFX_BFG_HIT, x - 32, y - 32);
+  {$ENDIF}
 end;
 
 procedure g_Weapon_pistol(x, y, xd, yd: Integer; SpawnerUID: Word;
@@ -2113,7 +2121,9 @@ var
   o: TObj;
   spl: Boolean;
   Loud: Boolean;
-  tcx, tcy: Integer;
+  {$IFDEF ENABLE_GFX}
+    var tcx, tcy: Integer;
+  {$ENDIF}
 begin
   if Shots = nil then
     Exit;
@@ -2194,13 +2204,17 @@ begin
             if WordBool(st and MOVE_HITAIR) then
               g_Obj_SetSpeed(@Obj, 12);
 
-          // В воде шлейф - пузыри, в воздухе шлейф - дым:
-            if WordBool(st and MOVE_INWATER) then
-              g_GFX_Bubbles(Obj.X+(Obj.Rect.Width div 2),
-                            Obj.Y+(Obj.Rect.Height div 2),
-                            1+Random(3), 16, 16)
-            else
-              g_GFX_QueueEffect(R_GFX_SMOKE_TRANS, Obj.X-14+Random(9), Obj.Y+(Obj.Rect.Height div 2)-20+Random(9));
+            {$IFDEF ENABLE_GFX}
+              // В воде шлейф - пузыри, в воздухе шлейф - дым:
+              if WordBool(st and MOVE_INWATER) then
+              begin
+                g_GFX_Bubbles(Obj.X + (Obj.Rect.Width div 2), Obj.Y + (Obj.Rect.Height div 2), 1 + Random(3), 16, 16)
+              end
+              else
+              begin
+                g_GFX_QueueEffect(R_GFX_SMOKE_TRANS, Obj.X-14+Random(9), Obj.Y+(Obj.Rect.Height div 2)-20+Random(9));
+              end;
+            {$ENDIF}
 
           // Попали в кого-то или в стену:
             if WordBool(st and (MOVE_HITWALL or MOVE_HITLAND or MOVE_HITCEIL)) or
@@ -2213,15 +2227,19 @@ begin
               g_Weapon_Explode(cx, cy, 60, SpawnerUID);
 
               if ShotType = WEAPON_SKEL_FIRE then
-                begin // Взрыв снаряда Скелета
+              begin // Взрыв снаряда Скелета
+                {$IFDEF ENABLE_GFX}
                   g_GFX_QueueEffect(R_GFX_EXPLODE_SKELFIRE, Obj.X + 32 - 58, Obj.Y + 8 - 36);
                   g_DynLightExplosion((Obj.X+32), (Obj.Y+8), 64, 1, 0, 0);
-                end
+                {$ENDIF}
+              end
               else
-                begin // Взрыв Ракеты
+              begin // Взрыв Ракеты
+                {$IFDEF ENABLE_GFX}
                   g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
                   g_DynLightExplosion(cx, cy, 64, 1, 0, 0);
-                end;
+                {$ENDIF}
+              end;
 
               g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEROCKET', Obj.X, Obj.Y);
 
@@ -2264,11 +2282,13 @@ begin
                (g_Weapon_Hit(@Obj, a, SpawnerUID, HIT_SOME, False) <> 0) or
                (Timeout < 1) then
             begin
-              if ShotType = WEAPON_PLASMA then
-                g_GFX_QueueEffect(R_GFX_EXPLODE_PLASMA, cx - 16, cy - 16)
-              else
-                g_GFX_QueueEffect(R_GFX_EXPLODE_BSPFIRE, cx - 16, cy - 16);
-              g_DynLightExplosion(cx, cy, 32, 0, 0.5, 0.5);
+              {$IFDEF ENABLE_GFX}
+                if ShotType = WEAPON_PLASMA then
+                  g_GFX_QueueEffect(R_GFX_EXPLODE_PLASMA, cx - 16, cy - 16)
+                else
+                  g_GFX_QueueEffect(R_GFX_EXPLODE_BSPFIRE, cx - 16, cy - 16);
+                g_DynLightExplosion(cx, cy, 32, 0, 0.5, 0.5);
+              {$ENDIF}
               g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEPLASMA', Obj.X, Obj.Y);
               ShotType := 0;
             end;
@@ -2285,14 +2305,18 @@ begin
           // Под водой тоже
             if WordBool(st and (MOVE_HITWATER or MOVE_INWATER)) then
             begin
-              if WordBool(st and MOVE_HITWATER) then
-              begin
-                tcx := Random(8);
-                tcy := Random(8);
-                g_GFX_QueueEffect(R_GFX_SMOKE, cx-4+tcx-(R_GFX_SMOKE_WIDTH div 2), cy-4+tcy-(R_GFX_SMOKE_HEIGHT div 2));
-              end
-              else
-                g_GFX_Bubbles(cx, cy, 1+Random(3), 16, 16);
+              {$IFDEF ENABLE_GFX}
+                if WordBool(st and MOVE_HITWATER) then
+                begin
+                  tcx := Random(8);
+                  tcy := Random(8);
+                  g_GFX_QueueEffect(R_GFX_SMOKE, cx-4+tcx-(R_GFX_SMOKE_WIDTH div 2), cy-4+tcy-(R_GFX_SMOKE_HEIGHT div 2));
+                end
+                else
+                begin
+                  g_GFX_Bubbles(cx, cy, 1 + Random(3), 16, 16);
+                end;
+              {$ENDIF}
               ShotType := 0;
               Continue;
             end;
@@ -2332,14 +2356,16 @@ begin
 
             if (gTime mod LongWord(tf) = 0) then
             begin
-              case Stopped of
-                MOVE_HITWALL: begin tcx := cx-4+Random(8); tcy := cy-12+Random(24); end;
-                MOVE_HITLAND: begin tcx := cx-12+Random(24); tcy := cy-10+Random(8); end;
-                MOVE_HITCEIL: begin tcx := cx-12+Random(24); tcy := cy+6+Random(8); end;
-                else begin tcx := cx-4+Random(8); tcy := cy-4+Random(8); end;
-              end;
-              g_GFX_QueueEffect(R_GFX_FLAME_RAND, tcx - (R_GFX_FLAME_WIDTH div 2), tcy - (R_GFX_FLAME_HEIGHT div 2));
-              //g_DynLightExplosion(tcx, tcy, 1, 1, 0.8, 0.3);
+              {$IFDEF ENABLE_GFX}
+                case Stopped of
+                  MOVE_HITWALL: begin tcx := cx-4+Random(8); tcy := cy-12+Random(24); end;
+                  MOVE_HITLAND: begin tcx := cx-12+Random(24); tcy := cy-10+Random(8); end;
+                  MOVE_HITCEIL: begin tcx := cx-12+Random(24); tcy := cy+6+Random(8); end;
+                  else begin tcx := cx-4+Random(8); tcy := cy-4+Random(8); end;
+                end;
+                g_GFX_QueueEffect(R_GFX_FLAME_RAND, tcx - (R_GFX_FLAME_WIDTH div 2), tcy - (R_GFX_FLAME_HEIGHT div 2));
+                //g_DynLightExplosion(tcx, tcy, 1, 1, 0.8, 0.3);
+              {$ENDIF}
             end;
           end;
 
@@ -2361,8 +2387,10 @@ begin
             begin
             // Лучи BFG:
               if g_Game_IsServer then g_Weapon_BFG9000(cx, cy, SpawnerUID);
-              g_GFX_QueueEffect(R_GFX_EXPLODE_BFG, cx - 64, cy - 64);
-              g_DynLightExplosion(cx, cy, 96, 0, 1, 0);
+              {$IFDEF ENABLE_GFX}
+                g_GFX_QueueEffect(R_GFX_EXPLODE_BFG, cx - 64, cy - 64);
+                g_DynLightExplosion(cx, cy, 96, 0, 1, 0);
+              {$ENDIF}
               g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBFG', Obj.X, Obj.Y);
               ShotType := 0;
             end;
@@ -2388,11 +2416,13 @@ begin
                (g_Weapon_Hit(@Obj, a, SpawnerUID, HIT_SOME) <> 0) or
                (Timeout < 1) then
             begin
-              case ShotType of
-                WEAPON_IMP_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_IMPFIRE, cx - 32, cy - 32);
-                WEAPON_CACO_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_CACOFIRE, cx - 32, cy - 32);
-                WEAPON_BARON_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_BARONFIRE, cx - 32, cy - 32);
-              end;
+              {$IFDEF ENABLE_GFX}
+                case ShotType of
+                  WEAPON_IMP_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_IMPFIRE, cx - 32, cy - 32);
+                  WEAPON_CACO_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_CACOFIRE, cx - 32, cy - 32);
+                  WEAPON_BARON_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_BARONFIRE, cx - 32, cy - 32);
+                end;
+              {$ENDIF}
               g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBALL', Obj.X, Obj.Y);
               ShotType := 0;
             end;
@@ -2409,8 +2439,10 @@ begin
                (g_Weapon_Hit(@Obj, 40, SpawnerUID, HIT_SOME, False) <> 0) or
                (Timeout < 1) then
             begin
-            // Взрыв:
-              g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
+              // Взрыв:
+              {$IFDEF ENABLE_GFX}
+                g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
+              {$ENDIF}
               g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBALL', Obj.X, Obj.Y);
               ShotType := 0;
             end;
@@ -2572,7 +2604,9 @@ begin
 end;
 
 procedure g_Weapon_DestroyShot(I: Integer; X, Y: Integer; Loud: Boolean = True);
-  var cx, cy: Integer;
+  {$IFDEF ENABLE_GFX}
+    var cx, cy: Integer;
+  {$ENDIF}
 begin
   if Shots = nil then
     Exit;
@@ -2583,18 +2617,22 @@ begin
     if ShotType = 0 then Exit;
     Obj.X := X;
     Obj.Y := Y;
-    cx := Obj.X + (Obj.Rect.Width div 2);
-    cy := Obj.Y + (Obj.Rect.Height div 2);
+    {$IFDEF ENABLE_GFX}
+      cx := Obj.X + (Obj.Rect.Width div 2);
+      cy := Obj.Y + (Obj.Rect.Height div 2);
+    {$ENDIF}
 
     case ShotType of
       WEAPON_ROCKETLAUNCHER, WEAPON_SKEL_FIRE: // Ракеты и снаряды Скелета
       begin
         if Loud then
         begin
-          if ShotType = WEAPON_SKEL_FIRE then
-            g_GFX_QueueEffect(R_GFX_EXPLODE_SKELFIRE, (Obj.X + 32) - 32, (Obj.Y + 8) - 32)
-          else
-            g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
+          {$IFDEF ENABLE_GFX}
+            if ShotType = WEAPON_SKEL_FIRE then
+              g_GFX_QueueEffect(R_GFX_EXPLODE_SKELFIRE, (Obj.X + 32) - 32, (Obj.Y + 8) - 32)
+            else
+              g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
+          {$ENDIF}
           g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEROCKET', Obj.X, Obj.Y);
         end;
       end;
@@ -2603,17 +2641,21 @@ begin
       begin
         if loud then
         begin
-          if ShotType = WEAPON_PLASMA then
-            g_GFX_QueueEffect(R_GFX_EXPLODE_PLASMA, cx - 16, cy - 16)
-          else
-            g_GFX_QueueEffect(R_GFX_EXPLODE_BSPFIRE, cx - 16, cy - 16);
+          {$IFDEF ENABLE_GFX}
+            if ShotType = WEAPON_PLASMA then
+              g_GFX_QueueEffect(R_GFX_EXPLODE_PLASMA, cx - 16, cy - 16)
+            else
+              g_GFX_QueueEffect(R_GFX_EXPLODE_BSPFIRE, cx - 16, cy - 16);
+          {$ENDIF}
           g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEPLASMA', Obj.X, Obj.Y);
         end;
       end;
 
       WEAPON_BFG: // BFG
       begin
-        g_GFX_QueueEffect(R_GFX_EXPLODE_BFG, cx - 64, cy - 64);
+        {$IFDEF ENABLE_GFX}
+          g_GFX_QueueEffect(R_GFX_EXPLODE_BFG, cx - 64, cy - 64);
+        {$ENDIF}
         g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBFG', Obj.X, Obj.Y);
       end;
 
@@ -2621,18 +2663,22 @@ begin
       begin
         if loud then
         begin
-          case ShotType of
-            WEAPON_IMP_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_IMPFIRE, cx - 32, cy - 32);
-            WEAPON_CACO_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_CACOFIRE, cx - 32, cy - 32);
-            WEAPON_BARON_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_BARONFIRE, cx - 32, cy - 32);
-          end;
+          {$IFDEF ENABLE_GFX}
+            case ShotType of
+              WEAPON_IMP_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_IMPFIRE, cx - 32, cy - 32);
+              WEAPON_CACO_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_CACOFIRE, cx - 32, cy - 32);
+              WEAPON_BARON_FIRE: g_GFX_QueueEffect(R_GFX_EXPLODE_BARONFIRE, cx - 32, cy - 32);
+            end;
+          {$ENDIF}
           g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBALL', Obj.X, Obj.Y);
         end;
       end;
 
       WEAPON_MANCUB_FIRE: // Выстрел Манкубуса
       begin
-        g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
+        {$IFDEF ENABLE_GFX}
+          g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, cx - 64, cy - 64);
+        {$ENDIF}
         g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBALL', Obj.X, Obj.Y);
       end;
     end; // case ShotType of...
