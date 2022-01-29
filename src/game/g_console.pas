@@ -1588,12 +1588,6 @@ begin
 
   //SetLength(ConsoleHistory, Length(ConsoleHistory)+1);
   //ConsoleHistory[High(ConsoleHistory)] := L;
-
-  (*
-{$IFDEF HEADLESS}
-  e_WriteLog('CON: ' + L, MSG_NOTIFY);
-{$ENDIF}
-  *)
 end;
 
 
