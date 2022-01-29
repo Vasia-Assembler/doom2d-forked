@@ -117,6 +117,9 @@ uses
   {$IFDEF ENABLE_SHELLS}
     g_shells,
   {$ENDIF}
+  {$IFDEF ENABLE_CORPSES}
+    g_corpses,
+  {$ENDIF}
   g_textures, e_input, g_game, g_player, g_items,
   SysUtils, g_basic, g_options, Math, e_res,
   g_language, g_net, g_netmsg, e_log, conbuf, g_weapons;
@@ -2065,7 +2068,9 @@ begin
   {$IFDEF ENABLE_GIBS}
     WriteLn(f, 'g_max_gibs ', g_Gibs_GetMax());
   {$ENDIF}
-  WriteLn(f, 'g_max_corpses ', g_Corpses_GetMax());
+  {$IFDEF ENABLE_CORPSES}
+    WriteLn(f, 'g_max_corpses ', g_Corpses_GetMax());
+  {$ENDIF}
   WriteLn(f, 'sv_intertime ', gDefInterTime);
 
   // gameplay settings
