@@ -111,6 +111,9 @@ uses
   {$IFDEF ENABLE_GFX}
     g_gfx,
   {$ENDIF}
+  {$IFDEF ENABLE_GIBS}
+    g_gibs,
+  {$ENDIF}
   g_textures, e_input, g_game, g_player, g_items,
   SysUtils, g_basic, g_options, Math, e_res,
   g_language, g_net, g_netmsg, e_log, conbuf, g_weapons;
@@ -2054,7 +2057,9 @@ begin
     WriteLn(f, 'g_max_particles ', g_GFX_GetMax());
   {$ENDIF}
   WriteLn(f, 'g_max_shells ', g_Shells_GetMax());
-  WriteLn(f, 'g_max_gibs ', g_Gibs_GetMax());
+  {$IFDEF ENABLE_GIBS}
+    WriteLn(f, 'g_max_gibs ', g_Gibs_GetMax());
+  {$ENDIF}
   WriteLn(f, 'g_max_corpses ', g_Corpses_GetMax());
   WriteLn(f, 'sv_intertime ', gDefInterTime);
 
