@@ -75,22 +75,6 @@ type
     lParam: LongInt;
   end;
 
-  TFontType = (Texture, Character);
-
-  TFont = class{$IFDEF USE_MEMPOOL}(TPoolObject){$ENDIF}
-  private
-    FID: DWORD;
-    FScale: Single;
-    FFontType: TFontType;
-  public
-    constructor Create(FontID: DWORD; FontType: TFontType);
-    destructor Destroy; override;
-    procedure Draw(X, Y: Integer; Text: string; R, G, B: Byte);
-    procedure GetTextSize(Text: string; var w, h: Word);
-    property Scale: Single read FScale write FScale;
-    property ID: DWORD read FID;
-  end;
-
   TGUIControl = class;
   TGUIWindow = class;
 
@@ -168,20 +152,20 @@ type
   private
     FText: string;
     FColor: TRGB;
-    FFont: TFont;
+    FBigFont: Boolean;
     FSound: string;
     FShowWindow: string;
   public
     Proc: procedure;
     ProcEx: procedure (sender: TGUITextButton);
-    constructor Create(aProc: Pointer; FontID: DWORD; Text: string);
+    constructor Create(aProc: Pointer; BigFont: Boolean; Text: string);
     destructor Destroy(); override;
     procedure OnMessage(var Msg: TMessage); override;
     procedure Update(); override;
     procedure Click(Silent: Boolean = False);
     property Caption: string read FText write FText;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
     property ShowWindow: string read FShowWindow write FShowWindow;
   end;
 
@@ -189,17 +173,17 @@ type
   private
     FText: string;
     FColor: TRGB;
-    FFont: TFont;
+    FBigFont: Boolean;
     FFixedLen: Word;
     FOnClickEvent: TOnClickEvent;
   public
-    constructor Create(Text: string; FontID: DWORD);
+    constructor Create(Text: string; BigFont: Boolean);
     procedure OnMessage(var Msg: TMessage); override;
     property OnClick: TOnClickEvent read FOnClickEvent write FOnClickEvent;
     property FixedLength: Word read FFixedLen write FFixedLen;
     property Text: string read FText write FText;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
   end;
 
   TGUIScroll = class(TGUIControl)
@@ -221,27 +205,27 @@ type
 
   TGUISwitch = class(TGUIControl)
   private
-    FFont: TFont;
+    FBigFont: Boolean;
     FItems: TGUIItemsList;
     FIndex: Integer;
     FColor: TRGB;
     FOnChangeEvent: TOnChangeEvent;
   public
-    constructor Create(FontID: DWORD);
+    constructor Create(BigFont: Boolean);
     procedure OnMessage(var Msg: TMessage); override;
     procedure AddItem(Item: string);
     procedure Update; override;
     function GetText: string;
     property ItemIndex: Integer read FIndex write FIndex;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
     property OnChange: TOnChangeEvent read FOnChangeEvent write FOnChangeEvent;
     property Items: TGUIItemsList read FItems;
   end;
 
   TGUIEdit = class(TGUIControl)
   private
-    FFont: TFont;
+    FBigFont: Boolean;
     FCaretPos: Integer;
     FMaxLength: Word;
     FWidth: Word;
@@ -253,7 +237,7 @@ type
     FInvalid: Boolean;
     procedure SetText(Text: string);
   public
-    constructor Create(FontID: DWORD);
+    constructor Create(BigFont: Boolean);
     procedure OnMessage(var Msg: TMessage); override;
     procedure Update; override;
     property OnChange: TOnChangeEvent read FOnChangeEvent write FOnChangeEvent;
@@ -263,7 +247,7 @@ type
     property OnlyDigits: Boolean read FOnlyDigits write FOnlyDigits;
     property Text: string read FText write SetText;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
     property Invalid: Boolean read FInvalid write FInvalid;
 
     property CaretPos: Integer read FCaretPos;
@@ -271,17 +255,17 @@ type
 
   TGUIKeyRead = class(TGUIControl)
   private
-    FFont: TFont;
+    FBigFont: Boolean;
     FColor: TRGB;
     FKey: Word;
     FIsQuery: Boolean;
   public
-    constructor Create(FontID: DWORD);
+    constructor Create(BigFont: Boolean);
     procedure OnMessage(var Msg: TMessage); override;
     function WantActivationKey (key: LongInt): Boolean; override;
     property Key: Word read FKey write FKey;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
 
     property IsQuery: Boolean read FIsQuery;
   end;
@@ -289,21 +273,20 @@ type
   // can hold two keys
   TGUIKeyRead2 = class(TGUIControl)
   private
-    FFont: TFont;
-    FFontID: DWORD;
+    FBigFont: Boolean;
     FColor: TRGB;
     FKey0, FKey1: Word; // this should be an array. sorry.
     FKeyIdx: Integer;
     FIsQuery: Boolean;
     FMaxKeyNameWdt: Integer;
   public
-    constructor Create(FontID: DWORD);
+    constructor Create(BigFont: Boolean);
     procedure OnMessage(var Msg: TMessage); override;
     function WantActivationKey (key: LongInt): Boolean; override;
     property Key0: Word read FKey0 write FKey0;
     property Key1: Word read FKey1 write FKey1;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
 
     property IsQuery: Boolean read FIsQuery;
     property MaxKeyNameWdt: Integer read FMaxKeyNameWdt;
@@ -373,7 +356,7 @@ type
     FItems: SSArray;
     FActiveColor: TRGB;
     FUnActiveColor: TRGB;
-    FFont: TFont;
+    FBigFont: Boolean;
     FStartLine: Integer;
     FIndex: Integer;
     FWidth: Word;
@@ -387,7 +370,7 @@ type
     procedure FSetIndex(aIndex: Integer);
 
   public
-    constructor Create(FontID: DWORD; Width, Height: Word);
+    constructor Create(BigFont: Boolean; Width, Height: Word);
     procedure OnMessage(var Msg: TMessage); override;
     procedure AddItem(Item: String);
     function ItemExists (item: String): Boolean;
@@ -403,7 +386,7 @@ type
     property DrawScrollBar: Boolean read FDrawScroll write FDrawScroll;
     property ActiveColor: TRGB read FActiveColor write FActiveColor;
     property UnActiveColor: TRGB read FUnActiveColor write FUnActiveColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
 
     property Width: Word read FWidth;
     property Height: Word read FHeight;
@@ -432,7 +415,7 @@ type
   TGUIMemo = class(TGUIControl)
   private
     FLines: SSArray;
-    FFont: TFont;
+    FBigFont: Boolean;
     FStartLine: Integer;
     FWidth: Word;
     FHeight: Word;
@@ -440,14 +423,14 @@ type
     FDrawBack: Boolean;
     FDrawScroll: Boolean;
   public
-    constructor Create(FontID: DWORD; Width, Height: Word);
+    constructor Create(BigFont: Boolean; Width, Height: Word);
     procedure OnMessage(var Msg: TMessage); override;
     procedure Clear;
     procedure SetText(Text: string);
     property DrawBack: Boolean read FDrawBack write FDrawBack;
     property DrawScrollBar: Boolean read FDrawScroll write FDrawScroll;
     property Color: TRGB read FColor write FColor;
-    property Font: TFont read FFont write FFont;
+    property BigFont: Boolean read FBigFont write FBigFont;
 
     property Width: Word read FWidth;
     property Height: Word read FHeight;
@@ -462,10 +445,10 @@ type
     FButtons: TGUITextButtonList;
     FHeader: TGUILabel;
     FIndex: Integer;
-    FFontID: DWORD;
+    FBigFont: Boolean;
     FCounter: Byte; // !!! update it within render
   public
-    constructor Create(FontID: DWORD; Header: string);
+    constructor Create(BigFont: Boolean; Header: string);
     destructor Destroy; override;
     procedure OnMessage(var Msg: TMessage); override;
     function AddButton(fProc: Pointer; Caption: string; ShowWindow: string = ''): TGUITextButton;
@@ -495,14 +478,14 @@ type
     FItems: TMenuItemList;
     FHeader: TGUILabel;
     FIndex: Integer;
-    FFontID: DWORD;
+    FBigFont: Boolean;
     FCounter: Byte;
     FAlign: Boolean;
     FLeft: Integer;
     FYesNo: Boolean;
     function NewItem(): Integer;
   public
-    constructor Create(HeaderFont, ItemsFont: DWORD; Header: string);
+    constructor Create(HeaderBigFont, ItemsBigFont: Boolean; Header: string);
     destructor Destroy; override;
     procedure OnMessage(var Msg: TMessage); override;
     procedure AddSpace();
@@ -531,7 +514,7 @@ type
     property Counter: Byte read FCounter;
     property Index: Integer read FIndex;
     property Items: TMenuItemList read FItems;
-    property FontID: DWORD read FFontID;
+    property BigFont: Boolean read FBigFont;
   end;
 
 var
@@ -555,7 +538,8 @@ uses
     g_system,
   {$ENDIF}
   {$IFDEF ENABLE_RENDER}
-    r_gui, r_textures, r_graphics,
+    r_gui,
+    r_textures, (* load/free image *)
   {$ENDIF}
   g_sound, SysUtils, e_res,
   g_game, Math, StrUtils, g_player, g_options, g_console,
@@ -565,7 +549,7 @@ uses
 var
   Saved_Windows: SSArray;
 
-function GetLines (Text: string; FontID: DWORD; MaxWidth: Word): SSArray;
+function GetLines (Text: string; BigFont: Boolean; MaxWidth: Word): SSArray;
   var i, j, len, lines: Integer;
 
   function GetLine (j, i: Integer): String;
@@ -574,9 +558,9 @@ function GetLines (Text: string; FontID: DWORD; MaxWidth: Word): SSArray;
   end;
 
   function GetWidth (j, i: Integer): Integer;
-    var w, h: Word;
+    var w, h: Integer;
   begin
-    e_CharFont_GetSize(FontID, GetLine(j, i), w, h);
+    r_GUI_GetStringSize(BigFont, GetLine(j, i), w, h);
     result := w
   end;
 
@@ -924,15 +908,14 @@ begin
   if FShowWindow <> '' then g_GUI_ShowWindow(FShowWindow);
 end;
 
-constructor TGUITextButton.Create(aProc: Pointer; FontID: DWORD; Text: string);
+constructor TGUITextButton.Create(aProc: Pointer; BigFont: Boolean; Text: string);
 begin
   inherited Create();
 
   Self.Proc := aProc;
   ProcEx := nil;
 
-  FFont := TFont.Create(FontID, TFontType.Character);
-
+  FBigFont := BigFont;
   FText := Text;
 end;
 
@@ -961,43 +944,6 @@ begin
   inherited;
 end;
 
-{ TFont }
-
-constructor TFont.Create(FontID: DWORD; FontType: TFontType);
-begin
-  FID := FontID;
-  FScale := 1;
-  FFontType := FontType;
-end;
-
-destructor TFont.Destroy;
-begin
-
-  inherited;
-end;
-
-procedure TFont.Draw(X, Y: Integer; Text: string; R, G, B: Byte);
-begin
-  if FFontType = TFontType.Character then e_CharFont_PrintEx(ID, X, Y, Text, _RGB(R, G, B), FScale)
-  else e_TextureFontPrintEx(X, Y, Text, ID, R, G, B, FScale);
-end;
-
-procedure TFont.GetTextSize(Text: string; var w, h: Word);
-var
-  cw, ch: Byte;
-begin
-  if FFontType = TFontType.Character then e_CharFont_GetSize(ID, Text, w, h)
-  else
-  begin
-    e_TextureFontGetSize(ID, cw, ch);
-    w := cw*Length(Text);
-    h := ch;
-  end;
-
-  w := Round(w*FScale);
-  h := Round(h*FScale);
-end;
-
 { TGUIMainMenu }
 
 function TGUIMainMenu.AddButton(fProc: Pointer; Caption: string; ShowWindow: string = ''): TGUITextButton;
@@ -1010,7 +956,7 @@ begin
   FIndex := 0;
 
   SetLength(FButtons, Length(FButtons)+1);
-  FButtons[High(FButtons)] := TGUITextButton.Create(fProc, FFontID, Caption);
+  FButtons[High(FButtons)] := TGUITextButton.Create(fProc, FBigFont, Caption);
   FButtons[High(FButtons)].ShowWindow := ShowWindow;
   with FButtons[High(FButtons)] do
   begin
@@ -1063,17 +1009,17 @@ begin
   FButtons[High(FButtons)] := nil;
 end;
 
-constructor TGUIMainMenu.Create(FontID: DWORD; Header: string);
+constructor TGUIMainMenu.Create(BigFont: Boolean; Header: string);
 begin
   inherited Create();
 
   FIndex := -1;
-  FFontID := FontID;
+  FBigFont := BigFont;
   FCounter := MAINMENU_MARKERDELAY;
 
   if Header <> '' then
   begin
-    FHeader := TGUILabel.Create(Header, FFontID);
+    FHeader := TGUILabel.Create(Header, BigFont);
     with FHeader do
     begin
       FColor := MAINMENU_HEADER_COLOR;
@@ -1183,12 +1129,11 @@ end;
 
 { TGUILabel }
 
-constructor TGUILabel.Create(Text: string; FontID: DWORD);
+constructor TGUILabel.Create(Text: string; BigFont: Boolean);
 begin
   inherited Create();
 
-  FFont := TFont.Create(FontID, TFontType.Character);
-
+  FBigFont := BigFont;
   FText := Text;
   FFixedLen := 0;
   FOnClickEvent := nil;
@@ -1217,7 +1162,7 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUITextButton.Create(Proc, FFontID, fText);
+    Control := TGUITextButton.Create(Proc, FBigFont, fText);
     with Control as TGUITextButton  do
     begin
       ShowWindow := _ShowWindow;
@@ -1242,7 +1187,7 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSTEXT_COLOR;
@@ -1259,7 +1204,7 @@ var
   a, i: Integer;
   l: SSArray;
 begin
-  l := GetLines(fText, FFontID, MaxWidth);
+  l := GetLines(fText, FBigFont, MaxWidth);
 
   if l = nil then Exit;
 
@@ -1268,7 +1213,7 @@ begin
     i := NewItem();
     with FItems[i] do
     begin
-      Text := TGUILabel.Create(l[a], FFontID);
+      Text := TGUILabel.Create(l[a], FBigFont);
       if FYesNo then
       begin
         with Text do begin FColor := _RGB(255, 0, 0); end;
@@ -1299,18 +1244,18 @@ begin
   ReAlign();
 end;
 
-constructor TGUIMenu.Create(HeaderFont, ItemsFont: DWORD; Header: string);
+constructor TGUIMenu.Create(HeaderBigFont, ItemsBigFont: Boolean; Header: string);
 begin
   inherited Create();
 
   FItems := nil;
   FIndex := -1;
-  FFontID := ItemsFont;
+  FBigFont := ItemsBigFont;
   FCounter := MENU_MARKERDELAY;
   FAlign := True;
   FYesNo := false;
 
-  FHeader := TGUILabel.Create(Header, HeaderFont);
+  FHeader := TGUILabel.Create(Header, HeaderBigFont);
   with FHeader do
   begin
     FX := (gScreenWidth div 2)-(GetWidth div 2);
@@ -1493,7 +1438,7 @@ end;
 
 procedure TGUIMenu.ReAlign();
 var
-  a, tx, cx, w, h: Integer;
+  a, tx, cx, w, h, fw, fh: Integer;
   cww: array of Integer; // cached widths
   maxcww: Integer;
 begin
@@ -1562,7 +1507,10 @@ begin
       if (ControlType = TGUIListBox) or (ControlType = TGUIFileListBox) then
         h := h+(FItems[a].Control as TGUIListBox).GetHeight()
       else
-        h := h+e_CharFont_GetMaxHeight(FFontID);
+      begin
+        r_GUI_GetMaxFontSize(FBigFont, fw, fh);
+        h := h + fh;
+      end;
     end;
   end;
 
@@ -1614,7 +1562,11 @@ begin
 
            if (ControlType = TGUIListBox) or (ControlType = TGUIFileListBox) then Inc(h, (Control as TGUIListBox).GetHeight+MENU_VSPACE)
       else if ControlType = TGUIMemo then Inc(h, (Control as TGUIMemo).GetHeight+MENU_VSPACE)
-      else Inc(h, e_CharFont_GetMaxHeight(FFontID)+MENU_VSPACE);
+      else
+      begin
+        r_GUI_GetMaxFontSize(FBigFont, fw, fh);
+        h := h + fh + MENU_VSPACE;
+      end;
     end;
   end;
 
@@ -1652,7 +1604,7 @@ begin
   begin
     Control := TGUIScroll.Create();
 
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSTEXT_COLOR;
@@ -1675,10 +1627,10 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUISwitch.Create(FFontID);
+    Control := TGUISwitch.Create(FBigFont);
    (Control as TGUISwitch).FColor := MENU_ITEMSCTRL_COLOR;
 
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSTEXT_COLOR;
@@ -1701,7 +1653,7 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUIEdit.Create(FFontID);
+    Control := TGUIEdit.Create(FBigFont);
     with Control as TGUIEdit do
     begin
       FWindow := Self.FWindow;
@@ -1710,7 +1662,7 @@ begin
 
     if fText = '' then Text := nil else
     begin
-      Text := TGUILabel.Create(fText, FFontID);
+      Text := TGUILabel.Create(fText, FBigFont);
       Text.FColor := MENU_ITEMSTEXT_COLOR;
     end;
 
@@ -1745,14 +1697,14 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUIKeyRead.Create(FFontID);
+    Control := TGUIKeyRead.Create(FBigFont);
     with Control as TGUIKeyRead do
     begin
       FWindow := Self.FWindow;
       FColor := MENU_ITEMSCTRL_COLOR;
     end;
 
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSTEXT_COLOR;
@@ -1775,14 +1727,14 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUIKeyRead2.Create(FFontID);
+    Control := TGUIKeyRead2.Create(FBigFont);
     with Control as TGUIKeyRead2 do
     begin
       FWindow := Self.FWindow;
       FColor := MENU_ITEMSCTRL_COLOR;
     end;
 
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSCTRL_COLOR; //MENU_ITEMSTEXT_COLOR;
@@ -1806,7 +1758,7 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUIListBox.Create(FFontID, Width, Height);
+    Control := TGUIListBox.Create(FBigFont, Width, Height);
     with Control as TGUIListBox do
     begin
       FWindow := Self.FWindow;
@@ -1814,7 +1766,7 @@ begin
       FUnActiveColor := MENU_ITEMSTEXT_COLOR;
     end;
 
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSTEXT_COLOR;
@@ -1837,7 +1789,7 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUIFileListBox.Create(FFontID, Width, Height);
+    Control := TGUIFileListBox.Create(FBigFont, Width, Height);
     with Control as TGUIFileListBox do
     begin
       FWindow := Self.FWindow;
@@ -1847,7 +1799,7 @@ begin
 
     if fText = '' then Text := nil else
     begin
-      Text := TGUILabel.Create(fText, FFontID);
+      Text := TGUILabel.Create(fText, FBigFont);
       Text.FColor := MENU_ITEMSTEXT_COLOR;
     end;
 
@@ -1868,14 +1820,14 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUILabel.Create('', FFontID);
+    Control := TGUILabel.Create('', FBigFont);
     with Control as TGUILabel do
     begin
       FWindow := Self.FWindow;
       FColor := MENU_ITEMSCTRL_COLOR;
     end;
 
-    Text := TGUILabel.Create(fText, FFontID);
+    Text := TGUILabel.Create(fText, FBigFont);
     with Text do
     begin
       FColor := MENU_ITEMSTEXT_COLOR;
@@ -1898,7 +1850,7 @@ begin
   i := NewItem();
   with FItems[i] do
   begin
-    Control := TGUIMemo.Create(FFontID, Width, Height);
+    Control := TGUIMemo.Create(FBigFont, Width, Height);
     with Control as TGUIMemo do
     begin
       FWindow := Self.FWindow;
@@ -1907,7 +1859,7 @@ begin
 
     if fText = '' then Text := nil else
     begin
-      Text := TGUILabel.Create(fText, FFontID);
+      Text := TGUILabel.Create(fText, FBigFont);
       Text.FColor := MENU_ITEMSTEXT_COLOR;
     end;
 
@@ -2002,13 +1954,13 @@ begin
   if FIndex = -1 then FIndex := 0;
 end;
 
-constructor TGUISwitch.Create(FontID: DWORD);
+constructor TGUISwitch.Create(BigFont: Boolean);
 begin
   inherited Create();
 
   FIndex := -1;
 
-  FFont := TFont.Create(FontID, TFontType.Character);
+  FBigFont := BigFont;
 end;
 
 function TGUISwitch.GetText: string;
@@ -2068,12 +2020,11 @@ end;
 
 { TGUIEdit }
 
-constructor TGUIEdit.Create(FontID: DWORD);
+constructor TGUIEdit.Create(BigFont: Boolean);
 begin
   inherited Create();
 
-  FFont := TFont.Create(FontID, TFontType.Character);
-
+  FBigFont := BigFont;
   FMaxLength := 0;
   FWidth := 0;
   FInvalid := false;
@@ -2157,13 +2108,12 @@ end;
 
 { TGUIKeyRead }
 
-constructor TGUIKeyRead.Create(FontID: DWORD);
+constructor TGUIKeyRead.Create(BigFont: Boolean);
 begin
   inherited Create();
   FKey := 0;
   FIsQuery := false;
-
-  FFont := TFont.Create(FontID, TFontType.Character);
+  FBigFont := BigFont;
 end;
 
 function TGUIKeyRead.WantActivationKey (key: LongInt): Boolean;
@@ -2234,10 +2184,8 @@ end;
 
 { TGUIKeyRead2 }
 
-constructor TGUIKeyRead2.Create(FontID: DWORD);
-var
-  a: Byte;
-  w, h: Word;
+constructor TGUIKeyRead2.Create(BigFont: Boolean);
+  var a: Byte; w, h: Integer;
 begin
   inherited Create();
 
@@ -2246,22 +2194,24 @@ begin
   FKeyIdx := 0;
   FIsQuery := False;
 
-  FFontID := FontID;
-  FFont := TFont.Create(FontID, TFontType.Character);
+  FBigFont := BigFont;
 
   FMaxKeyNameWdt := 0;
+
+  FMaxKeyNameWdt := 0;
+
   for a := 0 to 255 do
   begin
-    FFont.GetTextSize(e_KeyNames[a], w, h);
+    r_GUI_GetStringSize(BigFont, e_KeyNames[a], w, h);
     FMaxKeyNameWdt := Max(FMaxKeyNameWdt, w);
   end;
 
   FMaxKeyNameWdt := FMaxKeyNameWdt-(FMaxKeyNameWdt div 3);
 
-  FFont.GetTextSize(KEYREAD_QUERY, w, h);
+  r_GUI_GetStringSize(BigFont, KEYREAD_QUERY, w, h);
   if w > FMaxKeyNameWdt then FMaxKeyNameWdt := w;
 
-  FFont.GetTextSize(KEYREAD_CLEAR, w, h);
+  r_GUI_GetStringSize(BigFont, KEYREAD_CLEAR, w, h);
   if w > FMaxKeyNameWdt then FMaxKeyNameWdt := w;
 end;
 
@@ -2593,12 +2543,11 @@ begin
   FIndex := -1;
 end;
 
-constructor TGUIListBox.Create(FontID: DWORD; Width, Height: Word);
+constructor TGUIListBox.Create(BigFont: Boolean; Width, Height: Word);
 begin
   inherited Create();
 
-  FFont := TFont.Create(FontID, TFontType.Character);
-
+  FBigFont := BigFont;
   FWidth := Width;
   FHeight := Height;
   FIndex := -1;
@@ -2961,12 +2910,11 @@ begin
   FStartLine := 0;
 end;
 
-constructor TGUIMemo.Create(FontID: DWORD; Width, Height: Word);
+constructor TGUIMemo.Create(BigFont: Boolean; Width, Height: Word);
 begin
   inherited Create();
 
-  FFont := TFont.Create(FontID, TFontType.Character);
-
+  FBigFont := BigFont;
   FWidth := Width;
   FHeight := Height;
   FDrawBack := True;
@@ -3010,7 +2958,7 @@ end;
 procedure TGUIMemo.SetText(Text: string);
 begin
   FStartLine := 0;
-  FLines := GetLines(Text, FFont.ID, FWidth*16);
+  FLines := GetLines(Text, FBigFont, FWidth * 16);
 end;
 
 { TGUIimage }
