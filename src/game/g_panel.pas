@@ -597,9 +597,7 @@ var
   {$IFDEF ENABLE_CORPSES}
     cor: TCorpse;
   {$ENDIF}
-  {$IF DEFINED(ENABLE_GIBS) OR DEFINED(ENABLE_CORPSES)}
-    ontop: Boolean;
-  {$ENDIF}
+  ontop: Boolean;
   mon: TMonster;
   flg: PFlag;
   itm: PItem;
