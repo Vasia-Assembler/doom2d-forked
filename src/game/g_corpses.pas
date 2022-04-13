@@ -247,7 +247,7 @@ implementation
   end;
 
   procedure TCorpse.LoadState (st: TStream);
-    var anim, blending: Boolean; r, g, b, alpha: Byte; stub: TAnimationState;
+    var anim, blending: Boolean; r, g, b, alpha: Byte; stub: TAnimState;
   begin
     assert(st <> nil);
 
@@ -267,7 +267,7 @@ implementation
     Obj_LoadState(@FObj, st);
     FPlayerUID := utils.readWord(st);
     // animation
-    stub := TAnimationState.Create(False, 0, 0);
+    stub := TAnimState.Create(False, 0, 0);
     anim := utils.readBool(st);
     if anim then
     begin
