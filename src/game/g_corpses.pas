@@ -282,7 +282,6 @@ implementation
     // animation for mask (same as animation, compat with older saves)
     anim := utils.readBool(st);
     if anim then stub.LoadState(st, alpha, blending);
-    stub.Free;
   end;
 
   procedure g_Corpses_SetMax (Count: Word);
