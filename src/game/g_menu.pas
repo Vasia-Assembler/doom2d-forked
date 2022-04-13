@@ -3175,7 +3175,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPlayersP1WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON]))) do
   begin
     Name := 'mOptionsPlayersP1WeaponMenu';
     with AddSwitch(_lc[I_MENU_WEAPON_SWITCH]) do
@@ -3204,7 +3204,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPreferencesP1WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_1]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_1]))) do
   begin
     Name := 'mOptionsPreferencesP1WeaponMenu';
     for i := WP_FIRST to WP_LAST do
@@ -3234,7 +3234,7 @@ begin
 
 
   Menu := TGUIWindow.Create('OptionsPlayersP2WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON]))) do
   begin
     Name := 'mOptionsPlayersP2WeaponMenu';
     with AddSwitch(_lc[I_MENU_WEAPON_SWITCH]) do
@@ -3263,7 +3263,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPreferencesP2WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_2]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_2]))) do
   begin
     Name := 'mOptionsPreferencesP2WeaponMenu';
     for i := WP_FIRST to WP_LAST do
