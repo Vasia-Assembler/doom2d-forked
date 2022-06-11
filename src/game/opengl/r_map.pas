@@ -17,7 +17,7 @@ unit r_map;
 
 interface
 
-  uses g_panel, MAPDEF; // TPanel, TDFColor
+  uses g_panel, MAPDEF, binheap; // TPanel, TDFColor
 
   procedure r_Map_Initialize;
   procedure r_Map_Finalize;
