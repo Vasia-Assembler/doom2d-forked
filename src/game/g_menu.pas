@@ -910,9 +910,6 @@ begin
   {$IFDEF ENABLE_RENDER}
     r_Render_Draw;
   {$ENDIF}
-  {$IFDEF ENABLE_SYSTEM}
-    sys_Repaint;
-  {$ENDIF}
 
   slReturnPressed := True;
   if g_Net_Slist_Fetch(slCurrent) then
