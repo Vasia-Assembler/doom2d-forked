@@ -330,7 +330,7 @@ implementation
         i := High(ratl); while (i >= 0) and (ratl[i] <> a) do DEC(i);
         if i >= 0 then ratl[i] := nil;
         r_Common_FreeAndNil(a);
-      end
+      end;
       SetLength(self.mTile, 0);
     end;
     inherited;
