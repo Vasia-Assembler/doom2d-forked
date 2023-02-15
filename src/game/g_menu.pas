@@ -3303,7 +3303,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('AuthorsMenu');
-  Menu.BackTexture := 'INTER';
+  Menu.BackTexture := GameWad + ':/TEXTURES/INTER';
   Menu.OnClose := ProcAuthorsClose;
 
 // Заголовок:
