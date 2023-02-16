@@ -3497,12 +3497,13 @@ begin
   begin
     //result := g_Map_Load(gGameSettings.WAD + ':\' + ResName);
     result := g_Map_Load(NewWAD+':\'+ResName);
-    {$IFDEF ENABLE_RENDER}
-      r_Render_LoadTextures;
-    {$ENDIF}
   end;
   if Result then
     begin
+      {$IFDEF ENABLE_RENDER}
+        r_Render_LoadTextures;
+        r_Render_Reset;
+      {$ENDIF}
       g_Player_ResetAll(Force or gLastMap, gGameSettings.GameType = GT_SINGLE);
 
       gState := STATE_NONE;
