@@ -32,7 +32,7 @@ type
     GameType: Byte;
     GameMode: Byte;
     TimeLimit: Word;
-    GoalLimit: Word;
+    ScoreLimit: Word;
     WarmupTime: Word;
     SpawnInvul: Word;
     ItemRespawnTime: Word;
@@ -103,8 +103,8 @@ procedure g_Game_RemovePlayer();
 procedure g_Game_Spectate();
 procedure g_Game_SpectateCenterView();
 procedure g_Game_StartSingle(Map: String; TwoPlayers: Boolean; nPlayers: Byte);
-procedure g_Game_StartCustom(Map: String; GameMode: Byte; TimeLimit, GoalLimit: Word; MaxLives: Byte; Options: LongWord; nPlayers: Byte);
-procedure g_Game_StartServer(Map: String; GameMode: Byte; TimeLimit, GoalLimit: Word; MaxLives: Byte; Options: LongWord; nPlayers: Byte; IPAddr: LongWord; Port: Word);
+procedure g_Game_StartCustom(Map: String; GameMode: Byte; TimeLimit, ScoreLimit: Word; MaxLives: Byte; Options: LongWord; nPlayers: Byte);
+procedure g_Game_StartServer(Map: String; GameMode: Byte; TimeLimit, ScoreLimit: Word; MaxLives: Byte; Options: LongWord; nPlayers: Byte; IPAddr: LongWord; Port: Word);
 procedure g_Game_StartClient(Addr: String; Port: Word; PW: String);
 procedure g_Game_Restart();
 procedure g_Game_RestartLevel();
@@ -274,7 +274,7 @@ var
   gPauseHolmes: Boolean = false;
   gShowTime: Boolean = False;
   gShowFPS: Boolean = False;
-  gShowGoals: Boolean = True;
+  gShowScore: Boolean = True;
   gShowStat: Boolean = True;
   gShowPIDs: Boolean = False;
   gShowKillMsg: Boolean = True;
@@ -739,7 +739,7 @@ begin
       end;
 
     IK_F2, IK_F3, IK_F4, IK_F5, IK_F6, IK_F7, IK_F10:
-      begin // <F2> .. <F6> пїЅ <F12>
+      begin // <F2> .. <F6>  <F12>
         if gGameOn and (not gConsoleShow) and (not gChatShow) then
         begin
           while (g_ActiveWindow <> nil) do g_GUI_HideWindow(False);
@@ -997,7 +997,7 @@ begin
         dquoteStr(map),
         mode,
         gGameSettings.TimeLimit,
-        gGameSettings.GoalLimit,
+        gGameSettings.ScoreLimit,
         gGameSettings.Options,
         etime,
         Length(Stat.PlayerStat)
@@ -1008,7 +1008,7 @@ begin
       //   otherwise nothing
       if Stat.GameMode in [GM_TDM, GM_CTF] then
         WriteLn(s, 
-          Format('red_score,blue_score' + LineEnding + '%d,%d', [Stat.TeamStat[TEAM_RED].Goals, Stat.TeamStat[TEAM_BLUE].Goals]))
+          Format('red_score,blue_score' + LineEnding + '%d,%d', [Stat.TeamStat[TEAM_RED].Score, Stat.TeamStat[TEAM_BLUE].Score]))
       else if Stat.GameMode in [GM_COOP, GM_SINGLE] then
         WriteLn(s,
           Format('mon_killed,mon_total,secrets_found,secrets_total' + LineEnding + '%d,%d,%d,%d',[gCoopMonstersKilled, gTotalMonsters, gCoopSecretsFound, gSecretsCount]));
@@ -1153,7 +1153,7 @@ begin
   if MegaWAD.endpic <> '' then
     EndPicPath := e_GetResourcePath(WadDirs, MegaWAD.endpic, WAD);
 
-  MegaWAD.endmus := cfg.ReadStr('megawad', 'endmus', 'Standart.wad:D2DMUS\РљРћРќР•Р¦');
+  MegaWAD.endmus := cfg.ReadStr('megawad', 'endmus', 'Standart.wad:D2DMUS\КОНЕЦ');
   if MegaWAD.endmus <> '' then
   begin
     s := e_GetResourcePath(WadDirs, MegaWAD.endmus, WAD);
@@ -1244,7 +1244,7 @@ begin
   if g_Game_IsNet and g_Game_IsServer then
     MH_SEND_GameEvent(NET_EV_MAPEND, Byte(gMissionFailed));
 
-// РЎС‚РѕРї РёРіСЂР°:
+// Стоп игра:
   gPauseMain := false;
   gPauseHolmes := false;
   gGameOn := false;
@@ -1264,15 +1264,15 @@ begin
   gLMSRespawnTime := 0;
 
   case gExit of
-    EXIT_SIMPLE: // Р’С‹С…РѕРґ С‡РµСЂРµР· РјРµРЅСЋ РёР»Рё РєРѕРЅРµС† С‚РµСЃС‚Р°
+    EXIT_SIMPLE: // Выход через меню или конец теста
       begin
         g_Game_Free();
         if gMapOnce  then
-        begin // Р­С‚Рѕ Р±С‹Р» С‚РµСЃС‚
+        begin // Это был тест
           g_Game_Quit();
         end
         else
-        begin // Р’С‹С…РѕРґ РІ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ
+        begin // Выход в главное меню
           {$IFDEF DISABLE_MENU}
             gState := STATE_MENU; // ???
           {$ELSE}
@@ -1285,7 +1285,7 @@ begin
             end
             else
             begin
-              // РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє СЃРµСЂРІРµСЂРѕРІ
+              // Обновляем список серверов
               slReturnPressed := True;
               if g_Net_Slist_Fetch(slCurrent) then
               begin
@@ -1301,14 +1301,14 @@ begin
         end;
       end;
 
-    EXIT_RESTART: // РќР°С‡Р°С‚СЊ СѓСЂРѕРІРµРЅСЊ СЃРЅР°С‡Р°Р»Р°
+    EXIT_RESTART: // Начать уровень сначала
       begin
         if not g_Game_IsClient then g_Game_Restart();
       end;
 
-    EXIT_ENDLEVELCUSTOM: // Р—Р°РєРѕРЅС‡РёР»СЃСЏ СѓСЂРѕРІРµРЅСЊ РІ РЎРІРѕРµР№ РёРіСЂРµ
+    EXIT_ENDLEVELCUSTOM: // Закончился уровень в Своей игре
       begin
-      // РЎС‚Р°С‚РёСЃС‚РёРєР° РЎРІРѕРµР№ РёРіСЂС‹:
+      // Статистика Своей игры:
         FileName := g_ExtractWadName(gMapInfo.Map);
 
         CustomStat.GameTime := gTime;
@@ -1320,7 +1320,7 @@ begin
 
         CustomStat.PlayerStat := nil;
 
-      // РЎС‚Р°С‚РёСЃС‚РёРєР° РёРіСЂРѕРєРѕРІ:
+      // Статистика игроков:
         if gPlayers <> nil then
         begin
           for a := 0 to High(gPlayers) do
@@ -1360,7 +1360,7 @@ begin
         if not g_Game_IsClient then g_Player_ResetReady;
         gInterReadyCount := 0;
 
-      // Р—Р°С‚СѓС…Р°СЋС‰РёР№ СЌРєСЂР°РЅ:
+      // Затухающий экран:
         EndingGameCounter := 255;
         gState := STATE_FOLD;
         gInterTime := 0;
@@ -1370,16 +1370,16 @@ begin
           gInterEndTime := gDefInterTime * 1000;
       end;
 
-    EXIT_ENDLEVELSINGLE: // Р—Р°РєРѕРЅС‡РёР»СЃСЏ СѓСЂРѕРІРµРЅСЊ РІ РћРґРёРЅРѕС‡РЅРѕР№ РёРіСЂРµ
+    EXIT_ENDLEVELSINGLE: // Закончился уровень в Одиночной игре
       begin
-      // РЎС‚Р°С‚РёСЃС‚РёРєР° РћРґРёРЅРѕС‡РЅРѕР№ РёРіСЂС‹:
+      // Статистика Одиночной игры:
         SingleStat.GameTime := gTime;
         SingleStat.TwoPlayers := gPlayer2 <> nil;
         SingleStat.TotalSecrets := gSecretsCount;
-      // РЎС‚Р°С‚РёСЃС‚РёРєР° РїРµСЂРІРѕРіРѕ РёРіСЂРѕРєР°:
+      // Статистика первого игрока:
         SingleStat.PlayerStat[0].Kills := gPlayer1.MonsterKills;
         SingleStat.PlayerStat[0].Secrets := gPlayer1.Secrets;
-      // РЎС‚Р°С‚РёСЃС‚РёРєР° РІС‚РѕСЂРѕРіРѕ РёРіСЂРѕРєР° (РµСЃР»Рё РµСЃС‚СЊ):
+      // Статистика второго игрока (если есть):
         if SingleStat.TwoPlayers then
         begin
           SingleStat.PlayerStat[1].Kills := gPlayer2.MonsterKills;
@@ -1388,7 +1388,7 @@ begin
 
         g_Game_ExecuteEvent('onmapend');
 
-      // Р•СЃС‚СЊ РµС‰Рµ РєР°СЂС‚С‹:
+      // Есть еще карты:
         if gNextMap <> '' then
           begin
             gMusic.SetByName('MUSIC_INTERMUS');
@@ -1398,16 +1398,16 @@ begin
 
             g_Game_ExecuteEvent('oninter');
           end
-        else // Р‘РѕР»СЊС€Рµ РЅРµС‚ РєР°СЂС‚
+        else // Больше нет карт
           begin
-          // Р—Р°С‚СѓС…Р°СЋС‰РёР№ СЌРєСЂР°РЅ:
+          // Затухающий экран:
             EndingGameCounter := 255;
             gState := STATE_FOLD;
           end;
       end;
   end;
 
-// РћРєРѕРЅС‡Р°РЅРёРµ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ:
+// Окончание обработано:
   if gExit <> EXIT_QUIT then
     gExit := 0;
 end;
@@ -1608,13 +1608,13 @@ begin
   MoveButton := MoveButton and $0F;
 
   if gPlayerAction[p, ACTION_MOVELEFT] and (not gPlayerAction[p, ACTION_MOVERIGHT]) then
-    MoveButton := 1 // РќР°Р¶Р°С‚Р° С‚РѕР»СЊРєРѕ "Р’Р»РµРІРѕ"
+    MoveButton := 1 // Нажата только "Влево"
   else if (not gPlayerAction[p, ACTION_MOVELEFT]) and gPlayerAction[p, ACTION_MOVERIGHT] then
-    MoveButton := 2 // РќР°Р¶Р°С‚Р° С‚РѕР»СЊРєРѕ "Р’РїСЂР°РІРѕ"
+    MoveButton := 2 // Нажата только "Вправо"
   else if (not gPlayerAction[p, ACTION_MOVELEFT]) and (not gPlayerAction[p, ACTION_MOVERIGHT]) then
-    MoveButton := 0; // РќРµ РЅР°Р¶Р°С‚С‹ РЅРё "Р’Р»РµРІРѕ", РЅРё "Р’РїСЂР°РІРѕ"
+    MoveButton := 0; // Не нажаты ни "Влево", ни "Вправо"
 
-  // РЎРµР№С‡Р°СЃ РёР»Рё СЂР°РЅСЊС€Рµ Р±С‹Р»Рё РЅР°Р¶Р°С‚С‹ "Р’Р»РµРІРѕ"/"Р’РїСЂР°РІРѕ" => РїРµСЂРµРґР°РµРј РёРіСЂРѕРєСѓ:
+  // Сейчас или раньше были нажаты "Влево"/"Вправо" => передаем игроку:
   if MoveButton = 1 then
     plr.PressKey(KEY_LEFT, time)
   else if MoveButton = 2 then
@@ -1635,13 +1635,13 @@ begin
   else
   begin
     strafeDir := 0; // not strafing anymore
-    // Р Р°РЅСЊС€Рµ Р±С‹Р»Р° РЅР°Р¶Р°С‚Р° "Р’РїСЂР°РІРѕ", Р° СЃРµР№С‡Р°СЃ "Р’Р»РµРІРѕ" => Р±РµР¶РёРј РІРїСЂР°РІРѕ, СЃРјРѕС‚СЂРёРј РІР»РµРІРѕ:
+    // Раньше была нажата "Вправо", а сейчас "Влево" => бежим вправо, смотрим влево:
     if (MoveButton = 2) and gPlayerAction[p, ACTION_MOVELEFT] then
       plr.SetDirection(TDirection.D_LEFT)
-    // Р Р°РЅСЊС€Рµ Р±С‹Р»Р° РЅР°Р¶Р°С‚Р° "Р’Р»РµРІРѕ", Р° СЃРµР№С‡Р°СЃ "Р’РїСЂР°РІРѕ" => Р±РµР¶РёРј РІР»РµРІРѕ, СЃРјРѕС‚СЂРёРј РІРїСЂР°РІРѕ:
+    // Раньше была нажата "Влево", а сейчас "Вправо" => бежим влево, смотрим вправо:
     else if (MoveButton = 1) and gPlayerAction[p, ACTION_MOVERIGHT] then
       plr.SetDirection(TDirection.D_RIGHT)
-    // Р§С‚Рѕ-С‚Рѕ Р±С‹Р»Рѕ РЅР°Р¶Р°С‚Рѕ Рё РЅРµ РёР·РјРµРЅРёР»РѕСЃСЊ => РєСѓРґР° Р±РµР¶РёРј, С‚СѓРґР° Рё СЃРјРѕС‚СЂРёРј:
+    // Что-то было нажато и не изменилось => куда бежим, туда и смотрим:
     else if MoveButton <> 0 then
       plr.SetDirection(TDirection(MoveButton-1))
   end;
@@ -1649,7 +1649,7 @@ begin
   // fix movebutton state
   MoveButton := MoveButton or (strafeDir shl 4);
 
-  // РћСЃС‚Р°Р»СЊРЅС‹Рµ РєР»Р°РІРёС€Рё:
+  // Остальные клавиши:
   if gPlayerAction[p, ACTION_JUMP] then plr.PressKey(KEY_JUMP, time);
   if gPlayerAction[p, ACTION_LOOKUP] then plr.PressKey(KEY_UP, time);
   if gPlayerAction[p, ACTION_LOOKDOWN] then plr.PressKey(KEY_DOWN, time);
@@ -1818,10 +1818,10 @@ begin
   g_ResetDynlights();
   framePool.reset();
 
-// РџРѕСЂР° РІС‹РєР»СЋС‡Р°С‚СЊ РёРіСЂСѓ:
+// Пора выключать игру:
   if gExit = EXIT_QUIT then
     Exit;
-// РРіСЂР° Р·Р°РєРѕРЅС‡РёР»Р°СЃСЊ - РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј:
+// Игра закончилась - обрабатываем:
   if gExit <> 0 then
   begin
     EndGame();
@@ -1829,10 +1829,10 @@ begin
       Exit;
   end;
 
-  // Р§РёС‚Р°РµРј РєР»Р°РІРёР°С‚СѓСЂСѓ Рё РґР¶РѕР№СЃС‚РёРє, РµСЃР»Рё РѕРєРЅРѕ Р°РєС‚РёРІРЅРѕ
+  // Читаем клавиатуру и джойстик, если окно активно
   // no need to, as we'll do it in event handler
 
-// РћР±РЅРѕРІР»СЏРµРј РєРѕРЅСЃРѕР»СЊ (РґРІРёР¶РµРЅРёРµ Рё СЃРѕРѕР±С‰РµРЅРёСЏ):
+// Обновляем консоль (движение и сообщения):
   g_Console_Update();
 
   if (NetMode = NET_NONE) and (g_Game_IsNet) and (gGameOn or (gState in [STATE_FOLD, STATE_INTERCUSTOM])) then
@@ -1846,10 +1846,10 @@ begin
   g_Net_Slist_Pulse();
 
   case gState of
-    STATE_INTERSINGLE, // РЎС‚Р°С‚РёСЃС‚РєР° РїРѕСЃР»Рµ РїСЂРѕС…РѕР¶РґРµРЅРёСЏ СѓСЂРѕРІРЅСЏ РІ РћРґРёРЅРѕС‡РЅРѕР№ РёРіСЂРµ
-    STATE_INTERCUSTOM, // РЎС‚Р°С‚РёСЃС‚РєР° РїРѕСЃР»Рµ РїСЂРѕС…РѕР¶РґРµРЅРёСЏ СѓСЂРѕРІРЅСЏ РІ РЎРІРѕРµР№ РёРіСЂРµ
-    STATE_INTERTEXT, // РўРµРєСЃС‚ РјРµР¶РґСѓ СѓСЂРѕРІРЅСЏРјРё
-    STATE_INTERPIC: // РљР°СЂС‚РёРЅРєР° РјРµР¶РґСѓ СѓСЂРѕРІРЅСЏРјРё
+    STATE_INTERSINGLE, // Статистка после прохождения уровня в Одиночной игре
+    STATE_INTERCUSTOM, // Статистка после прохождения уровня в Своей игре
+    STATE_INTERTEXT, // Текст между уровнями
+    STATE_INTERPIC: // Картинка между уровнями
       begin
         if g_Game_IsNet and g_Game_IsServer then
         begin
@@ -1879,19 +1879,19 @@ begin
           or (g_Game_IsNet and ((gInterTime > gInterEndTime) or ((gInterReadyCount >= NetClientCount) and (NetClientCount > 0))))
         )
         then
-        begin // РќР°Р¶Р°Р»Рё <Enter>/<РџСЂРѕР±РµР»> РёР»Рё РїСЂРѕС€Р»Рѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РІСЂРµРјРµРЅРё:
+        begin // Нажали <Enter>/<Пробел> или прошло достаточно времени:
           g_Game_StopAllSounds(True);
 
-          if gMapOnce then // Р­С‚Рѕ Р±С‹Р» С‚РµСЃС‚
+          if gMapOnce then // Это был тест
             gExit := EXIT_SIMPLE
           else
-            if gNextMap <> '' then // РџРµСЂРµС…РѕРґРёРј РЅР° СЃР»РµРґСѓСЋС‰СѓСЋ РєР°СЂС‚Сѓ
+            if gNextMap <> '' then // Переходим на следующую карту
               g_Game_ChangeMap(gNextMap)
-            else // РЎР»РµРґСѓСЋС‰РµР№ РєР°СЂС‚С‹ РЅРµС‚
+            else // Следующей карты нет
             begin
               if gGameSettings.GameType in [GT_CUSTOM, GT_SERVER] then
               begin
-              // Р’С‹С…РѕРґ РІ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ:
+              // Выход в главное меню:
                 g_Game_Free;
 {$IFDEF ENABLE_MENU}
                 g_GUI_ShowWindow('MainMenu');
@@ -1901,7 +1901,7 @@ begin
                 gState := STATE_MENU;
               end else
               begin
-              // Р¤РёРЅР°Р»СЊРЅР°СЏ РєР°СЂС‚РёРЅРєР°:
+              // Финальная картинка:
                 g_Game_ExecuteEvent('onwadend');
                 g_Game_Free();
                 if not gMusic.SetByName('MUSIC_endmus') then
@@ -1938,11 +1938,11 @@ begin
             InterText.counter := InterText.counter - 1;
       end;
 
-    STATE_FOLD: // Р—Р°С‚СѓС…Р°РЅРёРµ СЌРєСЂР°РЅР°
+    STATE_FOLD: // Затухание экрана
       begin
         if EndingGameCounter = 0 then
           begin
-          // Р—Р°РєРѕРЅС‡РёР»СЃСЏ СѓСЂРѕРІРµРЅСЊ РІ РЎРІРѕРµР№ РёРіСЂРµ:
+          // Закончился уровень в Своей игре:
             if gGameSettings.GameType in [GT_CUSTOM, GT_SERVER, GT_CLIENT] then
               begin
                 gState := STATE_INTERCUSTOM;
@@ -1958,7 +1958,7 @@ begin
                 gMusic.Play();
                 e_UnpressAllKeys();
               end
-            else // Р—Р°РєРѕРЅС‡РёР»Р°СЃСЊ РїРѕСЃР»РµРґРЅСЏСЏ РєР°СЂС‚Р° РІ РћРґРёРЅРѕС‡РЅРѕР№ РёРіСЂРµ
+            else // Закончилась последняя карта в Одиночной игре
               begin
                 gMusic.SetByName('MUSIC_INTERMUS');
                 gMusic.Play();
@@ -1971,9 +1971,9 @@ begin
           DecMin(EndingGameCounter, 6, 0);
       end;
 
-    STATE_ENDPIC: // РљР°СЂС‚РёРЅРєР° РѕРєРѕРЅС‡Р°РЅРёСЏ РјРµРіР°Р’Р°РґР°
+    STATE_ENDPIC: // Картинка окончания мегаВада
       begin
-        if gMapOnce then // Р­С‚Рѕ Р±С‹Р» С‚РµСЃС‚
+        if gMapOnce then // Это был тест
         begin
           gExit := EXIT_SIMPLE;
           Exit;
@@ -1984,7 +1984,7 @@ begin
         g_Serverlist_Control(slCurrent, slTable);
   end;
 
-// РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕ Tab:
+// Статистика по Tab:
   if gGameOn then
   begin
     IsDrawStat := (not gConsoleShow) and (not gChatShow) and (gGameSettings.GameType <> GT_SINGLE) and g_Console_Action(ACTION_SCORES);
@@ -2003,13 +2003,13 @@ begin
       gStatsPressed := False;
   end;
 
-// РРіСЂР° РёРґРµС‚:
+// Игра идет:
   if gGameOn and not gPause and (gState <> STATE_FOLD) then
   begin
-  // Р’СЂРµРјСЏ += 28 РјРёР»Р»РёСЃРµРєСѓРЅРґ:
+  // Время += 28 миллисекунд:
     gTime := gTime + GAME_TICK;
 
-  // РЎРѕРѕР±С‰РµРЅРёРµ РїРѕСЃРµСЂРµРґРёРЅРµ СЌРєСЂР°РЅР°:
+  // Сообщение посередине экрана:
     if MessageTime = 0 then
       MessageText := '';
     if MessageTime > 0 then
@@ -2017,19 +2017,19 @@ begin
 
     if (g_Game_IsServer) then
     begin
-    // Р‘С‹Р» Р·Р°РґР°РЅ Р»РёРјРёС‚ РІСЂРµРјРµРЅРё:
+    // Был задан лимит времени:
       if (gGameSettings.TimeLimit > 0) then
         if (gTime - gGameStartTime) div 1000 >= gGameSettings.TimeLimit then
-        begin // РћРЅ РїСЂРѕС€РµР» => РєРѕРЅРµС† СѓСЂРѕРІРЅСЏ
+        begin // Он прошел => конец уровня
           g_Game_NextLevel();
           Exit;
         end;
 
-    // РќР°РґРѕ СЂРµСЃРїР°РІРЅРёС‚СЊ РёРіСЂРѕРєРѕРІ РІ LMS:
+    // Надо респавнить игроков в LMS:
       if (gLMSRespawn > LMS_RESPAWN_NONE) and (gLMSRespawnTime < gTime) then
         g_Game_RestartRound(gLMSSoftSpawn);
 
-    // РџСЂРѕРІРµСЂРёРј СЂРµР·СѓР»СЊС‚Р°С‚ РіРѕР»РѕСЃРѕРІР°РЅРёСЏ, РµСЃР»Рё РІСЂРµРјСЏ РїСЂРѕС€Р»Рѕ
+    // Проверим результат голосования, если время прошло
       if gVoteInProgress and (gVoteTimer < gTime) then
         g_Game_CheckVote
       else if gVotePassed and (gVoteCmdTimer < gTime) then
@@ -2039,19 +2039,19 @@ begin
         gVotePassed := False;
       end;
 
-    // Р—Р°РјРµСЂСЏРµРј РІСЂРµРјСЏ Р·Р°С…РІР°С‚Р° С„Р»Р°РіРѕРІ
+    // Замеряем время захвата флагов
       if gFlags[FLAG_RED].State = FLAG_STATE_CAPTURED then
         gFlags[FLAG_RED].CaptureTime := gFlags[FLAG_RED].CaptureTime + GAME_TICK;
       if gFlags[FLAG_BLUE].State = FLAG_STATE_CAPTURED then
         gFlags[FLAG_BLUE].CaptureTime := gFlags[FLAG_BLUE].CaptureTime + GAME_TICK;
 
-    // Р‘С‹Р» Р·Р°РґР°РЅ Р»РёРјРёС‚ РїРѕР±РµРґ:
-      if (gGameSettings.GoalLimit > 0) then
+    // Был задан лимит побед:
+      if (gGameSettings.ScoreLimit > 0) then
       begin
         b := 0;
 
         if gGameSettings.GameMode = GM_DM then
-          begin // Р’ DM РёС‰РµРј РёРіСЂРѕРєР° СЃ max С„СЂР°РіР°РјРё
+          begin // В DM ищем игрока с max фрагами
             for i := 0 to High(gPlayers) do
               if gPlayers[i] <> nil then
                 if gPlayers[i].Frags > b then
@@ -2059,19 +2059,19 @@ begin
           end
         else
           if gGameSettings.GameMode in [GM_TDM, GM_CTF] then
-          begin // Р’ CTF/TDM РІС‹Р±РёСЂР°РµРј РєРѕРјР°РЅРґСѓ СЃ РЅР°РёР±РѕР»СЊС€РёРј СЃС‡РµС‚РѕРј
-            b := Max(gTeamStat[TEAM_RED].Goals, gTeamStat[TEAM_BLUE].Goals);
+          begin // В CTF/TDM выбираем команду с наибольшим счетом
+            b := Max(gTeamStat[TEAM_RED].Score, gTeamStat[TEAM_BLUE].Score);
           end;
 
-      // Р›РёРјРёС‚ РїРѕР±РµРґ РЅР°Р±СЂР°РЅ => РєРѕРЅРµС† СѓСЂРѕРІРЅСЏ:
-        if b >= gGameSettings.GoalLimit then
+      // Лимит побед набран => конец уровня:
+        if b >= gGameSettings.ScoreLimit then
         begin
           g_Game_NextLevel();
           Exit;
         end;
       end;
 
-    // РћР±СЂР°Р±Р°С‚С‹РІР°РµРј РєР»Р°РІРёС€Рё РёРіСЂРѕРєРѕРІ:
+    // Обрабатываем клавиши игроков:
       if gPlayer1 <> nil then gPlayer1.ReleaseKeys();
       if gPlayer2 <> nil then gPlayer2.ReleaseKeys();
 {$IFDEF DISABLE_MENU}
@@ -2284,7 +2284,7 @@ begin
 
     g_Game_SetupHearPoints;
 
-  // РћР±РЅРѕРІР»СЏРµРј РІСЃРµ РѕСЃС‚Р°Р»СЊРЅРѕРµ:
+  // Обновляем все остальное:
     g_Map_Update();
     g_Items_Update();
     g_Triggers_Update();
@@ -2392,7 +2392,7 @@ begin
     end;
   end; // if gameOn ...
 
-// РђРєС‚РёРІРЅРѕ РѕРєРЅРѕ РёРЅС‚РµСЂС„РµР№СЃР° - РїРµСЂРµРґР°РµРј РєР»Р°РІРёС€Рё РµРјСѓ:
+// Активно окно интерфейса - передаем клавиши ему:
 {$IFDEF ENABLE_MENU}
   if g_ActiveWindow <> nil then
   begin
@@ -2405,11 +2405,11 @@ begin
         g_ActiveWindow.OnMessage(Msg);
       end;
 
-  // Р•СЃР»Рё РѕРЅРѕ РѕС‚ СЌС‚РѕРіРѕ РЅРµ Р·Р°РєСЂС‹Р»РѕСЃСЊ, С‚Рѕ РѕР±РЅРѕРІР»СЏРµРј:
+  // Если оно от этого не закрылось, то обновляем:
     if g_ActiveWindow <> nil then
       g_ActiveWindow.Update();
 
-  // РќСѓР¶РЅРѕ СЃРјРµРЅРёС‚СЊ СЂР°Р·СЂРµС€РµРЅРёРµ:
+  // Нужно сменить разрешение:
     if gResolutionChange then
     begin
       {$IFDEF ENABLE_RENDER}
@@ -2420,7 +2420,7 @@ begin
       g_ActiveWindow := nil;
     end;
 
-  // РќСѓР¶РЅРѕ СЃРјРµРЅРёС‚СЊ СЏР·С‹Рє:
+  // Нужно сменить язык:
     if gLanguageChange then
     begin
       //e_WriteLog('Read language file', MSG_NOTIFY);
@@ -2431,7 +2431,7 @@ begin
     end;
   end;
 
-// Р“РѕСЂСЏС‡Р°СЏ РєР»Р°РІРёС€Р° РґР»СЏ РІС‹Р·РѕРІР° РјРµРЅСЋ РІС‹С…РѕРґР° РёР· РёРіСЂС‹ (F10):
+// Горячая клавиша для вызова меню выхода из игры (F10):
   if e_KeyPressed(IK_F10) and
      gGameOn and
      (not gConsoleShow) and
@@ -2443,7 +2443,7 @@ begin
 
   Time := GetTickCount64() {div 1000};
 
-// РћР±СЂР°Р±РѕС‚РєР° РѕС‚Р»РѕР¶РµРЅРЅС‹С… СЃРѕР±С‹С‚РёР№:
+// Обработка отложенных событий:
   if gDelayedEvents <> nil then
     for a := 0 to High(gDelayedEvents) do
       if gDelayedEvents[a].Pending and
@@ -2472,7 +2472,7 @@ begin
         gDelayedEvents[a].Pending := False;
       end;
 
-// РљР°Р¶РґСѓСЋ СЃРµРєСѓРЅРґСѓ РѕР±РЅРѕРІР»СЏРµРј СЃС‡РµС‚С‡РёРє РѕР±РЅРѕРІР»РµРЅРёР№:
+// Каждую секунду обновляем счетчик обновлений:
   UPSCounter := UPSCounter + 1;
   if Time - UPSTime >= 1000 then
   begin
@@ -2775,7 +2775,7 @@ begin
     if not (Team in [TEAM_RED, TEAM_BLUE]) then
       Team := gPlayer1Settings.Team;
 
-    // РЎРѕР·РґР°РЅРёРµ РїРµСЂРІРѕРіРѕ РёРіСЂРѕРєР°:
+    // Создание первого игрока:
     gPlayer1 := g_Player_Get(g_Player_Create(gPlayer1Settings.Model,
                                              gPlayer1Settings.Color,
                                              Team, False));
@@ -2809,7 +2809,7 @@ begin
     if not (Team in [TEAM_RED, TEAM_BLUE]) then
       Team := gPlayer2Settings.Team;
 
-    // РЎРѕР·РґР°РЅРёРµ РІС‚РѕСЂРѕРіРѕ РёРіСЂРѕРєР°:
+    // Создание второго игрока:
     gPlayer2 := g_Player_Get(g_Player_Create(gPlayer2Settings.Model,
                                              gPlayer2Settings.Color,
                                              Team, False));
@@ -2903,7 +2903,7 @@ begin
 
   g_Game_ClearLoading();
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂС‹:
+// Настройки игры:
   FillByte(gGameSettings, SizeOf(TGameSettings), 0);
   gAimLine := False;
   gShowMap := False;
@@ -2923,7 +2923,7 @@ begin
 
   g_Game_ExecuteEvent('ongamestart');
 
-// РЎРѕР·РґР°РЅРёРµ РїРµСЂРІРѕРіРѕ РёРіСЂРѕРєР°:
+// Создание первого игрока:
   gPlayer1 := g_Player_Get(g_Player_Create(gPlayer1Settings.Model,
                                            gPlayer1Settings.Color,
                                            gPlayer1Settings.Team, False));
@@ -2940,7 +2940,7 @@ begin
   gPlayer1.SkipFist := gPlayer1Settings.SkipFist;
   nPl := 1;
 
-// РЎРѕР·РґР°РЅРёРµ РІС‚РѕСЂРѕРіРѕ РёРіСЂРѕРєР°, РµСЃР»Рё РµСЃС‚СЊ:
+// Создание второго игрока, если есть:
   if TwoPlayers then
   begin
     gPlayer2 := g_Player_Get(g_Player_Create(gPlayer2Settings.Model,
@@ -2960,7 +2960,7 @@ begin
     Inc(nPl);
   end;
 
-// Р—Р°РіСЂСѓР·РєР° Рё Р·Р°РїСѓСЃРє РєР°СЂС‚С‹:
+// Загрузка и запуск карты:
   if not g_Game_StartMap(false{asMegawad}, MAP, True) then
   begin
     if (Pos(':\', Map) > 0) or (Pos(':/', Map) > 0) then tmps := Map else tmps := gGameSettings.WAD + ':\' + MAP;
@@ -2968,16 +2968,16 @@ begin
     Exit;
   end;
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂРѕРєРѕРІ Рё Р±РѕС‚РѕРІ:
+// Настройки игроков и ботов:
   g_Player_Init();
 
-// РЎРѕР·РґР°РµРј Р±РѕС‚РѕРІ:
+// Создаем ботов:
   for i := nPl+1 to nPlayers do
     g_Player_Create(STD_PLAYER_MODEL, _RGB(0, 0, 0), 0, True);
 end;
 
 procedure g_Game_StartCustom(Map: String; GameMode: Byte;
-                             TimeLimit, GoalLimit: Word;
+                             TimeLimit, ScoreLimit: Word;
                              MaxLives: Byte;
                              Options: LongWord; nPlayers: Byte);
 var
@@ -2989,12 +2989,12 @@ begin
 
   g_Game_ClearLoading();
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂС‹:
+// Настройки игры:
   gGameSettings.GameType := GT_CUSTOM;
   gGameSettings.GameMode := GameMode;
   gSwitchGameMode := GameMode;
   gGameSettings.TimeLimit := TimeLimit;
-  gGameSettings.GoalLimit := GoalLimit;
+  gGameSettings.ScoreLimit := ScoreLimit;
   gGameSettings.MaxLives := IfThen(GameMode = GM_CTF, 0, MaxLives);
   gGameSettings.Options := Options;
 
@@ -3012,7 +3012,7 @@ begin
 
   g_Game_ExecuteEvent('ongamestart');
 
-// Р РµР¶РёРј РЅР°Р±Р»СЋРґР°С‚РµР»СЏ:
+// Режим наблюдателя:
   if nPlayers = 0 then
   begin
     gPlayer1 := nil;
@@ -3022,7 +3022,7 @@ begin
   nPl := 0;
   if nPlayers >= 1 then
   begin
-  // РЎРѕР·РґР°РЅРёРµ РїРµСЂРІРѕРіРѕ РёРіСЂРѕРєР°:
+  // Создание первого игрока:
     gPlayer1 := g_Player_Get(g_Player_Create(gPlayer1Settings.Model,
                                              gPlayer1Settings.Color,
                                              gPlayer1Settings.Team, False));
@@ -3042,7 +3042,7 @@ begin
 
   if nPlayers >= 2 then
   begin
-  // РЎРѕР·РґР°РЅРёРµ РІС‚РѕСЂРѕРіРѕ РёРіСЂРѕРєР°:
+  // Создание второго игрока:
     gPlayer2 := g_Player_Get(g_Player_Create(gPlayer2Settings.Model,
                                              gPlayer2Settings.Color,
                                              gPlayer2Settings.Team, False));
@@ -3060,14 +3060,14 @@ begin
     Inc(nPl);
   end;
 
-// Р—Р°РіСЂСѓР·РєР° Рё Р·Р°РїСѓСЃРє РєР°СЂС‚С‹:
+// Загрузка и запуск карты:
   if not g_Game_StartMap(true{asMegawad}, Map, True) then
   begin
     g_FatalError(Format(_lc[I_GAME_ERROR_MAP_LOAD], [Map]));
     Exit;
   end;
 
-// РќРµС‚ С‚РѕС‡РµРє РїРѕСЏРІР»РµРЅРёСЏ:
+// Нет точек появления:
   if (g_Map_GetPointCount(RESPAWNPOINT_PLAYER1) +
       g_Map_GetPointCount(RESPAWNPOINT_PLAYER2) +
       g_Map_GetPointCount(RESPAWNPOINT_DM) +
@@ -3078,16 +3078,16 @@ begin
     Exit;
   end;
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂРѕРєРѕРІ Рё Р±РѕС‚РѕРІ:
+// Настройки игроков и ботов:
   g_Player_Init();
 
-// РЎРѕР·РґР°РµРј Р±РѕС‚РѕРІ:
+// Создаем ботов:
   for i := nPl+1 to nPlayers do
     g_Player_Create(STD_PLAYER_MODEL, _RGB(0, 0, 0), 0, True);
 end;
 
 procedure g_Game_StartServer(Map: String; GameMode: Byte;
-                             TimeLimit, GoalLimit: Word; MaxLives: Byte;
+                             TimeLimit, ScoreLimit: Word; MaxLives: Byte;
                              Options: LongWord; nPlayers: Byte;
                              IPAddr: LongWord; Port: Word);
 begin
@@ -3098,12 +3098,12 @@ begin
 
   g_Game_ClearLoading();
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂС‹:
+// Настройки игры:
   gGameSettings.GameType := GT_SERVER;
   gGameSettings.GameMode := GameMode;
   gSwitchGameMode := GameMode;
   gGameSettings.TimeLimit := TimeLimit;
-  gGameSettings.GoalLimit := GoalLimit;
+  gGameSettings.ScoreLimit := ScoreLimit;
   gGameSettings.MaxLives := IfThen(GameMode = GM_CTF, 0, MaxLives);
   gGameSettings.Options := Options;
 
@@ -3121,7 +3121,7 @@ begin
 
   g_Game_ExecuteEvent('ongamestart');
 
-// Р РµР¶РёРј РЅР°Р±Р»СЋРґР°С‚РµР»СЏ:
+// Режим наблюдателя:
   if nPlayers = 0 then
   begin
     gPlayer1 := nil;
@@ -3130,7 +3130,7 @@ begin
 
   if nPlayers >= 1 then
   begin
-  // РЎРѕР·РґР°РЅРёРµ РїРµСЂРІРѕРіРѕ РёРіСЂРѕРєР°:
+  // Создание первого игрока:
     gPlayer1 := g_Player_Get(g_Player_Create(gPlayer1Settings.Model,
                                              gPlayer1Settings.Color,
                                              gPlayer1Settings.Team, False));
@@ -3149,7 +3149,7 @@ begin
 
   if nPlayers >= 2 then
   begin
-  // РЎРѕР·РґР°РЅРёРµ РІС‚РѕСЂРѕРіРѕ РёРіСЂРѕРєР°:
+  // Создание второго игрока:
     gPlayer2 := g_Player_Get(g_Player_Create(gPlayer2Settings.Model,
                                              gPlayer2Settings.Color,
                                              gPlayer2Settings.Team, False));
@@ -3170,7 +3170,7 @@ begin
   if NetForwardPorts then
     g_Game_SetLoadingText(_lc[I_LOAD_PORTS], 0, False);
 
-// РЎС‚Р°СЂС‚СѓРµРј СЃРµСЂРІРµСЂ
+// Стартуем сервер
   if not g_Net_Host(IPAddr, Port, NetMaxClients) then
   begin
     g_FatalError(_lc[I_NET_MSG] + Format(_lc[I_NET_ERR_HOST], [Port]));
@@ -3181,7 +3181,7 @@ begin
 
   g_Net_Slist_ServerStarted();
 
-// Р—Р°РіСЂСѓР·РєР° Рё Р·Р°РїСѓСЃРє РєР°СЂС‚С‹:
+// Загрузка и запуск карты:
   if not g_Game_StartMap(false{asMegawad}, Map, True) then
   begin
     g_Net_Slist_ServerClosed();
@@ -3189,7 +3189,7 @@ begin
     Exit;
   end;
 
-// РќРµС‚ С‚РѕС‡РµРє РїРѕСЏРІР»РµРЅРёСЏ:
+// Нет точек появления:
   if (g_Map_GetPointCount(RESPAWNPOINT_PLAYER1) +
       g_Map_GetPointCount(RESPAWNPOINT_PLAYER2) +
       g_Map_GetPointCount(RESPAWNPOINT_DM) +
@@ -3201,7 +3201,7 @@ begin
     Exit;
   end;
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂРѕРєРѕРІ Рё Р±РѕС‚РѕРІ:
+// Настройки игроков и ботов:
   g_Player_Init();
 
   g_Net_Slist_ServerMapStarted();
@@ -3228,7 +3228,7 @@ begin
 
   g_Game_ClearLoading();
 
-// РќР°СЃС‚СЂРѕР№РєРё РёРіСЂС‹:
+// Настройки игры:
   gGameSettings.GameType := GT_CLIENT;
 
   gCoopTotalMonstersKilled := 0;
@@ -3252,7 +3252,7 @@ begin
   gSpectLatchPID1 := 0;
   gSpectLatchPID2 := 0;
 
-// РЎС‚Р°СЂС‚СѓРµРј РєР»РёРµРЅС‚
+// Стартуем клиент
   if not g_Net_Connect(Addr, Port) then
   begin
     g_FatalError(_lc[I_NET_MSG] + _lc[I_NET_ERR_CONN]);
@@ -3296,7 +3296,7 @@ begin
 
           gGameSettings.GameMode := InMsg.ReadByte();
           gSwitchGameMode := gGameSettings.GameMode;
-          gGameSettings.GoalLimit := InMsg.ReadWord();
+          gGameSettings.ScoreLimit := InMsg.ReadWord();
           gGameSettings.TimeLimit := InMsg.ReadWord();
           gGameSettings.MaxLives := InMsg.ReadByte();
           gGameSettings.Options := InMsg.ReadLongWord();
@@ -3404,7 +3404,7 @@ begin
   g_Game_ClearLoading();
 
   Force := gGameSettings.GameMode in [GM_DM, GM_TDM, GM_CTF];
-  // Р•СЃР»Рё СѓСЂРѕРІРµРЅСЊ Р·Р°РІРµСЂС€РёР»СЃСЏ РїРѕ С‚СЂРёРіРіРµСЂСѓ Р’С‹С…РѕРґ, РЅРµ РѕС‡РёС‰Р°С‚СЊ РёРЅРІРµРЅС‚Р°СЂСЊ
+  // Если уровень завершился по триггеру Выход, не очищать инвентарь
   if gExitByTrigger then
   begin
     Force := False;
@@ -3536,7 +3536,7 @@ begin
       begin
         g_Map_ResetFlag(FLAG_RED);
         g_Map_ResetFlag(FLAG_BLUE);
-        // CTF, Р° С„Р»Р°РіРѕРІ РЅРµС‚:
+        // CTF, а флагов нет:
         if not g_Map_HaveFlagPoints() then
           g_SimpleError(_lc[I_GAME_ERROR_CTF]);
       end;
@@ -3598,7 +3598,7 @@ begin
 
     MH_SEND_GameEvent(NET_EV_MAPSTART, gGameSettings.GameMode, Map);
 
-  // РњР°СЃС‚РµСЂСЃРµСЂРІРµСЂ
+  // Мастерсервер
     g_Net_Slist_ServerMapStarted();
 
     if NetClients <> nil then
@@ -3651,10 +3651,10 @@ begin
   gCoopTotalMonsters := gCoopTotalMonsters + gTotalMonsters;
   gCoopTotalSecrets := gCoopTotalSecrets + gSecretsCount;
 
-// Р’С‹С€Р»Рё РІ РІС‹С…РѕРґ РІ РћРґРёРЅРѕС‡РЅРѕР№ РёРіСЂРµ:
+// Вышли в выход в Одиночной игре:
   if gGameSettings.GameType = GT_SINGLE then
     gExit := EXIT_ENDLEVELSINGLE
-  else // Р’С‹С€Р»Рё РІ РІС‹С…РѕРґ РІ РЎРІРѕРµР№ РёРіСЂРµ
+  else // Вышли в выход в Своей игре
   begin
     gExit := EXIT_ENDLEVELCUSTOM;
     if gGameSettings.GameMode = GM_COOP then
@@ -3908,7 +3908,7 @@ begin
   if (a = 0) then a := Pos('.wad:/', toLowerCase1251(gMapToDelete));
   if (a = 0) then exit;
 
-  // Р’С‹РґРµР»СЏРµРј РёРјСЏ wad-С„Р°Р№Р»Р° Рё РёРјСЏ РєР°СЂС‚С‹
+  // Выделяем имя wad-файла и имя карты
   WadName := Copy(gMapToDelete, 1, a+3);
   Delete(gMapToDelete, 1, a+5);
   gMapToDelete := UpperCase(gMapToDelete);
@@ -3916,7 +3916,7 @@ begin
   //CopyMemory(@MapName[0], @gMapToDelete[1], Min(16, Length(gMapToDelete)));
 
 {
-// РРјСЏ РєР°СЂС‚С‹ РЅРµ СЃС‚Р°РЅРґР°СЂС‚РЅРѕРµ С‚РµСЃС‚РѕРІРѕРµ:
+// Имя карты не стандартное тестовое:
   if MapName <> TEST_MAP_NAME then
     Exit;
 
@@ -3925,14 +3925,14 @@ begin
     time := g_GetFileTime(WadName);
     WAD := TWADFile.Create();
 
-  // Р§РёС‚Р°РµРј Wad-С„Р°Р№Р»:
+  // Читаем Wad-файл:
     if not WAD.ReadFile(WadName) then
-    begin // РќРµС‚ С‚Р°РєРѕРіРѕ WAD-С„Р°Р№Р»Р°
+    begin // Нет такого WAD-файла
       WAD.Free();
       Exit;
     end;
 
-  // РЎРѕСЃС‚Р°РІР»СЏРµРј СЃРїРёСЃРѕРє РєР°СЂС‚ Рё РёС‰РµРј РЅСѓР¶РЅСѓСЋ:
+  // Составляем список карт и ищем нужную:
     WAD.CreateImage();
     MapList := WAD.GetResourcesList('');
 
@@ -3940,7 +3940,7 @@ begin
       for a := 0 to High(MapList) do
         if MapList[a] = MapName then
         begin
-        // РЈРґР°Р»СЏРµРј Рё СЃРѕС…СЂР°РЅСЏРµРј:
+        // Удаляем и сохраняем:
           WAD.RemoveResource('', MapName);
           WAD.SaveTo(WadName);
           Break;
@@ -4232,7 +4232,7 @@ begin
   begin
     if Length(P) > 1 then
     begin
-      gsGoalLimit := nclamp(StrToIntDef(P[1], gsGoalLimit), 0, $FFFF);
+      gsScoreLimit := nclamp(StrToIntDef(P[1], gsScoreLimit), 0, $FFFF);
 
       if g_Game_IsServer then
       begin
@@ -4246,17 +4246,17 @@ begin
                 b := stat[a].Frags;
         end
         else // TDM/CTF
-          b := Max(gTeamStat[TEAM_RED].Goals, gTeamStat[TEAM_BLUE].Goals);
+          b := Max(gTeamStat[TEAM_RED].Score, gTeamStat[TEAM_BLUE].Score);
 
         // if someone has a higher score, set it to that instead
-        gsGoalLimit := max(gsGoalLimit, b);
-        gGameSettings.GoalLimit := gsGoalLimit;
+        gsScoreLimit := max(gsScoreLimit, b);
+        gGameSettings.ScoreLimit := gsScoreLimit;
  
         if g_Game_IsNet then MH_SEND_GameSettings;
       end;
     end;
 
-    g_Console_Add(Format(_lc[I_MSG_SCORE_LIMIT], [Integer(gsGoalLimit)]));
+    g_Console_Add(Format(_lc[I_MSG_SCORE_LIMIT], [Integer(gsScoreLimit)]));
   end
   else if cmd = 'g_timelimit' then
   begin
@@ -4605,7 +4605,7 @@ var
   //pt: TDFPoint;
   mon: TMonster;
 begin
-// РљРѕРјР°РЅРґС‹ РѕС‚Р»Р°РґРѕС‡РЅРѕРіРѕ СЂРµР¶РёРјР°:
+// Команды отладочного режима:
   if {gDebugMode}conIsCheatsEnabled then
   begin
     cmd := LowerCase(P[0]);
@@ -4930,7 +4930,7 @@ var
   listen: LongWord;
   found: Boolean;
 begin
-// РћР±С‰РёРµ РєРѕРјР°РЅРґС‹:
+// Общие команды:
   cmd := LowerCase(P[0]);
   chstr := '';
   if cmd = 'pause' then
@@ -4986,7 +4986,7 @@ begin
           if gPlayers[a] <> nil then
             if Copy(LowerCase(gPlayers[a].Name), 1, Length(P[1])) = LowerCase(P[1]) then
             begin
-              // РќРµ РѕС‚РєР»СЋС‡Р°С‚СЊ РѕСЃРЅРѕРІРЅС‹С… РёРіСЂРѕРєРѕРІ РІ СЃРёРЅРіР»Рµ
+              // Не отключать основных игроков в сингле
               if not(gPlayers[a] is TBot) and (gGameSettings.GameType = GT_SINGLE) then
                 continue;
               gPlayers[a].Lives := 0;
@@ -4994,7 +4994,7 @@ begin
               g_Console_Add(Format(_lc[I_PLAYER_LEAVE], [gPlayers[a].Name]), True);
               g_Player_Remove(gPlayers[a].UID);
               g_Net_Slist_ServerPlayerLeaves();
-              // Р•СЃР»Рё РЅРµ РїРµСЂРµРјРµС€Р°С‚СЊ, РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РЅРѕРІС‹С… Р±РѕС‚РѕРІ РїРѕСЏРІСЏС‚СЃСЏ СЃС‚Р°СЂС‹Рµ
+              // Если не перемешать, при добавлении новых ботов появятся старые
               g_Bot_MixNames();
             end;
     end else
@@ -5502,7 +5502,7 @@ begin
           if Length(P) >= 4 then
             b := StrToIntDef(P[3], 1);
           g_Game_StartCustom(s, GameMode, TimeLimit,
-                             GoalLimit, MaxLives, Options, b);
+                             ScoreLimit, MaxLives, Options, b);
         end;
       end
       else
@@ -5555,7 +5555,7 @@ begin
           b := 0;
           if Length(P) >= 6 then
             b := StrToIntDef(P[5], 0);
-          g_Game_StartServer(s, GameMode, TimeLimit, GoalLimit, MaxLives, Options, b, listen, prt)
+          g_Game_StartServer(s, GameMode, TimeLimit, ScoreLimit, MaxLives, Options, b, listen, prt)
         end
       end
       else
@@ -5969,7 +5969,7 @@ begin
     else
       MC_SEND_CheatRequest(NET_CHEAT_DROPFLAG);
   end
-// РљРѕРјР°РЅРґС‹ РЎРІРѕРµР№ РёРіСЂС‹:
+// Команды Своей игры:
   else if gGameSettings.GameType in [GT_CUSTOM, GT_SERVER, GT_CLIENT] then
   begin
     if cmd = 'bot_addred' then
@@ -6073,7 +6073,7 @@ begin
     begin
       if (Length(P) = 1) or (StrToIntDef(P[1], -1) <= 0) then
         Exit;
-      // Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ РІСЂРµРјСЏ:
+      // Дополнительное время:
       gGameSettings.TimeLimit := (gTime - gGameStartTime) div 1000 + Word(StrToIntDef(P[1], 0));
 
       g_Console_Add(Format(_lc[I_MSG_TIME_LIMIT],
@@ -6253,14 +6253,14 @@ begin
       end;
       g_Sound_PlayEx('MENU_OPEN');
 
-    // РџР°СѓР·Р° РїСЂРё РјРµРЅСЋ С‚РѕР»СЊРєРѕ РІ РѕРґРёРЅРѕС‡РЅРѕР№ РёРіСЂРµ:
+    // Пауза при меню только в одиночной игре:
       if (not g_Game_IsNet) then
         g_Game_Pause(True);
     end
   else
     if (g_ActiveWindow <> nil) and (not Show) then
     begin
-    // РџР°СѓР·Р° РїСЂРё РјРµРЅСЋ С‚РѕР»СЊРєРѕ РІ РѕРґРёРЅРѕС‡РЅРѕР№ РёРіСЂРµ:
+    // Пауза при меню только в одиночной игре:
       if (not g_Game_IsNet) then
         g_Game_Pause(False);
     end;
@@ -6298,7 +6298,7 @@ procedure g_Game_PauseAllSounds(Enable: Boolean);
 var
   i: Integer;
 begin
-// РўСЂРёРіРіРµСЂС‹:
+// Триггеры:
   if gTriggers <> nil then
     for i := 0 to High(gTriggers) do
       with gTriggers[i] do
@@ -6309,13 +6309,13 @@ begin
           Sound.Pause(Enable);
         end;
 
-// Р—РІСѓРєРё РёРіСЂРѕРєРѕРІ:
+// Звуки игроков:
   if gPlayers <> nil then
     for i := 0 to High(gPlayers) do
       if gPlayers[i] <> nil then
         gPlayers[i].PauseSounds(Enable);
 
-// РњСѓР·С‹РєР°:
+// Музыка:
   if gMusic <> nil then
     gMusic.Pause(Enable);
 end;
@@ -6681,7 +6681,7 @@ end;
 procedure g_Game_SetDebugMode();
 begin
   gDebugMode := True;
-// Р§РёС‚С‹ (РґР°Р¶Рµ РІ СЃРІРѕРµР№ РёРіСЂРµ):
+// Читы (даже в своей игре):
   gCheats := True;
 end;
 
@@ -6698,7 +6698,7 @@ begin
     if (Length(s) > 1) and (s[1] = '-') then
     begin
       if (Length(s) > 2) and (s[2] = '-') then
-        begin // РћРґРёРЅРѕС‡РЅС‹Р№ РїР°СЂР°РјРµС‚СЂ
+        begin // Одиночный параметр
           SetLength(pars, Length(pars) + 1);
           with pars[High(pars)] do
           begin
@@ -6708,7 +6708,7 @@ begin
         end
       else
         if (i < ParamCount) then
-        begin // РџР°СЂР°РјРµС‚СЂ СЃРѕ Р·РЅР°С‡РµРЅРёРµРј
+        begin // Параметр со значением
           Inc(i);
           SetLength(pars, Length(pars) + 1);
           with pars[High(pars)] do
@@ -6805,7 +6805,7 @@ begin
     if LimT < 0 then
       LimT := 0;
 
-  // Goal limit:
+  // Score limit:
     s := Find_Param_Value(pars, '-lims');
     if (s = '') or (not TryStrToInt(s, LimS)) then
       LimS := 0;
@@ -6946,7 +6946,7 @@ begin
   conRegVar('r_showfps', @gShowFPS, 'draw fps counter', 'draw fps counter');
   conRegVar('r_showtime', @gShowTime, 'show game time', 'show game time');
   conRegVar('r_showping', @gShowPing, 'show ping', 'show ping');
-  conRegVar('r_showscore', @gShowGoals, 'show score', 'show score');
+  conRegVar('r_showscore', @gShowScore, 'show score', 'show score');
   conRegVar('r_showkillmsg', @gShowKillMsg, 'show kill log', 'show kill log');
   conRegVar('r_showlives', @gShowLives, 'show lives', 'show lives');
   conRegVar('r_showspect', @gSpectHUD, 'show spectator hud', 'show spectator hud');

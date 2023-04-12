@@ -67,7 +67,7 @@ var
   gsMap: String;
   gsGameMode: String;
   gsTimeLimit: Word;
-  gsGoalLimit: Word;
+  gsScoreLimit: Word;
   gsMaxLives: Byte;
   gsPlayers: Byte;
   gsGameFlags: LongWord;
@@ -321,7 +321,7 @@ begin
   gsMap := '';
   gsGameMode := _lc[I_MENU_GAME_TYPE_DM];
   gsTimeLimit := 0;
-  gsGoalLimit := 0;
+  gsScoreLimit := 0;
   gsMaxLives := 0;
   gsPlayers := 1;
   gsSpawnInvul := 0;
@@ -370,7 +370,7 @@ begin
     if GameMode = GM_SINGLE then
       GameMode := GM_COOP;
     TimeLimit := gsTimeLimit;
-    GoalLimit := gsGoalLimit;
+    ScoreLimit := gsScoreLimit;
     MaxLives := gsMaxLives;
     SpawnInvul := gsSpawnInvul;
     ItemRespawnTime := gsItemRespawnTime;

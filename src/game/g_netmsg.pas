@@ -998,7 +998,7 @@ begin
   NetOut.Write(g_ExtractFileName(gMapInfo.Map));
   NetOut.Write(gWADHash);
   NetOut.Write(gGameSettings.GameMode);
-  NetOut.Write(gGameSettings.GoalLimit);
+  NetOut.Write(gGameSettings.ScoreLimit);
   NetOut.Write(gGameSettings.TimeLimit);
   NetOut.Write(gGameSettings.MaxLives);
   NetOut.Write(gGameSettings.Options);
@@ -1152,8 +1152,8 @@ begin
   NetOut.Write(Byte(NET_MSG_SCORE));
   if gGameSettings.GameMode in [GM_TDM, GM_CTF] then
   begin
-    NetOut.Write(gTeamStat[TEAM_RED].Goals);
-    NetOut.Write(gTeamStat[TEAM_BLUE].Goals);
+    NetOut.Write(gTeamStat[TEAM_RED].Score);
+    NetOut.Write(gTeamStat[TEAM_BLUE].Score);
   end
   else
     if gGameSettings.GameMode = GM_COOP then
@@ -1228,7 +1228,7 @@ procedure MH_SEND_GameSettings(ID: Integer = NET_EVERYONE);
 begin
   NetOut.Write(Byte(NET_MSG_GSET));
   NetOut.Write(gGameSettings.GameMode);
-  NetOut.Write(gGameSettings.GoalLimit);
+  NetOut.Write(gGameSettings.ScoreLimit);
   NetOut.Write(gGameSettings.TimeLimit);
   NetOut.Write(gGameSettings.MaxLives);
   NetOut.Write(gGameSettings.Options);
@@ -1894,8 +1894,8 @@ procedure MC_RECV_GameStats(var M: TMsg);
 begin
   if gGameSettings.GameMode in [GM_TDM, GM_CTF] then
   begin
-    gTeamStat[TEAM_RED].Goals := M.ReadSmallInt();
-    gTeamStat[TEAM_BLUE].Goals := M.ReadSmallInt();
+    gTeamStat[TEAM_RED].Score := M.ReadSmallInt();
+    gTeamStat[TEAM_BLUE].Score := M.ReadSmallInt();
   end
   else
     if gGameSettings.GameMode = GM_COOP then
@@ -2368,7 +2368,7 @@ end;
 procedure MC_RECV_GameSettings(var M: TMsg);
 begin
   gGameSettings.GameMode := M.ReadByte();
-  gGameSettings.GoalLimit := M.ReadWord();
+  gGameSettings.ScoreLimit := M.ReadWord();
   gGameSettings.TimeLimit := M.ReadWord();
   gGameSettings.MaxLives := M.ReadByte();
   gGameSettings.Options := M.ReadLongWord();
