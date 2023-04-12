@@ -196,11 +196,11 @@ begin
   with menu do
   begin
     g_Console_BindKey(g_Console_FindBind(1, 'screenshot'), '');
-    g_Console_BindKey(g_Console_FindBind(1, '+p1_scores', '-p1_scores'), '');
+    g_Console_BindKey(g_Console_FindBind(1, '+scores', '-scores'), '');
     g_Console_BindKey(g_Console_FindBind(1, 'togglechat'), '');
     g_Console_BindKey(g_Console_FindBind(1, 'toggleteamchat'), '');
     g_Console_BindKey(TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_SCREENSHOT])).Key, 'screenshot');
-    g_Console_BindKey(TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_STAT])).Key, '+p1_scores', '-p1_scores');
+    g_Console_BindKey(TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_STAT])).Key, '+scores', '-scores');
     g_Console_BindKey(TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_CHAT])).Key, 'togglechat');
     g_Console_BindKey(TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_TEAMCHAT])).Key, 'toggleteamchat');
   end;
@@ -350,24 +350,20 @@ begin
   end;
 
   menu := TGUIMenu(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mOptionsPlayersP1Menu'));
-
   gPlayer1Settings.Name := b_Text_Unformat(TGUIEdit(menu.GetControl('edP1Name')).Text);
   gPlayer1Settings.Team := IfThen(TGUISwitch(menu.GetControl('swP1Team')).ItemIndex = 0,
                                   TEAM_RED, TEAM_BLUE);
-
   with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mvP1Model')) do
   begin
     gPlayer1Settings.Model := Model.GetName();
     gPlayer1Settings.Color := Model.Color;
   end;
 
-  menu := TGUIMenu(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mOptionsPlayersP1Menu'));
-
-  gPlayer1Settings.Name := b_Text_Unformat(TGUIEdit(menu.GetControl('edP1Name')).Text);
-  gPlayer1Settings.Team := IfThen(TGUISwitch(menu.GetControl('swP1Team')).ItemIndex = 0,
+  menu := TGUIMenu(g_GUI_GetWindow('OptionsPlayersP2Menu').GetControl('mOptionsPlayersP2Menu'));
+  gPlayer2Settings.Name := b_Text_Unformat(TGUIEdit(menu.GetControl('edP2Name')).Text);
+  gPlayer2Settings.Team := IfThen(TGUISwitch(menu.GetControl('swP2Team')).ItemIndex = 0,
                                   TEAM_RED, TEAM_BLUE);
-
-  with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mvP1Model')) do
+  with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP2Menu').GetControl('mvP2Model')) do
   begin
     gPlayer1Settings.Model := Model.GetName();
     gPlayer1Settings.Color := Model.Color;
@@ -377,7 +373,6 @@ begin
   gPlayer1Settings.WeaponSwitch := TGUISwitch(menu.GetControl('swWeaponAutoswitch')).ItemIndex;
   gPlayer1Settings.SwitchToEmpty := TGUISwitch(menu.GetControl('swWeaponAllowEmpty')).ItemIndex;
   gPlayer1Settings.SkipFist := TGUISwitch(menu.GetControl('swWeaponAllowFist')).ItemIndex;
-  
   menu := TGUIMenu(g_GUI_GetWindow('OptionsPreferencesP1WeaponMenu').GetControl('mOptionsPreferencesP1WeaponMenu'));
   with menu do
   begin
@@ -436,7 +431,7 @@ begin
     begin
       gPlayer2.SetModel(gPlayer2Settings.Model);
       gPlayer2.Name := gPlayer2Settings.Name;
-      if (gGameSettings.GameMode <> GM_TDM) and (gGameSettings.GameMode <> GM_CTF) then
+      if not (gGameSettings.GameMode in [GM_TDM, GM_CTF]) then
         gPlayer2.SetColor(gPlayer2Settings.Color)
       else
         if gPlayer2.Team <> gPlayer2Settings.Team then
@@ -445,6 +440,7 @@ begin
       gPlayer2.setWeaponPrefs(gPlayer2Settings.WeaponPreferences);
       gPlayer2.SwitchToEmpty := gPlayer2Settings.SwitchToEmpty;
       gPlayer2.SkipFist := gPlayer2Settings.SkipFist;
+      //if g_Game_IsNet then MH_SEND_PlayerSettings(gPlayer2.UID);
     end;
   end;
 
@@ -610,7 +606,7 @@ begin
   with menu do
   begin
     TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_SCREENSHOT])).Key := g_Console_FindBind(1, 'screenshot');
-    TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_STAT])).Key := g_Console_FindBind(1, '+p1_scores', '-p1_scores');
+    TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_STAT])).Key := g_Console_FindBind(1, '+scores', '-scores');
     TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_CHAT])).Key := g_Console_FindBind(1, 'togglechat');
     TGUIKeyRead(GetControl(_lc[I_MENU_CONTROL_TEAMCHAT])).Key := g_Console_FindBind(1, 'toggleteamchat');
   end;
