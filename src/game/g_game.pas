@@ -352,6 +352,7 @@ var
   gInterReadyCount: Integer = 0;
   gMaxBots: Integer = 127;
 
+  g_dbg_centered_camera: Boolean = false;
   g_dbg_ignore_bounds: Boolean = false;
   r_smallmap_h: Integer = 0; // 0: left; 1: center; 2: right
   r_smallmap_v: Integer = 2; // 0: top; 1: center; 2: bottom
@@ -3696,7 +3697,7 @@ begin
   px := fX + PLAYER_RECT_CX;
   py := fY + PLAYER_RECT_CY+nlerp(p.SlopeOld, camObj.slopeUpLeft, gLerpFactor);
 
-  if (g_dbg_scale = 1.0) and (not g_dbg_ignore_bounds) then
+  if (g_dbg_scale = 1.0) and (not (g_dbg_ignore_bounds or g_dbg_centered_camera)) then
   begin
     if (px > (gPlayerScreenSize.X div 2)) then a := -px+(gPlayerScreenSize.X div 2) else a := 0;
     if (py > (gPlayerScreenSize.Y div 2)) then b := -py+(gPlayerScreenSize.Y div 2) else b := 0;
@@ -3753,7 +3754,7 @@ begin
 
   sY := sY - nlerp(p.IncCamOld, p.IncCam, gLerpFactor);
 
-  if (not g_dbg_ignore_bounds) then
+  if not (g_dbg_ignore_bounds or g_dbg_centered_camera) then
   begin
     if (sX+sWidth > gMapInfo.Width) then sX := gMapInfo.Width-sWidth;
     if (sY+sHeight > gMapInfo.Height) then sY := gMapInfo.Height-sHeight;
@@ -3767,29 +3768,32 @@ begin
   //r_smallmap_h: 0: left; 1: center; 2: right
   //r_smallmap_v: 0: top; 1: center; 2: bottom
   // horiz small map?
-  if (gMapInfo.Width = sWidth) then
+  if (not g_dbg_centered_camera) then
   begin
-    sX := 0;
-  end
-  else if (gMapInfo.Width < sWidth) then
-  begin
-    case r_smallmap_h of
-      1: sX := -((sWidth-gMapInfo.Width) div 2); // center
-      2: sX := -(sWidth-gMapInfo.Width); // right
-      else sX := 0; // left
+    if (gMapInfo.Width = sWidth) then
+    begin
+      sX := 0;
+    end
+    else if (gMapInfo.Width < sWidth) then
+    begin
+      case r_smallmap_h of
+        1: sX := -((sWidth-gMapInfo.Width) div 2); // center
+        2: sX := -(sWidth-gMapInfo.Width); // right
+        else sX := 0; // left
+      end;
     end;
-  end;
-  // vert small map?
-  if (gMapInfo.Height = sHeight) then
-  begin
-    sY := 0;
-  end
-  else if (gMapInfo.Height < sHeight) then
-  begin
-    case r_smallmap_v of
-      1: sY := -((sHeight-gMapInfo.Height) div 2); // center
-      2: sY := -(sHeight-gMapInfo.Height); // bottom
-      else sY := 0; // top
+    // vert small map?
+    if (gMapInfo.Height = sHeight) then
+    begin
+      sY := 0;
+    end
+    else if (gMapInfo.Height < sHeight) then
+    begin
+      case r_smallmap_v of
+        1: sY := -((sHeight-gMapInfo.Height) div 2); // center
+        2: sY := -(sHeight-gMapInfo.Height); // bottom
+        else sY := 0; // top
+      end;
     end;
   end;
 
@@ -8614,6 +8618,7 @@ begin
   conRegVar('dbg_holmes', @g_holmes_enabled, 'enable/disable Holmes', 'Holmes', true);
 {$ENDIF}
 
+  conRegVar('r_centered_camera', @g_dbg_centered_camera, 'enable/disable camera following player', '',  false);
   conRegVar('r_ignore_level_bounds', @g_dbg_ignore_bounds, 'ignore level bounds', '',  false);
   conRegVar('r_scale', @g_dbg_scale, 0.01, 100.0, 'render scale', '',  false);
   conRegVar('r_resolution_scale', @r_pixel_scale, 0.01, 100.0, 'upscale factor', '', false);
