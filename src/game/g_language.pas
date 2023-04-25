@@ -278,6 +278,7 @@ type
     I_MENU_GAME_INDICATOR_ARROW,
     I_MENU_GAME_INDICATOR_NAME,
     I_MENU_GAME_SCALE_FACTOR,
+    I_MENU_GAME_IGNORE_LEVEL_BOUNDS,
     I_MENU_GAME_WEAPON_AUTOSWITCH,
 
     I_MENU_VIDEO_RESOLUTION,
@@ -1181,6 +1182,8 @@ const
                                        'Имя'),
     ('MENU GAME SCALE FACTOR',         'Scale:',
                                        'Масштаб:'),
+    ('MENU GAME IGNORE LEVEL BOUNDS',  'Ignore level bounds:',
+                                       'Игнорировать границы уровня:'),
     ('MENU GAME WEAPON AUTOSWITCH',    'Weapon autoswitch:',
                                        'Автовыбор оружия:'),
 

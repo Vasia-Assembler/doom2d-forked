@@ -189,6 +189,7 @@ begin
     TempScale := TGUIScroll(menu.GetControl('scScaleFactor')).Value;
     g_dbg_scale := TempScale + 1;
   end;
+  g_dbg_ignore_bounds := TGUISwitch(menu.GetControl('swIgnoreLevelBounds')).ItemIndex = 0;
 
 
   menu := TGUIMenu(g_GUI_GetWindow('OptionsControlsMenu').GetControl('mOptionsControlsMenu'));
@@ -672,6 +673,9 @@ begin
 
   TempScale := Round(g_dbg_scale - 1);
   TGUIScroll(menu.GetControl('scScaleFactor')).Value := TempScale;
+
+  with TGUISwitch(menu.GetControl('swIgnoreLevelBounds')) do
+    if g_dbg_ignore_bounds then ItemIndex := 0 else ItemIndex := 1;
 
   menu := TGUIMenu(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mOptionsPlayersP1Menu'));
 
@@ -2981,6 +2985,12 @@ begin
       Name := 'scScaleFactor';
       Max := 10;
       OnChange := ProcChangeGameSettings;
+    end;
+    with AddSwitch(_lc[I_MENU_GAME_IGNORE_LEVEL_BOUNDS]) do
+    begin
+      Name := 'swIgnoreLevelBounds';
+      AddItem(_lc[I_MENU_YES]);
+      AddItem(_lc[I_MENU_NO]);
     end;
     ReAlign();
   end;
