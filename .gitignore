@@ -1,0 +1,4 @@
+game/**/*
+tmp/**/*
+src/**/*.ppu
+src/**/*.o
