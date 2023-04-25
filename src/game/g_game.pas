@@ -348,6 +348,7 @@ var
   gInterReadyCount: Integer = 0;
   gMaxBots: Integer = 127;
 
+  g_dbg_centered_camera: Boolean = false;
   g_dbg_ignore_bounds: Boolean = false;
   r_smallmap_h: Integer = 0; // 0: left; 1: center; 2: right
   r_smallmap_v: Integer = 2; // 0: top; 1: center; 2: bottom
@@ -6965,6 +6966,7 @@ begin
   conRegVar('dbg_holmes', @g_holmes_enabled, 'enable/disable Holmes', 'Holmes', true);
 {$ENDIF}
 
+  conRegVar('r_centered_camera', @g_dbg_centered_camera, 'enable/disable camera following player', '',  false);
   conRegVar('r_ignore_level_bounds', @g_dbg_ignore_bounds, 'ignore level bounds', '',  false);
   conRegVar('r_scale', @g_dbg_scale, 0.01, 100.0, 'render scale', '',  false);
   conRegVar('r_resolution_scale', @r_pixel_scale, 0.01, 100.0, 'upscale factor', '', false);

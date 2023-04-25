@@ -279,6 +279,7 @@ type
     I_MENU_GAME_INDICATOR_NAME,
     I_MENU_GAME_SCALE_FACTOR,
     I_MENU_GAME_IGNORE_LEVEL_BOUNDS,
+    I_MENU_GAME_CENTERED_CAMERA,
     I_MENU_GAME_WEAPON_AUTOSWITCH,
 
     I_MENU_VIDEO_RESOLUTION,
@@ -1184,6 +1185,8 @@ const
                                        'Масштаб:'),
     ('MENU GAME IGNORE LEVEL BOUNDS',  'Ignore level bounds:',
                                        'Игнорировать границы уровня:'),
+    ('MENU GAME CENTERED CAMERA',      'Follow player:',
+                                       'Камера на игроке:'),
     ('MENU GAME WEAPON AUTOSWITCH',    'Weapon autoswitch:',
                                        'Автовыбор оружия:'),
 
