@@ -2022,7 +2022,7 @@ begin
     with AddEdit(_lc[I_MENU_PLAYER_NAME]) do
     begin
       Name := 'ed'+s+'Name';
-      MaxLength := 12;
+      MaxLength := MaxInt;
       Width := 12;
     end;
     with AddSwitch(_lc[I_MENU_PLAYER_TEAM]) do
