@@ -536,7 +536,10 @@ var
   VEL_JUMP: Integer = 10;
 
 function  Lerp(X, Y, Factor: Integer): Integer;
-
+procedure g_Force_Model_Set(Mode: Word);
+function g_Force_Model_Get(): Word;
+procedure g_Forced_Model_SetName(Model: String);
+function  g_Forced_Model_GetName(): String;
 procedure g_Player_Init();
 procedure g_Player_Free();
 function  g_Player_Create(ModelName: String; Color: TRGB; Team: Byte; Bot: Boolean): Word;
@@ -655,6 +658,8 @@ const
   BOTLIST_FILENAME = 'botlist.txt';
 
 var
+  ForceModel: Word = 0;
+  ForcedModelName: String = STD_PLAYER_MODEL;
   BotNames: Array of String;
   BotList: Array of TBotProfile;
   SavedStates: Array of TPlayerSavedState;
@@ -678,6 +683,26 @@ begin
       (g_Player_Get(UID2).Team = TEAM_NONE)) then Exit;
 
   Result := g_Player_Get(UID1).FTeam = g_Player_Get(UID2).FTeam;
+end;
+
+procedure g_Force_Model_Set(Mode: Word);
+begin
+  ForceModel := Mode;
+end;
+
+function g_Force_Model_Get(): Word;
+begin
+  Result := ForceModel;
+end;
+
+procedure g_Forced_Model_SetName(Model: String);
+begin
+  ForcedModelName := Model;
+end;
+
+function g_Forced_Model_GetName(): String;
+begin
+  Result := ForcedModelName;
 end;
 
 function g_Player_Create(ModelName: String; Color: TRGB; Team: Byte; Bot: Boolean): Word;

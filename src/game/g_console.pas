@@ -90,12 +90,12 @@ const
   {$ENDIF}
 
 var
-  gConsoleShow: Boolean = false; // True - консоль открыта или открывается
+  gConsoleShow: Boolean = false; // True - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
   gChatShow: Boolean = false;
   gChatTeam: Boolean = false;
   gAllowConsoleMessages: Boolean = true;
-  gJustChatted: Boolean = false; // чтобы админ в интере чатясь не проматывал статистику
-  gParsingBinds: Boolean = true; // не пересохранять конфиг во время парсинга
+  gJustChatted: Boolean = false; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  gParsingBinds: Boolean = true; // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
   gPlayerAction: Array [0..1, 0..LAST_ACTION] of Boolean; // [player, action]
   gConfigScript: string = defaultConfigScript;
 
@@ -1076,6 +1076,8 @@ begin
   AddCommand('g_max_shells', GameCVars);
   AddCommand('g_max_gibs', GameCVars);
   AddCommand('g_max_corpses', GameCVars);
+  AddCommand('g_force_model', GameCVars);
+  AddCommand('g_force_model_name', GameCVars);
   AddCommand('g_gamemode', GameCVars);
   AddCommand('g_friendlyfire', GameCVars);
   AddCommand('g_friendly_hit_trace', GameCVars);
@@ -1573,7 +1575,7 @@ begin
   show := show and gAllowConsoleMessages;
   if show and gShowMessages then
   begin
-    // Вывод строк с переносами по очереди
+    // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     while length(L) > 0 do
     begin
       f := Pos(#10, L);
@@ -2062,6 +2064,12 @@ begin
   {$IFDEF ENABLE_CORPSES}
     WriteLn(f, 'g_max_corpses ', g_Corpses_GetMax());
   {$ENDIF}
+  WriteLn(f, 'g_max_particles ', g_GFX_GetMax());
+  WriteLn(f, 'g_max_shells ', g_Shells_GetMax());
+  WriteLn(f, 'g_max_gibs ', g_Gibs_GetMax());
+  WriteLn(f, 'g_max_corpses ', g_Corpses_GetMax());
+  WriteLn(f, 'g_force_model ', g_Force_Model_Get());
+  WriteLn(f, 'g_force_model_name ', g_Forced_Model_GetName());
   WriteLn(f, 'sv_intertime ', gDefInterTime);
 
   // gameplay settings
