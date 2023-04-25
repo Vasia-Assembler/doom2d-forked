@@ -5087,7 +5087,7 @@ begin
 
   for a := WP_FIRST to WP_LAST do FWeapon[a] := True;
   for a := A_BULLETS to A_HIGH do FAmmo[a] := 30000;
-  FRulez := FRulez+[R_KEY_RED, R_KEY_GREEN, R_KEY_BLUE];
+  FRulez := FRulez+[R_KEY_RED, R_KEY_GREEN, R_KEY_BLUE]+[R_BERSERK];
 end;
 
 procedure TPlayer.RestoreHealthArmor();
