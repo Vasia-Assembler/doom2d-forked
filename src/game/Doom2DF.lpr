@@ -37,68 +37,68 @@ uses
 {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
 
 {$IFDEF USE_MINIUPNPC}
-  miniupnpc in '../lib/miniupnpc/miniupnpc.pas',
+  miniupnpc in '../thirdparty/miniupnpc/miniupnpc.pas',
 {$ENDIF}
 
 {$IFDEF USE_SDL}
-  SDL in '../lib/sdl/sdl.pas',
+  SDL in '../thirdparty/sdl/sdl.pas',
   {$IFDEF USE_SDLMIXER}
-    SDL_mixer in '../lib/sdl/sdl_mixer.pas',
+    SDL_mixer in '../thirdparty/sdl/sdl_mixer.pas',
   {$ENDIF}
 {$ENDIF}
 {$IFDEF USE_SDL2}
-  SDL2 in '../lib/sdl2/sdl2.pas',
+  SDL2 in '../thirdparty/sdl2/sdl2.pas',
   {$IFDEF USE_SDLMIXER}
-    SDL2_mixer in '../lib/sdl2/SDL2_mixer.pas',
+    SDL2_mixer in '../thirdparty/sdl2/SDL2_mixer.pas',
   {$ENDIF}
 {$ENDIF}
 {$IFDEF USE_SYSSTUB}
   {$IFDEF USE_SDLMIXER}
-    SDL2 in '../lib/sdl2/sdl2.pas',
-    SDL2_mixer in '../lib/sdl2/SDL2_mixer.pas',
+    SDL2 in '../thirdparty/sdl2/sdl2.pas',
+    SDL2_mixer in '../thirdparty/sdl2/SDL2_mixer.pas',
   {$ENDIF}
 {$ENDIF}
 
 {$IFDEF USE_OPENAL}
-  AL in '../lib/openal/al.pas',
+  AL in '../thirdparty/openal/al.pas',
   e_soundfile in '../engine/e_soundfile.pas',
   {$IF DEFINED(USE_SDL) OR DEFINED(USE_SDL2)}
     e_soundfile_wav in '../engine/e_soundfile_wav.pas',
   {$ENDIF}
   {$IFDEF USE_VORBIS}
-    vorbis in '../lib/vorbis/vorbis.pas',
+    vorbis in '../thirdparty/vorbis/vorbis.pas',
     e_soundfile_vorbis in '../engine/e_soundfile_vorbis.pas',
   {$ENDIF}
   {$IFDEF USE_FLUIDSYNTH}
-    fluidsynth in '../lib/fluidsynth/fluidsynth.pas',
+    fluidsynth in '../thirdparty/fluidsynth/fluidsynth.pas',
     e_soundfile_fluid in '../engine/e_soundfile_fluid.pas',
   {$ENDIF}
   {$IFDEF USE_MODPLUG}
-    modplug in '../lib/modplug/modplug.pas',
+    modplug in '../thirdparty/modplug/modplug.pas',
     e_soundfile_modplug in '../engine/e_soundfile_modplug.pas',
   {$ENDIF}
   {$IFDEF USE_XMP}
-    xmp in '../lib/xmp/xmp.pas',
+    xmp in '../thirdparty/xmp/xmp.pas',
     e_soundfile_xmp in '../engine/e_soundfile_xmp.pas',
   {$ENDIF}
   {$IFDEF USE_GME}
-    gme in '../lib/gme/gme.pas',
+    gme in '../thirdparty/gme/gme.pas',
     e_soundfile_gme in '../engine/e_soundfile_gme.pas',
   {$ENDIF}
   {$IFDEF USE_MPG123}
-    mpg123 in '../lib/mpg123/mpg123.pas',
+    mpg123 in '../thirdparty/mpg123/mpg123.pas',
     e_soundfile_mp3 in '../engine/e_soundfile_mp3.pas',
   {$ENDIF}
   {$IFDEF USE_OPUS}
-    opus in '../lib/opus/opus.pas',
+    opus in '../thirdparty/opus/opus.pas',
     e_soundfile_opus in '../engine/e_soundfile_opus.pas',
   {$ENDIF}
   {$IF DEFINED(USE_VORBIS) OR DEFINED(USE_OPUS)}
-    ogg in '../lib/vorbis/ogg.pas', // this has to come last because link order
+    ogg in '../thirdparty/vorbis/ogg.pas', // this has to come last because link order
   {$ENDIF}
 {$ENDIF}
 
-  ENet in '../lib/enet/enet.pp',
+  ENet in '../thirdparty/enet/enet.pp',
   e_graphics in '../engine/e_graphics.pas',
   e_input in '../engine/e_input.pas',
   e_log in '../engine/e_log.pas',
@@ -154,10 +154,10 @@ uses
 {$ENDIF}
 
 {$IFDEF USE_FMOD}
-  fmod in '../lib/FMOD/fmod.pas',
-  fmoderrors in '../lib/FMOD/fmoderrors.pas',
-  fmodpresets in '../lib/FMOD/fmodpresets.pas',
-  fmodtypes in '../lib/FMOD/fmodtypes.pas',
+  fmod in '../thirdparty/FMOD/fmod.pas',
+  fmoderrors in '../thirdparty/FMOD/fmoderrors.pas',
+  fmodpresets in '../thirdparty/FMOD/fmodpresets.pas',
+  fmodtypes in '../thirdparty/FMOD/fmodtypes.pas',
 {$ENDIF}
   xprofiler in '../shared/xprofiler.pas',
   binheap in '../shared/binheap.pas',
