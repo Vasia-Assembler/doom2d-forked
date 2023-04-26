@@ -1,5 +1,11 @@
 # Doom 2D Forever
-Doom 2D: Forever is a modern version of a Russian freeware doom game Doom 2D.
+**Doom 2D: Forever** is a modern version of a Russian freeware doom game Doom 2D.
+
+This open source multiplatform project, written from scratch, is designed to reproduce the original game with significant
+improvements in gameplay, graphics and logic.
+
+
+![MegaDM](docs/images/screenshots/screenshot-megadm.png)
 
 # Build
 Requirements:
@@ -18,8 +24,13 @@ Requirements:
 Windows binaries will require the appropriate DLLs (SDL2.dll, SDL2_mixer.dll or
 FMODEx.dll, ENet.dll, miniupnpc.dll), unless you choose to static link them.
 
-*Important* Remember to clear the cache directory (`build/tmp` by default) after you've built the game!
+**Important** Remember to clear the cache directory (`build/tmp` by default) after you've built the game!
 
 # Run
 - If you've followed build instructions above, `../../build/bin/Doom2DF`
 - If Doom2DF is installed in the system PATH, `Doom2DF`
+
+# Screenshots
+![MegaDM](docs/images/screenshots/screenshot-megadm.png)
+![Castlevania.wad](docs/images/screenshots/screenshot-castlevania.png)
+![Prikolsoft.wad](docs/images/screenshots/screenshot-prikolsoft.png)
