@@ -52,16 +52,16 @@ elif [[ -f Doom2DF && -x Doom2DF ]]; then
     DEST_PATH="."
 elif [[ -d ../../src ]]; then
     # Special hack for developers running this script from the source tree
-    DEST_PATH="../.."
+    DEST_PATH="../../build"
 fi
 
 echo_green "Destination directory: $DEST_PATH"
 
 echo_stage "[2/4] downloading the game files"
 
-[[ ! -d "$DEST_PATH/game/files" ]] && mkdir -p "$DEST_PATH/game/files"
+[[ ! -d "$DEST_PATH/bin/files" ]] && mkdir -p "$DEST_PATH/bin/files"
 
-cd "$DEST_PATH/game/files"
+cd "$DEST_PATH/bin/files"
 
 if [[ -n "$(command -v wget)" ]]; then
     wget -O "$DF_ARCHIVE_NAME" "$DF_URL"
