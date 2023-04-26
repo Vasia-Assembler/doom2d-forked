@@ -174,16 +174,16 @@ uses
 {$IFDEF ENABLE_HOLMES}
   g_holmes in 'g_holmes.pas',
 
-  sdlcarcass in '../flexui/sdlcarcass.pas',
-  //sdlstandalone in '../flexui/sdlstandalone.pas',
+  sdlcarcass in '../thidparty/flexui/sdlcarcass.pas',
+  //sdlstandalone in '../thidparty/flexui/sdlstandalone.pas',
 
-  fui_wadread in '../flexui/fui_wadread.pas',
-  fui_common in '../flexui/fui_common.pas',
-  fui_gfx_gl in '../flexui/fui_gfx_gl.pas',
-  fui_events in '../flexui/fui_events.pas',
-  fui_style in '../flexui/fui_style.pas',
-  fui_flexlay in '../flexui/fui_flexlay.pas',
-  fui_ctls in '../flexui/fui_ctls.pas',
+  fui_wadread in '../thidparty/flexui/fui_wadread.pas',
+  fui_common in '../thidparty/flexui/fui_common.pas',
+  fui_gfx_gl in '../thidparty/flexui/fui_gfx_gl.pas',
+  fui_events in '../thidparty/flexui/fui_events.pas',
+  fui_style in '../thidparty/flexui/fui_style.pas',
+  fui_flexlay in '../thidparty/flexui/fui_flexlay.pas',
+  fui_ctls in '../thidparty/flexui/fui_ctls.pas',
 {$ENDIF}
   {$I ../shared/vampimg.inc}
   SysUtils;

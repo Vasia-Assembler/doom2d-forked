@@ -520,11 +520,11 @@ begin
     if not fuiAddWad('./data/flexui.wad') then fuiAddWad('./flexui.wad');
   end;
   try
-    fuiGfxLoadFont('win8', 'flexui/fonts/win8.fuifont');
-    fuiGfxLoadFont('win14', 'flexui/fonts/win14.fuifont');
-    fuiGfxLoadFont('win16', 'flexui/fonts/win16.fuifont');
-    fuiGfxLoadFont('dos8', 'flexui/fonts/dos8.fuifont');
-    fuiGfxLoadFont('msx6', 'flexui/fonts/msx6.fuifont');
+    fuiGfxLoadFont('win8', 'thidparty/flexui/fonts/win8.fuifont');
+    fuiGfxLoadFont('win14', 'thidparty/flexui/fonts/win14.fuifont');
+    fuiGfxLoadFont('win16', 'thidparty/flexui/fonts/win16.fuifont');
+    fuiGfxLoadFont('dos8', 'thidparty/flexui/fonts/dos8.fuifont');
+    fuiGfxLoadFont('msx6', 'thidparty/flexui/fonts/msx6.fuifont');
   except on e: Exception do
     begin
       writeln('ERROR loading FlexUI fonts');
@@ -541,7 +541,7 @@ begin
   begin
     try
       e_LogWriteln('FlexUI: loading stylesheet...');
-      uiLoadStyles('flexui/widgets.wgs');
+      uiLoadStyles('thidparty/flexui/widgets.wgs');
     except on e: TParserException do
       begin
         writeln('ERROR at (', e.tokLine, ',', e.tokCol, '): ', e.message);
