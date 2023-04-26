@@ -22,7 +22,7 @@ unit e_texture;
 interface
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   SysUtils, e_log, ImagingTypes, Imaging, ImagingUtility;
 
 type

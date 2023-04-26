@@ -550,7 +550,7 @@ procedure g_GUI_LoadMenuPos();
 implementation
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   g_textures, g_sound, SysUtils, e_res,
   g_game, Math, StrUtils, g_player, g_options, g_console,
   g_map, g_weapons, xdynrec, wadreader;

@@ -18,7 +18,7 @@ unit e_graphics;
 interface
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   {$IFDEF USE_SDL2}
     SDL2,
   {$ENDIF}

@@ -1,7 +1,7 @@
 {$IF DEFINED(USE_GLES1) OR DEFINED(USE_GLSTUB)}
   {$UNDEF NOGL_LISTS}
   {$DEFINE NOGL_INIT}
-  noGL in '../nogl/noGL.pas',
+  noGL in '../thirdparty/nogl/noGL.pas',
 {$ENDIF}
 {$IFDEF USE_OPENGL}
   {$DEFINE NOGL_LISTS}

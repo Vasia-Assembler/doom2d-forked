@@ -254,7 +254,7 @@ var
 implementation
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   e_input, g_main, e_log, e_texture, e_res, g_items, g_gfx, g_console,
   g_weapons, g_game, g_sound, e_sound, CONFIG,
   g_options, g_triggers, g_player,

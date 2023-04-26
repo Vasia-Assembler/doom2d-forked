@@ -118,7 +118,7 @@ function g_Texture_Light (): Integer;
 implementation
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   g_game, e_log, g_basic, g_console, wadreader,
   g_language, utils, xstreams;
 

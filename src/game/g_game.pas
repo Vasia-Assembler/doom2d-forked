@@ -393,7 +393,7 @@ function gPause (): Boolean; inline;
 implementation
 
 uses
-{$INCLUDE ../nogl/noGLuses.inc}
+{$INCLUDE ../thirdparty/nogl/noGLuses.inc}
 {$IFDEF ENABLE_HOLMES}
   g_holmes,
 {$ENDIF}

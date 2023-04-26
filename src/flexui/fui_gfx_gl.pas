@@ -20,7 +20,7 @@ unit fui_gfx_gl;
 interface
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   SysUtils, Classes,
   SDL2,
   sdlcarcass,

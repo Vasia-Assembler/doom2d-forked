@@ -37,7 +37,7 @@ uses
 {$IFDEF ENABLE_HOLMES}
   g_holmes, sdlcarcass, fui_ctls,
 {$ENDIF}
-{$INCLUDE ../nogl/noGLuses.inc}
+{$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   SysUtils, Classes, MAPDEF, Math,
   e_graphics, e_log, e_texture, g_main,
   g_console, e_input, g_options, g_game,

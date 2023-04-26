@@ -68,7 +68,7 @@ implementation
 
 uses
   SysUtils, Classes,
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   {$IF DEFINED(LINUX) OR DEFINED(ANDROID)}
     unixtype, linux
   {$ELSEIF DEFINED(WINDOWS)}

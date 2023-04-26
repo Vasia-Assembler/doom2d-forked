@@ -147,7 +147,7 @@ function  g_PlayerModel_GetGibs(ModelName: String; var Gibs: TGibsArray): Boolea
 implementation
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   g_main, g_sound, g_console, SysUtils, g_player, CONFIG,
   e_sound, g_options, g_map, Math, e_log, wadreader;
 
