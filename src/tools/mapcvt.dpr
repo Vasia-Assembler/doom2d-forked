@@ -7,10 +7,10 @@
 uses
   SysUtils, Classes,
   {$IFDEF USE_SDL}
-    SDL in '../lib/sdl/sdl.pas',
+    SDL in '../thirdparty/sdl/sdl.pas',
   {$ENDIF}
   {$IFDEF USE_SDL2}
-    SDL2 in '../lib/sdl2/sdl2.pas',
+    SDL2 in '../thirdparty/sdl2/sdl2.pas',
   {$ENDIF}
   sfs in '../sfs/sfs.pas',
   sfsPlainFS in '../sfs/sfsPlainFS.pas',
