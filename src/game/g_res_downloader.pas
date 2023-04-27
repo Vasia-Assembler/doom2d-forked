@@ -124,7 +124,7 @@ begin
       begin
         st := openDiskFileRO(ccdir+'/maphash.db');
         knownMaps.loadFrom(st);
-        e_LogWriteln('loaded map database');
+        if gDebugMode then e_LogWriteln('loaded map database');
       end;
     except
     end;
@@ -136,7 +136,7 @@ begin
       begin
         st := openDiskFileRO(ccdir+'/reshash.db');
         knownRes.loadFrom(st);
-        e_LogWriteln('loaded resource database');
+        if gDebugMode then e_LogWriteln('loaded resource database');
       end;
     except
     end;
@@ -149,9 +149,9 @@ begin
     forcesave := false;
   end;
   // rescan dirs
-  e_LogWriteln('refreshing map database');
+  if gDebugMode then e_LogWriteln('refreshing map database');
   upmap := knownMaps.scanFiles();
-  e_LogWriteln('refreshing resource database');
+  if gDebugMode then e_LogWriteln('refreshing resource database');
   upres := knownRes.scanFiles();
   // save databases
   if (forcesave) then begin upmap := true; upres := true; end;
@@ -226,7 +226,7 @@ end;
 procedure clearReplacementWads ();
 begin
   if assigned(replacements) then replacements.clear();
-  e_LogWriteln('cleared replacement wads');
+  if gDebugMode then e_LogWriteln('cleared replacement wads');
 end;
 
 
@@ -239,7 +239,7 @@ end;
 //==========================================================================
 procedure addReplacementWad (oldname: AnsiString; newDiskName: AnsiString);
 begin
-  e_LogWritefln('adding replacement wad: oldname=%s; newname=%s', [oldname, newDiskName]);
+  if gDebugMode then e_LogWritefln('adding replacement wad: oldname=%s; newname=%s', [oldname, newDiskName]);
   if not assigned(replacements) then replacements := THashStrStr.Create();
   replacements.put(toLowerCase1251(oldname), newDiskName);
 end;
@@ -410,7 +410,7 @@ begin
       end;
       fname := destMapDir+'/'+generateFileName(FileName, mapHash);
       tf.diskName := fname;
-      e_LogWritefln('map disk file for `%s` is `%s`', [FileName, fname], TMsgType.Fatal);
+      if gDebugMode then e_LogWritefln('map disk file for `%s` is `%s`', [FileName, fname], TMsgType.Fatal);
       try
         strm := openDiskFileRW(fname);
       except
@@ -521,7 +521,7 @@ begin
           exit;
         end;
         fname := destResDir+'/'+generateFileName(tf.diskName, tf.hash);
-        e_LogWritefln('downloading resource `%s` to `%s`...', [tf.diskName, fname]);
+        if gDebugMode then e_LogWritefln('downloading resource `%s` to `%s`...', [tf.diskName, fname]);
         try
           strm := openDiskFileRW(fname);
         except

@@ -229,11 +229,14 @@ end;
 
 procedure PrintGLSupportedExtensions;
 begin
-  e_LogWritefln('GL Vendor: %s', [glGetString(GL_VENDOR)]);
-  e_LogWritefln('GL Renderer: %s', [glGetString(GL_RENDERER)]);
-  e_LogWritefln('GL Version: %s', [glGetString(GL_VERSION)]);
-  e_LogWritefln('GL Shaders: %s', [glGetString(GL_SHADING_LANGUAGE_VERSION)]);
-  e_LogWritefln('GL Extensions: %s', [glGetString(GL_EXTENSIONS)]);
+  if gDebugMode then
+  begin
+    e_LogWritefln('GL Vendor: %s', [glGetString(GL_VENDOR)]);
+    e_LogWritefln('GL Renderer: %s', [glGetString(GL_RENDERER)]);
+    e_LogWritefln('GL Version: %s', [glGetString(GL_VERSION)]);
+    e_LogWritefln('GL Shaders: %s', [glGetString(GL_SHADING_LANGUAGE_VERSION)]);
+    e_LogWritefln('GL Extensions: %s', [glGetString(GL_EXTENSIONS)]);
+  end;
 end;
 
 function SDLMain (): Integer;
@@ -350,12 +353,15 @@ begin
   if glNPOTOverride and glLegacyNPOT then
   begin
     glLegacyNPOT := true;
-    e_logWriteln('NPOT texture emulation: FORCED');
+    if gDebugMode then e_logWriteln('NPOT texture emulation: FORCED');
   end
   else
   begin
-    if (glLegacyNPOT) then e_logWriteln('NPOT texture emulation: enabled')
-    else e_logWriteln('NPOT texture emulation: disabled');
+    if gDebugMode then
+    begin
+      if (glLegacyNPOT) then e_logWriteln('NPOT texture emulation: enabled')
+      else e_logWriteln('NPOT texture emulation: disabled');
+    end;
   end;
 
   Init;

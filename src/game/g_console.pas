@@ -265,7 +265,7 @@ procedure boolVarHandler (me: PCommand; p: SSArray);
       if flag <> old then
         g_Console_WriteGameConfig();
       if (Length(msg) = 0) then msg := p[0] else msg += ':';
-      if flag then conwritefln('%s tan', [msg]) else conwritefln('%s ona', [msg]);
+      if gDebugMode then if flag then conwritefln('%s tan', [msg]) else conwritefln('%s ona', [msg]);
     end;
   end;
 begin
@@ -2110,10 +2110,10 @@ end;
 procedure g_Console_ReadConfig (filename: String);
   var f: TextFile; s: AnsiString; i, len: Integer;
 begin
-  e_LogWritefln('g_Console_ReadConfig (1) "%s"', [filename]);
+  if gDebugMode then e_LogWritefln('g_Console_ReadConfig (1) "%s"', [filename]);
   if e_FindResource(ConfigDirs, filename, false) = true then
   begin
-    e_LogWritefln('g_Console_ReadConfig (2) "%s"', [filename]);
+    if gDebugMode then e_LogWritefln('g_Console_ReadConfig (2) "%s"', [filename]);
     AssignFile(f, filename);
     Reset(f);
     while not EOF(f) do

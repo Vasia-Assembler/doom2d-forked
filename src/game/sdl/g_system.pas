@@ -85,19 +85,19 @@ implementation
       nogl_Init;
       if glRenderToFBO and (not nogl_ExtensionSupported('GL_OES_framebuffer_object')) then
       begin
-        e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
+        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
         glRenderToFBO := false;
       end;
     {$ELSE}
       if glRenderToFBO and (not Load_GL_ARB_framebuffer_object) then
       begin
-        e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
+        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
         glRenderToFBO := false;
       end;
     {$ENDIF}
     if SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, ltmp) = 0 then
     begin
-      e_LogWritefln('stencil buffer size: %s', [ltmp]);
+      if gDebugMode then e_LogWritefln('stencil buffer size: %s', [ltmp]);
       gwin_has_stencil := (ltmp > 0);
     end;
   end;
@@ -161,7 +161,7 @@ implementation
   function InitWindow (w, h, bpp: Integer; fullScreen: Boolean): Boolean;
     var flags: Uint32; title: AnsiString;
   begin
-    e_LogWritefln('InitWindow %s %s %s %s', [w, h, bpp, fullScreen]);
+    if gDebugMode then e_LogWritefln('InitWindow %s %s %s %s', [w, h, bpp, fullScreen]);
     result := false;
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -691,14 +691,14 @@ implementation
   procedure sys_Init;
     var flags: Uint32; i: Integer; name: AnsiString;
   begin
-    e_WriteLog('Init SDL', TMsgType.Notify);
+    if gDebugMode then e_WriteLog('Init SDL', TMsgType.Notify);
     flags := SDL_INIT_VIDEO or SDL_INIT_AUDIO or
              SDL_INIT_TIMER or SDL_INIT_JOYSTICK
              (*or SDL_INIT_NOPARACHUTE*);
     if SDL_Init(flags) <> 0 then
       raise Exception.Create('SDL: Init failed: ' + SDL_GetError);
     name := GetDriver();
-    e_LogWritefln('SDL: Video Driver "%s"', [name]);
+    if gDebugMode then e_LogWritefln('SDL: Video Driver "%s"', [name]);
     {$IF DEFINED(DARWIN) OR DEFINED(MACOS)}
       IsMacPlatform := (name = 'Quartz') or (name = 'toolbox') or (name = 'DSp');
     {$ENDIF}

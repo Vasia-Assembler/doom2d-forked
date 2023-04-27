@@ -346,9 +346,9 @@ begin
   if (dfmapdef <> nil) then exit;
 
   try
-    e_LogWritefln('parsing "mapdef.txt"...', []);
+    if gDebugMode then e_LogWritefln('parsing "mapdef.txt"...', []);
     st := e_OpenResourceRO(DataDirs, 'mapdef.txt');
-    e_LogWritefln('found local "mapdef.txt"', []);
+    if gDebugMode then e_LogWritefln('found local "mapdef.txt"', []);
   except
     st := nil;
   end;
@@ -371,7 +371,7 @@ begin
     if (st = nil) then
     begin
       //raise Exception.Create('cannot open "mapdef.txt"');
-      e_LogWriteln('using default "mapdef.txt"...');
+      if gDebugMode then e_LogWriteln('using default "mapdef.txt"...');
       pr := TStrTextParser.Create(defaultMapDef);
     end
     else
@@ -1617,7 +1617,7 @@ begin
   calcBoundingBox(gLifts);
   calcBoundingBox(gBlockMon);
 
-  e_LogWritefln('map dimensions: (%d,%d)-(%d,%d); editor size:(0,0)-(%d,%d)', [mapX0, mapY0, mapX1, mapY1, gMapInfo.Width, gMapInfo.Height]);
+  if gDebugMode then e_LogWritefln('map dimensions: (%d,%d)-(%d,%d); editor size:(0,0)-(%d,%d)', [mapX0, mapY0, mapX1, mapY1, gMapInfo.Width, gMapInfo.Height]);
 
   if (mapX0 > 0) then mapX0 := 0;
   if (mapY0 > 0) then mapY0 := 0;
@@ -1711,7 +1711,7 @@ begin
     if (gCurrentMap = nil) then
     begin
       FileName := g_ExtractWadName(Res);
-      e_LogWritefln('Loading map WAD [%s] (res=[%s])', [FileName, Res], TMsgType.Notify);
+      if gDebugMode then e_LogWritefln('Loading map WAD [%s] (res=[%s])', [FileName, Res], TMsgType.Notify);
       g_Game_SetLoadingText(_lc[I_LOAD_WAD_FILE], 0, False);
 
       WAD := TWADFile.Create();
@@ -1769,7 +1769,7 @@ begin
       end;
 
       // Загрузка карты:
-      e_LogWritefln('Loading map: %s', [mapResName], TMsgType.Notify);
+      if gDebugMode then e_LogWritefln('Loading map: %s', [mapResName], TMsgType.Notify);
       g_Game_SetLoadingText(_lc[I_LOAD_MAP], 0, False);
 
       stt := getTimeMicro();
@@ -1851,7 +1851,7 @@ begin
           if not usedTextures.has(toLowerCase1251(rec.Resource)) then
           begin
             rec.tagInt := -1; // just in case
-            e_LogWritefln('    Unused texture #%d: %s', [cnt, rec.Resource]);
+            if gDebugMode then e_LogWritefln('    Unused texture #%d: %s', [cnt, rec.Resource]);
           end
           else
           begin
@@ -2143,7 +2143,7 @@ begin
     // Если не LoadState, то создаем триггеры
     if (triggers <> nil) and (panels <> nil) and (not gLoadGameMode) then
     begin
-      e_LogWritefln('  Creating triggers (%d)...', [triggers.count]);
+      if gDebugMode then e_LogWritefln('  Creating triggers (%d)...', [triggers.count]);
       g_Game_SetLoadingText(_lc[I_LOAD_CREATE_TRIGGERS], 0, False);
       // Указываем тип панели, если есть
       trignum := -1;
@@ -2455,16 +2455,16 @@ begin
 
   if (Length(gCurrentMapFileName) <> 0) then
   begin
-    e_LogWritefln('g_Map_Free: previous map was ''%s''...', [gCurrentMapFileName]);
+    if gDebugMode then e_LogWritefln('g_Map_Free: previous map was ''%s''...', [gCurrentMapFileName]);
   end
   else
   begin
-    e_LogWritefln('g_Map_Free: no previous map.', []);
+    if gDebugMode then e_LogWritefln('g_Map_Free: no previous map.', []);
   end;
 
   if freeTextures then
   begin
-    e_LogWritefln('g_Map_Free: clearing textures...', []);
+    if gDebugMode then e_LogWritefln('g_Map_Free: clearing textures...', []);
     if (Textures <> nil) then
     begin
       for a := 0 to High(Textures) do

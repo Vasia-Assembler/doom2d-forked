@@ -7810,7 +7810,7 @@ begin
           else
             gFrameTime := 0;
         end;
-        e_LogWritefln('r_maxfps %d', [gMaxFPS]);
+        if gDebugMode then e_LogWritefln('r_maxfps %d', [gMaxFPS]);
       end;
     'g_language':
       begin

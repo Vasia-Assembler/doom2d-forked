@@ -832,7 +832,7 @@ begin
                 end;
                 Ptr := ev.packet^.data;
                 rMsgId := Byte(Ptr^);
-                e_LogWritefln('g_Net_Wait_MapInfo: got message %u from server (dataLength=%u)', [rMsgId, ev.packet^.dataLength]);
+                if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: got message %u from server (dataLength=%u)', [rMsgId, ev.packet^.dataLength]);
                 if (rMsgId = NTF_SERVER_FILE_INFO) then
                 begin
                   e_LogWritefln('g_Net_Wait_MapInfo: waiting for map info reply, but got file info reply', []);
@@ -847,18 +847,18 @@ begin
                 end
                 else if (rMsgId = NTF_SERVER_MAP_INFO) then
                 begin
-                  e_LogWritefln('g_Net_Wait_MapInfo: creating map info packet...', []);
+                  if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: creating map info packet...', []);
                   if not msg.Init(ev.packet^.data+1, ev.packet^.dataLength-1, True) then exit;
-                  e_LogWritefln('g_Net_Wait_MapInfo: parsing map info packet (rd=%d; max=%d)...', [msg.ReadCount, msg.MaxSize]);
+                  if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: parsing map info packet (rd=%d; max=%d)...', [msg.ReadCount, msg.MaxSize]);
                   SetLength(resList, 0); // just in case
                   // map wad name
                   tf.diskName := msg.ReadString();
-                  e_LogWritefln('g_Net_Wait_MapInfo: map wad is `%s`', [tf.diskName]);
+                  if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: map wad is `%s`', [tf.diskName]);
                   // map wad md5
                   tf.hash := msg.ReadMD5();
                   // map wad size
                   tf.size := msg.ReadLongInt();
-                  e_LogWritefln('g_Net_Wait_MapInfo: map wad size is %d', [tf.size]);
+                  if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: map wad size is %d', [tf.size]);
                   // number of external resources for map
                   rc := msg.ReadLongInt();
                   if (rc < 0) or (rc > 1024) then
@@ -867,7 +867,7 @@ begin
                     Result := -1;
                     exit;
                   end;
-                  e_LogWritefln('g_Net_Wait_MapInfo: map external resource count is %d', [rc]);
+                  if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: map external resource count is %d', [rc]);
                   SetLength(resList, rc);
                   // external resource names
                   for f := 0 to rc-1 do
@@ -891,7 +891,7 @@ begin
                       ri.size := -1; // unknown
                     end;
                   end;
-                  e_LogWritefln('g_Net_Wait_MapInfo: got map info', []);
+                  if gDebugMode then e_LogWritefln('g_Net_Wait_MapInfo: got map info', []);
                   Result := 0; // success
                   exit;
                 end
@@ -1014,7 +1014,7 @@ begin
                 end;
                 Ptr := ev.packet^.data;
                 rMsgId := Byte(Ptr^);
-                e_LogWritefln('received transfer packet with id %d (%u bytes)', [rMsgId, ev.packet^.dataLength]);
+                if gDebugMode then e_LogWritefln('received transfer packet with id %d (%u bytes)', [rMsgId, ev.packet^.dataLength]);
                 if (rMsgId = NTF_SERVER_FILE_INFO) then
                 begin
                   if not msg.Init(ev.packet^.data+1, ev.packet^.dataLength-1, True) then exit;
@@ -1028,7 +1028,7 @@ begin
                     Result := -1;
                     exit;
                   end;
-                  e_LogWritefln('got file info for resource #%d: size=%d; name=%s', [resIndex, tf.size, tf.diskName]);
+                  if gDebugMode then e_LogWritefln('got file info for resource #%d: size=%d; name=%s', [resIndex, tf.size, tf.diskName]);
                   Result := 0; // success
                   exit;
                 end
@@ -1127,7 +1127,7 @@ var
   //stx: Int64;
 begin
   tf.resumed := false;
-  e_LogWritefln('file `%s`, size=%d (%d)', [tf.diskName, Integer(strm.size), tf.size], TMsgType.Notify);
+  if gDebugMode then e_LogWritefln('file `%s`, size=%d (%d)', [tf.diskName, Integer(strm.size), tf.size], TMsgType.Notify);
   // check if we should resume downloading
   resumed := (strm.size > tf.chunkSize) and (strm.size < tf.size);
   // send request
@@ -1139,7 +1139,7 @@ begin
 
   strm.Seek(chunk*tf.chunkSize, soFromBeginning);
   chunkTotal := (tf.size+tf.chunkSize-1) div tf.chunkSize;
-  e_LogWritefln('receiving file `%s` (%d chunks)', [tf.diskName, chunkTotal], TMsgType.Notify);
+  if gDebugMode then e_LogWritefln('receiving file `%s` (%d chunks)', [tf.diskName, chunkTotal], TMsgType.Notify);
   g_Game_SetLoadingText('downloading "'+ExtractFileName(tf.diskName)+'"', chunkTotal, False);
   tf.resumed := resumed;
 
@@ -1204,7 +1204,7 @@ begin
                 rMsgId := Byte(Ptr^);
                 if (rMsgId = NTF_SERVER_DONE) then
                 begin
-                  e_LogWritefln('file transfer complete.', []);
+                  if gDebugMode then e_LogWritefln('file transfer complete.', []);
                   result := 0;
                   exit;
                 end

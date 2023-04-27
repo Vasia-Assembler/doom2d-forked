@@ -82,19 +82,19 @@ implementation
       nogl_Init;
       if glRenderToFBO and (not nogl_ExtensionSupported('GL_OES_framebuffer_object')) then
       begin
-        e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
+        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
         glRenderToFBO := false;
       end;
     {$ELSE}
       if glRenderToFBO and (not Load_GL_ARB_framebuffer_object) then
       begin
-        e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
+        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
         glRenderToFBO := false;
       end;
     {$ENDIF}
     if SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, @ltmp) = 0 then
     begin
-      e_LogWritefln('stencil buffer size: %s', [ltmp]);
+      if gDebugMode then e_LogWritefln('stencil buffer size: %s', [ltmp]);
       gwin_has_stencil := (ltmp > 0);
     end;
   end;
@@ -119,7 +119,7 @@ implementation
       h := round(h / r_pixel_scale);
       if not e_ResizeFramebuffer(w, h) then
       begin
-        e_LogWriteln('GL: could not create framebuffer, falling back to --no-fbo');
+        if gDebugMode then e_LogWriteln('GL: could not create framebuffer, falling back to --no-fbo');
         glRenderToFBO := False;
         w := gWinSizeX;
         h := gWinSizeY;
@@ -157,7 +157,7 @@ implementation
     var flags: UInt32; x, y: cint; title: AnsiString;
   begin
     // note: on window close make: if assigned(oglDeinitCB) then oglDeinitCB;
-    e_LogWritefln('InitWindow %s %s %s %s', [w, h, bpp, fullScreen]);
+    if gDebugMode then e_LogWritefln('InitWindow %s %s %s %s', [w, h, bpp, fullScreen]);
     result := false;
     if window = nil then
     begin
@@ -278,7 +278,7 @@ implementation
       e_LogWritefln('SDL: unable to get numer of available display modes: %s', [SDL_GetError]);
     if num > 0 then
     begin
-      e_LogWritefln('Video modes for display %s:', [display]);
+      if gDebugMode then e_LogWritefln('Video modes for display %s:', [display]);
       SetLength(result, num);
       i := 0; count := 0; pw := 0; ph := 0;
       while i < num do
@@ -286,14 +286,14 @@ implementation
         SDL_GetDisplayMode(display, i, @m);
         if ((pw <> m.w) or (ph <> m.h)) then
         begin
-          e_LogWritefln('* %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
+          if gDebugMode then e_LogWritefln('* %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
           pw := m.w; ph := m.h;
           result[count] := IntToStr(m.w) + 'x' + IntToStr(m.h);
           Inc(count);
         end
         else
         begin
-          e_LogWritefln('- %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
+          if gDebugMode then e_LogWritefln('- %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
         end;
         Inc(i)
       end;

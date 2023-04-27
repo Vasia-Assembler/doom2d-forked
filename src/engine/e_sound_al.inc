@@ -175,11 +175,11 @@ begin
   Result := False;
 
   WantDev := alcGetString(nil, ALC_DEVICE_SPECIFIER);
-  e_LogWritefln('AL: available devices: %s', [WantDev]);
+  if gDebugMode then e_LogWritefln('AL: available devices: %s', [WantDev]);
 
   // TODO: open a dummy device when NoOutput is true or something
   WantDev := alcGetString(nil, ALC_DEFAULT_DEVICE_SPECIFIER);
-  e_LogWritefln('AL: trying to open device %s', [WantDev]);
+  if gDebugMode then e_LogWritefln('AL: trying to open device %s', [WantDev]);
 
   alDevice := alcOpenDevice(PChar(WantDev));
   if alDevice = nil then
@@ -209,6 +209,8 @@ begin
   alVer := alGetString(AL_VERSION);
   alExt := alGetString(AL_EXTENSIONS);
 
+  if gDebugMode then
+  begin
   e_LogWriteln('AL INFO:');
   e_LogWriteln('  Version:  '    + alVer);
   e_LogWriteln('  Vendor:   '    + alVendor);
@@ -217,6 +219,7 @@ begin
   e_LogWriteln('  Sample rate: ' + IntToStr(e_SoundFormat.SampleRate));
   e_LogWriteln('  Extensions:');
   e_LogWriteln('    ' + alExt);
+  end;
 
   ZeroMemory(@alSources[0], sizeof(alSources));
   ZeroMemory(@alOwners[0], sizeof(alOwners));
