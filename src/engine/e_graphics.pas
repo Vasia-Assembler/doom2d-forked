@@ -303,7 +303,9 @@ var
 begin
  Result := False;
 
+ {$IFDEF D2F_DEBUG}
  e_WriteLog('Loading texture from '+FileName, TMsgType.Notify);
+ {$ENDIF}
 
  find_id := FindTexture();
 
@@ -1251,7 +1253,9 @@ function e_CharFont_Create(sp: ShortInt=0): DWORD;
 var
   i, id: DWORD;
 begin
+ {$IFDEF D2F_DEBUG}
  e_WriteLog('Creating CharFont...', TMsgType.Notify);
+ {$ENDIF}
 
  id := DWORD(-1);
 
@@ -1574,7 +1578,9 @@ var
   i, id: DWORD;
 begin
  if e_NoGraphics then Exit;
+ {$IFDEF D2F_DEBUG}
  e_WriteLog('Creating texture font...', TMsgType.Notify);
+ {$ENDIF}
 
  id := DWORD(-1);
 

@@ -422,7 +422,9 @@ begin
     gPlayer1.setWeaponPrefs(gPlayer1Settings.WeaponPreferences);
   end;
 
+  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
+  {$ENDIF}
 end;
 
 procedure ReadOptions();
@@ -791,7 +793,9 @@ begin
   GameMode := LatchGameOptions('mCustomGameMenu');
   if GameMode = GM_NONE then Exit;
 
+  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
+  {$ENDIF}
   g_Game_StartCustom(gsMap, GameMode, gsTimeLimit, gsScoreLimit,
                      gsMaxLives, gsGameFlags, gsPlayers);
 end;
@@ -814,7 +818,9 @@ begin
     NetUseMaster := TGUISwitch(GetControl('swUseMaster')).ItemIndex = 0;
   end;
 
+  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
+  {$ENDIF}
   g_Game_StartServer(gsMap, GameMode, gsTimeLimit, gsScoreLimit, gsMaxLives,
                      gsGameFlags, gsPlayers, 0, NetPort);
 end;
@@ -830,7 +836,9 @@ begin
     PW := TGUIEdit(GetControl('edPW')).Text;
   end;
 
+  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
+  {$ENDIF}
   g_Game_StartClient(NetClientIP, NetClientPort, PW);
 end;
 
@@ -845,7 +853,9 @@ begin
     PW := TGUIEdit(GetControl('edPW')).Text;
   end;
 
+  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
+  {$ENDIF}
   g_Game_StartClient(NetClientIP, NetClientPort, PW);
 end;
 

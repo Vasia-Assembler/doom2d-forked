@@ -132,7 +132,7 @@ end;
 
 function TryInitWithOutput(Output: FMOD_OUTPUTTYPE; OutputName: String): FMOD_RESULT;
 begin
-  e_WriteLog('Trying with ' + OutputName + '...', TMsgType.Warning);
+  if gDebugMode then e_WriteLog('Trying with ' + OutputName + '...', TMsgType.Warning);
   Result := FMOD_System_SetOutput(F_System, Output);
   if Result <> FMOD_OK then
   begin
@@ -158,7 +158,7 @@ var
 
 begin
   Result := False;
-  e_WriteLog(Format('Trying to initialize FMOD with %d', [Freq]), TMsgType.Notify);
+  if gDebugMode then e_WriteLog(Format('Trying to initialize FMOD with %d', [Freq]), TMsgType.Notify);
 
   res := FMOD_System_Create(F_System);
   if res <> FMOD_OK then
@@ -232,26 +232,29 @@ begin
   if res <> FMOD_OK then
     e_WriteLog('Error getting FMOD output!', TMsgType.Warning)
   else
+    if gDebugMode then
+    begin
     case output of
-      FMOD_OUTPUTTYPE_NOSOUND: e_WriteLog('FMOD Output Method: NOSOUND', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_NOSOUND_NRT: e_WriteLog('FMOD Output Method: NOSOUND_NRT', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_DSOUND: e_WriteLog('FMOD Output Method: DSOUND', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_WINMM: e_WriteLog('FMOD Output Method: WINMM', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_OPENAL: e_WriteLog('FMOD Output Method: OPENAL', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_WASAPI: e_WriteLog('FMOD Output Method: WASAPI', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_ASIO: e_WriteLog('FMOD Output Method: ASIO', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_OSS:  e_WriteLog('FMOD Output Method: OSS', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_ALSA: e_Writelog('FMOD Output Method: ALSA', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_SOUNDMANAGER: e_Writelog('FMOD Output Method: SOUNDMANAGER', TMsgType.Notify);
-      FMOD_OUTPUTTYPE_COREAUDIO: e_Writelog('FMOD Output Method: COREAUDIO', TMsgType.Notify);
-      else e_WriteLog('FMOD Output Method: Unknown', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_NOSOUND: e_WriteLog('FMOD Output Method: NOSOUND', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_NOSOUND_NRT: e_WriteLog('FMOD Output Method: NOSOUND_NRT', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_DSOUND: e_WriteLog('FMOD Output Method: DSOUND', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_WINMM: e_WriteLog('FMOD Output Method: WINMM', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_OPENAL: e_WriteLog('FMOD Output Method: OPENAL', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_WASAPI: e_WriteLog('FMOD Output Method: WASAPI', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_ASIO: e_WriteLog('FMOD Output Method: ASIO', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_OSS:  e_WriteLog('FMOD Output Method: OSS', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_ALSA: e_Writelog('FMOD Output Method: ALSA', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_SOUNDMANAGER: e_Writelog('FMOD Output Method: SOUNDMANAGER', TMsgType.Notify);
+        FMOD_OUTPUTTYPE_COREAUDIO: e_Writelog('FMOD Output Method: COREAUDIO', TMsgType.Notify);
+        else e_WriteLog('FMOD Output Method: Unknown', TMsgType.Notify);
+      end;
     end;
 
   res := FMOD_System_GetDriver(F_System, drv);
   if res <> FMOD_OK then
     e_WriteLog('Error getting FMOD driver!', TMsgType.Warning)
   else
-    e_WriteLog('FMOD driver id: '+IntToStr(drv), TMsgType.Notify);
+    if gDebugMode then e_WriteLog('FMOD driver id: '+IntToStr(drv), TMsgType.Notify);
 
   Result := True;
 end;
@@ -302,7 +305,7 @@ var
 begin
   Result := False;
 
-  e_WriteLog('Loading sound '+FileName+'...', TMsgType.Notify);
+  if gDebugMode then e_WriteLog('Loading sound '+FileName+'...', TMsgType.Notify);
 
   find_id := FindESound();
 

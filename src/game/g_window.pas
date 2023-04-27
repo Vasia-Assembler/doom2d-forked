@@ -377,7 +377,7 @@ begin
   if (not gGameOn) and gAskLanguage then g_Menu_AskLanguage();
 {$ENDIF}
 
-  e_WriteLog('Entering the main loop', TMsgType.Notify);
+  if gDebugMode then e_WriteLog('Entering the main loop', TMsgType.Notify);
 
   // main loop
   while not ProcessMessage() do begin end;

@@ -108,7 +108,9 @@ begin
   glBindTexture(GL_TEXTURE_2D, Texture);
 
   if (tex.glwidth <> tex.width) or (tex.glheight <> tex.height) then
+    {$IF DEFINED(D2F_DEBUG)}
     e_WriteLog(Format('NPOT: %u is %ux%u; gl is %ux%u; u=%f; v=%f', [tex.id, Width, Height, tex.glwidth, tex.glheight, tex.u, tex.v]), TMsgType.Notify);
+    {$ENDIF}
 
   // texture blends with object background
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

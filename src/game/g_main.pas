@@ -453,28 +453,30 @@ begin
     e_InitLog(LogFileName, TWriteMode.WM_NEWFILE);
   e_InitWritelnDriver();
   e_WriteLog('Doom 2D: Forever version ' + GAME_VERSION + ' proto ' + IntToStr(NET_PROTOCOL_VER), TMsgType.Notify);
-  e_WriteLog('Build arch: ' + g_GetBuildArch(), TMsgType.Notify);
-  e_WriteLog('Build date: ' + GAME_BUILDDATE + ' ' + GAME_BUILDTIME, TMsgType.Notify);
-  e_WriteLog('Build hash: ' + g_GetBuildHash(), TMsgType.Notify);
-  e_WriteLog('Build by: ' + g_GetBuilderName(), TMsgType.Notify);
+  if gDebugMode then
+  begin
+    e_WriteLog('Build arch: ' + g_GetBuildArch(), TMsgType.Notify);
+    e_WriteLog('Build date: ' + GAME_BUILDDATE + ' ' + GAME_BUILDTIME, TMsgType.Notify);
+    e_WriteLog('Build hash: ' + g_GetBuildHash(), TMsgType.Notify);
+    e_WriteLog('Build by: ' + g_GetBuilderName(), TMsgType.Notify);
 
-  e_LogWritefln('Force bin dir: %s', [forceBinDir], TMsgType.Notify);
-  e_LogWritefln('BINARY PATH: [%s]', [binPath], TMsgType.Notify);
+    e_LogWritefln('Force bin dir: %s', [forceBinDir], TMsgType.Notify);
+    e_LogWritefln('BINARY PATH: [%s]', [binPath], TMsgType.Notify);
+    PrintDirs('DataDirs', DataDirs);
+    PrintDirs('ModelDirs', ModelDirs);
+    PrintDirs('MegawadDirs', MegawadDirs);
+    PrintDirs('MapDirs', MapDirs);
+    PrintDirs('WadDirs', WadDirs);
 
-  PrintDirs('DataDirs', DataDirs);
-  PrintDirs('ModelDirs', ModelDirs);
-  PrintDirs('MegawadDirs', MegawadDirs);
-  PrintDirs('MapDirs', MapDirs);
-  PrintDirs('WadDirs', WadDirs);
-
-  PrintDirs('LogDirs', LogDirs);
-  PrintDirs('SaveDirs', SaveDirs);
-  PrintDirs('CacheDirs', CacheDirs);
-  PrintDirs('ConfigDirs', ConfigDirs);
-  PrintDirs('ScreenshotDirs', ScreenshotDirs);
-  PrintDirs('StatsDirs', StatsDirs);
-  PrintDirs('MapDownloadDirs', MapDownloadDirs);
-  PrintDirs('WadDownloadDirs', WadDownloadDirs);
+    PrintDirs('LogDirs', LogDirs);
+    PrintDirs('SaveDirs', SaveDirs);
+    PrintDirs('CacheDirs', CacheDirs);
+    PrintDirs('ConfigDirs', ConfigDirs);
+    PrintDirs('ScreenshotDirs', ScreenshotDirs);
+    PrintDirs('StatsDirs', StatsDirs);
+    PrintDirs('MapDownloadDirs', MapDownloadDirs);
+    PrintDirs('WadDownloadDirs', WadDownloadDirs);
+  end;
 
   GameWAD := e_FindWad(DataDirs, GameWADName);
   if GameWad = '' then
@@ -510,7 +512,7 @@ begin
   if sys_SetDisplayMode(gRC_Width, gRC_Height, gBPP, gRC_FullScreen, gRC_Maximized) = False then
     raise Exception.Create('Failed to set videomode on startup.');
 
-  e_WriteLog(gLanguage, TMsgType.Notify);
+  if gDebugMode then e_WriteLog(gLanguage, TMsgType.Notify);
   g_Language_Set(gLanguage);
 
 {$IF not DEFINED(HEADLESS) and DEFINED(ENABLE_HOLMES)}
@@ -568,7 +570,9 @@ begin
 
   //g_Res_CreateDatabases(true); // it will be done before connecting to the server for the first time
 
+  {$IFDEF D2F_DEBUG}
   e_WriteLog('Entering SDLMain', TMsgType.Notify);
+  {$ENDIF}
 
   {$WARNINGS OFF}
     SDLMain();
@@ -578,7 +582,9 @@ begin
     if assigned(oglDeinitCB) then oglDeinitCB;
   {$ENDIF}
 
+  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
+  {$ENDIF}
   sys_Final;
 end;
 
@@ -630,8 +636,10 @@ begin
         else
           timiditycfg := '';
       end;
+      {$IFDEF D2F_DEBUG}
       e_LogWritefln('TIMIDITY_CFG = "%s"', [timiditycfg]);
       e_LogWritefln('SDL_NATIVE_MUSIC = "%s"', [GetEnvironmentVariable('SDL_NATIVE_MUSIC')]);
+      {$ENDIF}
     {$ENDIF}
     e_InitSoundSystem(NoSound);
     {$IFDEF USE_SDLMIXER}
@@ -649,7 +657,7 @@ begin
     {$ENDIF}
   end;
 
-  e_WriteLog('Init game', TMsgType.Notify);
+  if gDebugMode then e_WriteLog('Init game', TMsgType.Notify);
   g_Game_Init();
 
   FillChar(charbuff, sizeof(charbuff), ' ');

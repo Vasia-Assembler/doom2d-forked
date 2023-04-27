@@ -663,7 +663,9 @@ begin
   mProxyFree := 0;
   mProxyCount := 0;
   mProxyMaxCount := 0;
+  {$IF DEFINED(D2F_DEBUG)}
   e_WriteLog(Format('created grid with size: %dx%d (tile size: %d); pix: %dx%d', [mWidth, mHeight, mTileSize, mWidth*mTileSize, mHeight*mTileSize]), TMsgType.Notify);
+  {$ENDIF}
 end;
 
 
@@ -693,7 +695,9 @@ begin
     end;
     if (mcb < cnt) then mcb := cnt;
   end;
+  {$IF DEFINED(D2F_DEBUG)}
   e_WriteLog(Format('grid size: %dx%d (tile size: %d); pix: %dx%d; used cells: %d; max bodies in cell: %d; max proxies allocated: %d; proxies used: %d', [mWidth, mHeight, mTileSize, mWidth*mTileSize, mHeight*mTileSize, mUsedCells, mcb, mProxyMaxCount, mProxyCount]), TMsgType.Notify);
+  {$ENDIF}
 end;
 
 
