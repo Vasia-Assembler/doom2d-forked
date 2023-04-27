@@ -803,7 +803,7 @@ begin
   end;
 
   NetHostConReqTime := lastDisconnectTime;
-  e_LogWritefln('connecting to master at [%s]', [hostName], TMsgType.Notify);
+  if gDebugMode then e_LogWritefln('connecting to master at [%s]', [hostName], TMsgType.Notify);
 end;
 
 
@@ -1055,7 +1055,7 @@ begin
   end;
   mlist[freeIdx].justAdded := true;
   mlist[freeIdx].setAddress(ea, sa);
-  e_LogWritefln('added masterserver with address [%s]', [sa], TMsgType.Notify);
+  if gDebugMode then e_LogWritefln('added masterserver with address [%s]', [sa], TMsgType.Notify);
 end;
 
 
@@ -1152,7 +1152,7 @@ begin
     NetMHost := enet_host_create(nil, 64, NET_MCHANS, 1024*1024, 1024*1024);
     if (NetMHost = nil) then
     begin
-      e_LogWriteln(_lc[I_NET_MSG_ERROR] + _lc[I_NET_ERR_CLIENT] + ' (host_create)', TMsgType.Notify);
+      if gDebugMode then e_LogWriteln(_lc[I_NET_MSG_ERROR] + _lc[I_NET_ERR_CLIENT] + ' (host_create)', TMsgType.Notify);
       for f := 0 to High(mlist) do mlist[f].clear();
       SetLength(mlist, 0);
       Exit;
@@ -1188,10 +1188,10 @@ begin
       begin
         if (mlist[f].isConnected()) and (mlist[f].updateSent) then
         begin
-          e_LogWritefln('removing from master [%s]', [mlist[f].hostName], TMsgType.Notify);
+          if gDebugMode then e_LogWritefln('removing from master [%s]', [mlist[f].hostName], TMsgType.Notify);
           mlist[f].remove();
         end;
-        e_LogWritefln('disconnecting from master [%s]', [mlist[f].hostName], TMsgType.Notify);
+        if gDebugMode then e_LogWritefln('disconnecting from master [%s]', [mlist[f].hostName], TMsgType.Notify);
         mlist[f].disconnect(false);
       end;
     end;
@@ -1220,7 +1220,7 @@ begin
     idx := findByPeer(NetMEvent.peer);
     if (idx < 0) then
     begin
-      e_LogWriteln('network event from unknown master host. ignored.', TMsgType.Warning);
+      if gDebugMode then e_LogWriteln('network event from unknown master host. ignored.', TMsgType.Warning);
       if (NetMEvent.kind = ENET_EVENT_TYPE_RECEIVE) then enet_packet_destroy(NetMEvent.packet);
     end
     else

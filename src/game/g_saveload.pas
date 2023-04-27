@@ -404,8 +404,8 @@ begin
         // Полный путь к ваду и карта
         curmapfile := utils.readStr(st);
 
-        if (Length(gCurrentMapFileName) <> 0) then e_LogWritefln('LOAD: previous map was ''%s''...', [gCurrentMapFileName]);
-        if (Length(curmapfile) <> 0) then e_LogWritefln('LOAD: new map is ''%s''...', [curmapfile]);
+        if gDebugMode then if (Length(gCurrentMapFileName) <> 0) then e_LogWritefln('LOAD: previous map was ''%s''...', [gCurrentMapFileName]);
+        if gDebugMode then if (Length(curmapfile) <> 0) then e_LogWritefln('LOAD: new map is ''%s''...', [curmapfile]);
         // А вот тут, наконец, чистим ресурсы
         g_Game_Free(curmapfile <> gCurrentMapFileName); // don't free textures for the same map
         gameCleared := true;

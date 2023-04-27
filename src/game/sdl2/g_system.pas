@@ -107,7 +107,7 @@ implementation
     var flags: UInt32; x, y: cint; title: AnsiString;
   begin
     // note: on window close make: if assigned(oglDeinitCB) then oglDeinitCB;
-    e_LogWritefln('InitWindow %s %s %s %s', [w, h, bpp, fullScreen]);
+    if gDebugMode then e_LogWritefln('InitWindow %s %s %s %s', [w, h, bpp, fullScreen]);
     result := false;
     if window = nil then
     begin
@@ -222,7 +222,7 @@ implementation
       e_LogWritefln('SDL: unable to get numer of available display modes: %s', [SDL_GetError]);
     if num > 0 then
     begin
-      e_LogWritefln('Video modes for display %s:', [display]);
+      if gDebugMode then e_LogWritefln('Video modes for display %s:', [display]);
       SetLength(result, num);
       i := 0; count := 0; pw := 0; ph := 0;
       while i < num do
@@ -230,14 +230,14 @@ implementation
         SDL_GetDisplayMode(display, i, @m);
         if ((pw <> m.w) or (ph <> m.h)) then
         begin
-          e_LogWritefln('* %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
+          if gDebugMode then e_LogWritefln('* %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
           pw := m.w; ph := m.h;
           result[count] := IntToStr(m.w) + 'x' + IntToStr(m.h);
           Inc(count);
         end
         else
         begin
-          e_LogWritefln('- %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
+          if gDebugMode then e_LogWritefln('- %sx%sx%s@%s', [m.w, m.h, SDL_BITSPERPIXEL(m.format), m.refresh_rate]);
         end;
         Inc(i)
       end;

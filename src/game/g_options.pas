@@ -206,7 +206,7 @@ begin
   end
   else
   begin
-    e_LogWritefln('SDL: Failed to get desktop display mode: %s', [SDL_GetError])
+    if gDebugMode then e_LogWritefln('SDL: Failed to get desktop display mode: %s', [SDL_GetError])
   end;
   (* Must be positioned on primary display *)
   gWinMaximized := False;
@@ -217,7 +217,7 @@ begin
   gRC_Height := gWinSizeY;
   gRC_FullScreen := gFullScreen;
   gRC_Maximized := gWinMaximized;
-  e_LogWriteLn('g_Options_SetDefaultVideo: w = ' + IntToStr(gWinSizeX) + ' h = ' + IntToStr(gWinSizeY));
+  if gDebugMode then e_LogWriteLn('g_Options_SetDefaultVideo: w = ' + IntToStr(gWinSizeX) + ' h = ' + IntToStr(gWinSizeY));
   g_Console_ResetBinds;
 end;
 {$ELSE}
@@ -237,7 +237,7 @@ begin
   gRC_Height := gWinSizeY;
   gRC_FullScreen := gFullScreen;
   gRC_Maximized := gWinMaximized;
-  e_LogWriteLn('g_Options_SetDefaultVideo: w = ' + IntToStr(gWinSizeX) + ' h = ' + IntToStr(gWinSizeY));
+  if gDebugMode then e_LogWriteLn('g_Options_SetDefaultVideo: w = ' + IntToStr(gWinSizeX) + ' h = ' + IntToStr(gWinSizeY));
   g_Console_ResetBinds;
 end;
 {$ENDIF}

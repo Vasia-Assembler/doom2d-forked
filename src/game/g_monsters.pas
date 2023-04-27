@@ -1079,7 +1079,7 @@ procedure g_Monsters_Free (clearGrid: Boolean=true);
 var
   a: Integer;
 begin
-  e_LogWritefln('Cleared monster data (clearGrid=%s)', [clearGrid]);
+  if gDebugMode then e_LogWritefln('Cleared monster data (clearGrid=%s)', [clearGrid]);
   if (clearGrid) then
   begin
     monsGrid.Free();
@@ -1099,7 +1099,7 @@ begin
   monsGrid.Free();
   monsGrid := TMonsterGrid.Create(x, y, w, h);
   //clearUidMap(); // why not?
-  e_LogWritefln('%s', ['Recreated monster tree']);
+  if gDebugMode then e_LogWritefln('%s', ['Recreated monster tree']);
 end;
 
 
