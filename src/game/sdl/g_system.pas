@@ -671,7 +671,7 @@ implementation
   procedure sys_Final;
     var i: Integer;
   begin
-    e_WriteLog('Releasing SDL', TMsgType.Notify);
+    if gDebugMode then e_WriteLog('Releasing SDL', TMsgType.Notify);
     for i := 0 to e_MaxJoys - 1 do
       RemoveJoystick(i);
     if screen <> nil then

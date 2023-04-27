@@ -679,7 +679,7 @@ implementation
   procedure sys_Init;
     var flags: UInt32;
   begin
-    e_WriteLog('Init SDL2', TMsgType.Notify);
+    if gDebugMode then e_WriteLog('Init SDL2', TMsgType.Notify);
     {$IFDEF HEADLESS}
       {$IFDEF USE_SDLMIXER}
         flags := SDL_INIT_TIMER or SDL_INIT_AUDIO or $00004000;
@@ -707,7 +707,7 @@ implementation
 
   procedure sys_Final;
   begin
-    e_WriteLog('Releasing SDL2', TMsgType.Notify);
+    if gDebugMode then e_WriteLog('Releasing SDL2', TMsgType.Notify);
     if context <> nil then
     begin
       SDL_GL_DeleteContext(context);

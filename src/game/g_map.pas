@@ -391,7 +391,7 @@ begin
   result := nil;
   if (dataLen < 4) then exit;
 
-  if (dfmapdef = nil) then writeln('need to load mapdef');
+  if (dfmapdef = nil) then if gDebugMode then writeln('need to load mapdef');
   loadMapDefinition();
   if (dfmapdef = nil) then raise Exception.Create('internal map loader error');
 
@@ -1467,7 +1467,7 @@ begin
     monsters := gCurrentMap['monster'];
 
     // Загрузка описания карты:
-    e_WriteLog('  Reading map info...', TMsgType.Notify);
+    if gDebugMode then e_WriteLog('  Reading map info...', TMsgType.Notify);
     g_Game_SetLoadingText(_lc[I_LOAD_MAP_HEADER], 0, False);
 
     with gMapInfo do

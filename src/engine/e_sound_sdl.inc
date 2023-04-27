@@ -143,6 +143,7 @@ end;
 
 procedure dumpMusicType (ms: PMix_Music);
 begin
+  {$IFDEF D2F_DEBUG}
   if ms = nil then
   begin
     e_WriteLog('MUSIC FORMAT: NONE', TMsgType.Notify);
@@ -174,6 +175,7 @@ begin
         e_WriteLog('MUSIC FORMAT: UNKNOWN', TMsgType.Notify);
     end;
   end;
+  {$ENDIF}
 end;
 
 function e_InitSoundSystem(NoOutput: Boolean = False): Boolean;
@@ -203,6 +205,7 @@ begin
     flags := flags or MIX_INIT_MODPLUG;
   {$ENDIF}
   res := Mix_Init(flags);
+  {$IFDEF D2F_DEBUG}
   e_WriteLog(Format('SDL: res=0x%x', [res]), TMsgType.Notify);
   if (res and MIX_INIT_FLAC) <> 0 then e_WriteLog('SDL: FLAC playback is active', TMsgType.Notify);
   if (res and MIX_INIT_MOD) <> 0 then e_WriteLog('SDL: MOD playback is active', TMsgType.Notify);
@@ -214,6 +217,7 @@ begin
   if (res and MIX_INIT_FLUIDSYNTH) <> 0 then e_WriteLog('SDL: FLUIDSYNTH playback is active', TMsgType.Notify);
 
   e_WriteLog(Format('SDL: initializing mixer at %d with buffer %d', [gsSDLSampleRate, gsSDLBufferSize]), TMsgType.Notify);
+  {$ENDIF}
   res := Mix_OpenAudio(gsSDLSampleRate, MIX_DEFAULT_FORMAT, 2, gsSDLBufferSize);
   if res = -1 then
   begin
@@ -224,13 +228,17 @@ begin
 
   if Mix_QuerySpec(@rfreq, @rformat, @rchans) > 0 then
   begin
+    {$IFDEF D2F_DEBUG}
     e_WriteLog(Format('SDL: frequency=%d; format=%u; channels=%d', [rfreq, rformat, rchans]), TMsgType.Notify);
+    {$ENDIF}
   end;
 
+  {$IFDEF D2F_DEBUG}
   for i := 0 to Mix_GetNumChunkDecoders()-1 do
   begin
     e_WriteLog(Format('SDL: chunk decoder %s is avalable', [Mix_GetChunkDecoder(i)]), TMsgType.Notify);
   end;
+  {$ENDIF}
 
   e_TimidityDecoder := false;
   for i := 0 to Mix_GetNumMusicDecoders()-1 do
@@ -238,7 +246,9 @@ begin
     case AnsiString(Mix_GetMusicDecoder(i)) of
       'TIMIDITY': e_TimidityDecoder := true;
     end;
+    {$IFDEF D2F_DEBUG}
     e_WriteLog(Format('SDL: music decoder %s is avalable', [Mix_GetMusicDecoder(i)]), TMsgType.Notify);
+    {$ENDIF}
   end;
 
   Mix_AllocateChannels(N_CHANNELS);
@@ -316,16 +326,11 @@ begin
   Result := False;
   if not SoundInitialized then Exit;
 
+  {$IFDEF D2F_DEBUG}
   if isMusic then e_WriteLog('Loading music '+FileName+'...', TMsgType.Notify)
   else e_WriteLog('Loading sound '+FileName+'...', TMsgType.Notify);
+  {$ENDIF}
 
-  {
-  if isMusic then
-  begin
-    e_WriteLog('IGNORING MUSIC FROM FILE', TMsgType.Warning);
-    Exit;
-  end;
-  }
 
   find_id := FindESound();
 
@@ -336,12 +341,16 @@ begin
 
   if isMusic then
   begin
+    {$IFDEF D2F_DEBUG}
     e_WriteLog(Format('  MUSIC SLOT: %u', [find_id]), TMsgType.Notify);
+    {$ENDIF}
     e_SoundsArray[find_id].Music := Mix_LoadMUS(PAnsiChar(FileName));
     if e_SoundsArray[find_id].Music = nil then
     begin
+      {$IFDEF D2F_DEBUG}
       e_WriteLog(Format('ERROR LOADING MUSIC:', [find_id]), TMsgType.Warning);
       e_WriteLog(Mix_GetError(), TMsgType.Warning);
+      {$ENDIF}
       Exit;
     end;
     dumpMusicType(e_SoundsArray[find_id].Music);
@@ -369,14 +378,6 @@ begin
   if not SoundInitialized then Exit;
   isid3 := False;
 
-  {
-  if isMusic then
-  begin
-    e_WriteLog('IGNORING MUSIC FROM MEMORY', TMsgType.Warning);
-    Exit;
-  end;
-  }
-
   //FIXME: correctly skip ID3
   {
   pc := PChar(pData);
@@ -386,7 +387,6 @@ begin
     Inc(pc, $400);
     pData := Pointer(pc);
     Dec(Length, $400);
-    e_WriteLog('MUSIC: MP3 ID3 WORKAROUND APPLIED!', TMsgType.Warning);
   end;
   }
 
@@ -403,7 +403,9 @@ begin
 
   if isMusic then
   begin
+    {$IFDEF D2F_DEBUG}
     e_WriteLog(Format('  MUSIC SLOT: %u', [find_id]), TMsgType.Notify);
+    {$ENDIF}
     {$IFDEF SDL1MIXER}
       e_SoundsArray[find_id].Music := Mix_LoadMUS_RW(rw);
     {$ELSE}
