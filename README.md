@@ -15,6 +15,7 @@ Requirements:
 ```
   git clone --recurse-submodules https://github.com/Challenge9/doom2d-forever
   cd doom2d-forever
+  git submodule update --init
   mkdir -p ./build/bin ./build/tmp
   bash script/game/download_game.sh ./build/
   cd src/game
