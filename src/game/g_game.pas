@@ -5534,13 +5534,16 @@ var
       end;
     end;
 
-    if LongBool(gsGameFlags and Flag) then
-      g_Console_Add(_lc[OnMsg])
-    else
-      g_Console_Add(_lc[OffMsg]);
+    if gGameSettings.GameType <> GM_NONE then
+    begin
+      if LongBool(gsGameFlags and Flag) then
+        g_Console_Add(_lc[OnMsg])
+      else
+        g_Console_Add(_lc[OffMsg]);
 
-    if OnMapChange and g_Game_IsServer then
-      g_Console_Add(_lc[I_MSG_ONMAPCHANGE]);
+      if OnMapChange and g_Game_IsServer then
+        g_Console_Add(_lc[I_MSG_ONMAPCHANGE]);
+    end;
   end;
 
 begin
@@ -5566,8 +5569,10 @@ begin
     end;
 
     if gSwitchGameMode = gGameSettings.GameMode then
-      g_Console_Add(Format(_lc[I_MSG_GAMEMODE_CURRENT],
-                          [g_Game_ModeToText(gGameSettings.GameMode)]))
+    begin
+      if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format(_lc[I_MSG_GAMEMODE_CURRENT],
+                          [g_Game_ModeToText(gGameSettings.GameMode)]));
+    end
     else
       g_Console_Add(Format(_lc[I_MSG_GAMEMODE_CHANGE],
                           [g_Game_ModeToText(gGameSettings.GameMode),
@@ -5653,7 +5658,7 @@ begin
       end;
     end;
 
-    g_Console_Add(Format(_lc[I_MSG_WARMUP], [Integer(gsWarmupTime)]));
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format(_lc[I_MSG_WARMUP], [Integer(gsWarmupTime)]));
     if g_Game_IsServer then g_Console_Add(_lc[I_MSG_ONMAPCHANGE]);
   end
   else if cmd = 'g_spawn_invul' then
@@ -5668,7 +5673,7 @@ begin
       end;
     end;
 
-    g_Console_Add(Format('%s %d', [cmd, Integer(gsSpawnInvul)]));
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format('%s %d', [cmd, Integer(gsSpawnInvul)]));
   end
   else if cmd = 'g_item_respawn_time' then
   begin
@@ -5682,15 +5687,16 @@ begin
       end;
     end;
 
-    g_Console_Add(Format('%s %d', [cmd, Integer(gsItemRespawnTime)]));
-    if g_Game_IsServer then g_Console_Add(_lc[I_MSG_ONMAPCHANGE]);
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format('%s %d', [cmd, Integer(gsItemRespawnTime)]));
+    if gGameSettings.GameType <> GM_NONE then if g_Game_IsServer then g_Console_Add(_lc[I_MSG_ONMAPCHANGE]);
   end
   else if cmd = 'sv_intertime' then
   begin
     if (Length(P) > 1) then
       gDefInterTime := Min(Max(StrToIntDef(P[1], gDefInterTime), -1), 120);
 
-    g_Console_Add(cmd + ' = ' + IntToStr(gDefInterTime));
+    if gGameSettings.GameType <> GM_NONE then
+      g_Console_Add(cmd + ' = ' + IntToStr(gDefInterTime));
   end
   else if cmd = 'g_max_particles' then
   begin
@@ -5842,7 +5848,7 @@ begin
       end;
     end;
 
-    g_Console_Add(Format(_lc[I_MSG_SCORE_LIMIT], [Integer(gsScoreLimit)]));
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format(_lc[I_MSG_SCORE_LIMIT], [Integer(gsScoreLimit)]));
   end
   else if cmd = 'g_timelimit' then
   begin
@@ -5855,7 +5861,7 @@ begin
         if g_Game_IsNet then MH_SEND_GameSettings;
       end;
     end;
-    g_Console_Add(Format(_lc[I_MSG_TIME_LIMIT],
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format(_lc[I_MSG_TIME_LIMIT],
                          [gsTimeLimit div 3600,
                          (gsTimeLimit div 60) mod 60,
                           gsTimeLimit mod 60]));
@@ -5864,7 +5870,7 @@ begin
   begin
     if Length(P) > 1 then
       gMaxBots := nclamp(StrToIntDef(P[1], gMaxBots), 0, 127);
-    g_Console_Add('g_max_bots = ' + IntToStr(gMaxBots));
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add('g_max_bots = ' + IntToStr(gMaxBots));
   end
   else if cmd = 'g_maxlives' then
   begin
@@ -5878,7 +5884,7 @@ begin
       end;
     end;
 
-    g_Console_Add(Format(_lc[I_MSG_LIVES], [Integer(gsMaxLives)]));
+    if gGameSettings.GameType <> GM_NONE then g_Console_Add(Format(_lc[I_MSG_LIVES], [Integer(gsMaxLives)]));
   end;
 end;
 
@@ -7795,7 +7801,9 @@ begin
         gRC_Height := Max(1, gRC_Height);
         gBPP := Max(1, gBPP);
         if sys_SetDisplayMode(gRC_Width, gRC_Height, gBPP, gRC_FullScreen, gRC_Maximized) = True then
-          e_LogWriteln('resolution changed')
+        begin
+          if gDebugMode then e_LogWriteln('resolution changed');
+        end
         else
           e_LogWriteln('resolution not changed');
         sys_EnableVSync(gVSync);
