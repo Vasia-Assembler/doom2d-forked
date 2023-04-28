@@ -514,7 +514,7 @@ begin
     g_Console_WriteGameConfig();
   msg := me.msg;
   if (Length(msg) = 0) then msg := me.cmd else msg += ':';
-  conwritefln('%s %s', [msg, pv.val^]);
+  if gGameSettings.GameType <> GM_NONE then conwritefln('%s xuy %s', [msg, pv.val^]);
 end;
 
 

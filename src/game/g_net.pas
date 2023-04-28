@@ -2478,7 +2478,7 @@ begin
             SetLength(NetServerName, 64);
           g_Net_Slist_ServerRenamed();
         end;
-        g_Console_Add(cmd + ' "' + NetServerName + '"');
+        if gGameSettings.GameType <> GM_NONE then g_Console_Add(cmd + ' "' + NetServerName + '"');
       end;
     'sv_passwd':
       begin
@@ -2489,7 +2489,7 @@ begin
             SetLength(NetPassword, 24);
           g_Net_Slist_ServerRenamed();
         end;
-        g_Console_Add(cmd + ' "' + AnsiLowerCase(NetPassword) + '"');
+        if gGameSettings.GameType <> GM_NONE then g_Console_Add(cmd + ' "' + AnsiLowerCase(NetPassword) + '"');
       end;
     'sv_maxplrs':
       begin
@@ -2516,7 +2516,7 @@ begin
             g_Net_Slist_ServerRenamed();
           end;
         end;
-        g_Console_Add(cmd + ' ' + IntToStr(NetMaxClients));
+        if gGameSettings.GameType <> GM_NONE then g_Console_Add(cmd + ' ' + IntToStr(NetMaxClients));
       end;
     'sv_public':
       begin
@@ -2525,7 +2525,7 @@ begin
           NetUseMaster := StrToIntDef(P[1], Byte(NetUseMaster)) <> 0;
           if NetUseMaster then g_Net_Slist_Public() else g_Net_Slist_Private();
         end;
-        g_Console_Add(cmd + ' ' + IntToStr(Byte(NetUseMaster)));
+        if gGameSettings.GameType <> GM_NONE then g_Console_Add(cmd + ' ' + IntToStr(Byte(NetUseMaster)));
       end;
     'sv_port':
       begin
@@ -2536,7 +2536,7 @@ begin
           else
             g_Console_Add(_lc[I_MSG_NOT_NETGAME]);
         end;
-        g_Console_Add(cmd + ' ' + IntToStr(Ord(NetUseMaster)));
+        if gGameSettings.GameType <> GM_NONE then g_Console_Add(cmd + ' ' + IntToStr(Ord(NetUseMaster)));
       end;
   end;
 end;
