@@ -5,6 +5,8 @@ This open source multiplatform project, written from scratch, is designed to rep
 improvements in gameplay, graphics and logic.
 
 
+**NOTE** This is a fork. Upstream has the same name and can be found at https://repo.or.cz/d2df-sdl.git. 
+
 ![MegaDM](docs/images/screenshots/screenshot-megadm.png)
 
 # Build
