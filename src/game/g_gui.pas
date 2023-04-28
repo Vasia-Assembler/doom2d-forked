@@ -2778,13 +2778,13 @@ begin
                   begin
                     if FItems[FIndex] = #29 + '..' then
                     begin
-                      e_LogWritefln('TGUIFileListBox: Upper dir "%s" -> "%s"', [FSubPath, e_UpperDir(FSubPath)]);
+                      if gDebugMode then e_LogWritefln('TGUIFileListBox: Upper dir "%s" -> "%s"', [FSubPath, e_UpperDir(FSubPath)]);
                       FSubPath := e_UpperDir(FSubPath)
                     end
                     else
                     begin
                       s := Copy(AnsiString(FItems[FIndex]), 2);
-                      e_LogWritefln('TGUIFileListBox: Enter dir "%s" -> "%s"', [FSubPath, e_CatPath(FSubPath, s)]);
+                      if gDebugMode then  e_LogWritefln('TGUIFileListBox: Enter dir "%s" -> "%s"', [FSubPath, e_CatPath(FSubPath, s)]);
                       FSubPath := e_CatPath(FSubPath, s);
                     end;
                     ScanDirs;
@@ -2891,7 +2891,7 @@ begin
     if e_FindResource(FBaseList, s) = true then
       result := ExpandFileName(s)
   end;
-  e_LogWritefln('TGUIFileListBox.SelectedItem -> "%s"', [result]);
+  if gDebugMode then e_LogWritefln('TGUIFileListBox.SelectedItem -> "%s"', [result]);
 end;
 
 procedure TGUIFileListBox.UpdateFileList();
