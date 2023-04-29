@@ -258,10 +258,10 @@ procedure InitPath;
       {$IF DEFINED(UNIX) AND NOT DEFINED(DARWIN) AND NOT DEFINED(ANDROID)}
         if {$I %FLATPAK_APP_NAME%} <> '' then
         begin
-          AddDir(result, '/app/share/doom2df');
-          AddDir(result, '/app/local/share/doom2d');
           if home <> '' then
             AddDir(result, e_CatPath(home, '.var/app/' + {$I %FLATPAK_APP_NAME%} + '/data/'));
+          AddDir(result, '/app/share/doom2df');
+          AddDir(result, '/app/local/share/doom2d');
         end
         else
         begin
