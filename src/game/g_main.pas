@@ -600,9 +600,7 @@ begin
     if assigned(oglDeinitCB) then oglDeinitCB;
   {$ENDIF}
 
-  {$IFDEF D2F_DEBUG}
   g_Console_WriteGameConfig;
-  {$ENDIF}
   sys_Final;
 end;
 
