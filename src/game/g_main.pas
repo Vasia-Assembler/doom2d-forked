@@ -261,6 +261,13 @@ procedure InitPath;
         home := GetEnvironmentVariable('HOME');
         if home <> '' then
           AddDir(result, e_CatPath(home, '.doom2df'));
+        if {$I %FLATPAK_APP_NAME%} <> '' then
+        begin
+          AddDir(result, '/app/share/doom2df');
+          AddDir(result, '/app/local/share/doom2d');
+          if home <> '' then
+            AddDir(result, e_CatPath(home, '.var/app/' + {$I %FLATPAK_APP_NAME%} + '/data/'));
+        end;
       {$ENDIF}
       {$IFDEF DARWIN}
         bundle := GetBundlePath();
@@ -314,6 +321,11 @@ procedure InitPath;
         home := GetEnvironmentVariable('HOME');
         if home <> '' then
           AddDir(result, e_CatPath(home, '.doom2df'));
+        if {$I %FLATPAK_APP_NAME%} <> '' then
+        begin
+          if home <> '' then
+            AddDir(result, e_CatPath(home, '.var/app/' + {$I %FLATPAK_APP_NAME%} + '/data/'));
+        end;
       {$ENDIF}
       {$IFDEF DARWIN}
         dirArr := NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, true);
