@@ -19,7 +19,7 @@ Requirements:
   cd doom2d-forever
   git submodule update --init
   mkdir -p ./build/bin ./build/tmp
-  bash script/game/download_game.sh ./build/
+  bash script/game/download_essentials.sh ./build/
   cd src/game
   fpc -B -dUSE_SDLMIXER -FE../../build/bin -FU../../build/tmp Doom2DF.lpr
 ```
