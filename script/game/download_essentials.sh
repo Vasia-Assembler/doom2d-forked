@@ -3,6 +3,8 @@
 ###########################################################################
 #   fheroes2: https://github.com/ihhub/fheroes2                           #
 #   Copyright (C) 2021 - 2023                                             #
+#   Challenge9: https://github.com/Challenge9/doom2d-forever              #
+#   Copyright (C) 2023                                                    #
 #                                                                         #
 #   This program is free software; you can redistribute it and/or modify  #
 #   it under the terms of the GNU General Public License as published by  #
@@ -22,8 +24,21 @@
 
 set -e -o pipefail
 
-DF_URL="https://doom2d.org/doom2d_forever/latest/doom2df-win32.zip"
-DF_ARCHIVE_NAME="doom2df-win32.zip"
+
+DOOMER="doomer.wad"
+MAPPACK="doom2d.wad"
+# EDITOR="editor.wad"
+GAME="game.wad"
+STANDART="standart.wad"
+SHRSHADE="shrshade.wad"
+
+BASE_URL="https://github.com/Challenge9/DF-Res/releases/download/v0.1.0" 
+DOOMER_URL="${BASE_URL}/${DOOMER}"
+MAPPACK_URL="${BASE_URL}/${MAPPACK}"
+# EDITOR_URL="${BASE_URL}/${EDITOR}"
+GAME_URL="${BASE_URL}/${GAME}"
+STANDART_URL="${BASE_URL}/${STANDART}"
+SHRSHADE_URL="${BASE_URL}/${SHRSHADE}"
 
 function echo_red {
     echo -e "\033[0;31m$*\033[0m"
@@ -42,7 +57,7 @@ function echo_stage {
 echo_green "This script will download the game files for Doom 2D: Forever"
 echo_green "It may take a few minutes, please wait..."
 
-echo_stage "[1/4] determining the destination directory"
+echo_stage "[1/3] determining the destination directory"
 
 DEST_PATH="."
 
@@ -52,36 +67,39 @@ elif [[ -f Doom2DF && -x Doom2DF ]]; then
     DEST_PATH="."
 elif [[ -d ../../src ]]; then
     # Special hack for developers running this script from the source tree
-    DEST_PATH="../../build"
+    DEST_PATH="../../build/bin"
 fi
 
 echo_green "Destination directory: $DEST_PATH"
 
-echo_stage "[2/4] downloading the game files"
+[[ ! -d $DEST_PATH ]] && mkdir -p "$DEST_PATH"
 
-[[ ! -d "$DEST_PATH/bin/files" ]] && mkdir -p "$DEST_PATH/bin/files"
+echo_stage "[2/3] downloading the game files"
 
-cd "$DEST_PATH/bin/files"
+cd "$DEST_PATH"
 
-if [[ -n "$(command -v wget)" ]]; then
-    wget -O "$DF_ARCHIVE_NAME" "$DF_URL"
-elif [[ -n "$(command -v curl)" ]]; then
-    curl -o "$DF_ARCHIVE_NAME" -L "$DF_URL"
+[[ ! -d ../wads ]] && mkdir wads
+[[ ! -d ../maps ]] && mkdir maps
+[[ ! -d ../maps/megawads ]] && mkdir -p maps/megawads
+[[ ! -d ../data ]] && mkdir data
+[[ ! -d ../data/models ]] && mkdir -p data/models
+
+if [[ -n "$(command -v curl)" ]]; then
+    curl -o "$MAPPACK" -L "$MAPPACK_URL"
+    curl -o "$DOOMER" -L "$DOOMER_URL"
+    curl -o "$GAME" -L "$GAME_URL"
+    curl -o "$STANDART" -L "$STANDART_URL"
+    curl -o "$SHRSHADE" -L "$SHRSHADE_URL"
 else
-    echo_red "Neither wget nor curl were found in your system. Unable to download the game files. Installation aborted."
+    echo_red "Curl was not found in your system. Unable to download the game files. Installation aborted."
     exit 1
 fi
 
-echo_stage "[3/4] unpacking archives"
+echo_stage "[3/3] copying files"
 
-unzip -o "$DF_ARCHIVE_NAME"
-
-echo_stage "[4/4] copying files"
-
-[[ ! -d ../wads ]] && mkdir ../wads
-[[ ! -d ../maps ]] && mkdir ../maps
-[[ ! -d ../data ]] && mkdir ../data
-
-cp -r wads/* ../wads
-cp -r maps/* ../maps
-cp -r data/* ../data
+cp $MAPPACK maps/
+mv $MAPPACK maps/megawads/
+mv $DOOMER data/models
+mv $GAME data
+mv $STANDART wads
+mv $SHRSHADE wads
