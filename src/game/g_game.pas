@@ -4312,7 +4312,7 @@ begin
   end
   else if cmd = 'g_force_model_name' then
   begin
-    if (Length(P) > 1) then
+    if (Length(P) = 2) then
     begin
       cmd := b_Text_Unformat(P[1]);
       g_Forced_Model_SetName(cmd);
@@ -4327,6 +4327,24 @@ begin
             else if (gPlayer2 <> nil) and (gPlayers[a].UID = gPlayer2.UID) then
               continue;
             gPlayers[a].setModel(g_Forced_Model_GetName());
+          end;
+        end
+      end
+    end
+    else if (Length(P) = 1) then
+    begin
+      g_Forced_Model_SetName('');
+      if (g_Force_Model_Get() <> 0) and (gPlayers <> nil) then
+      begin
+        for a := Low(gPlayers) to High(gPlayers) do
+        begin
+          if (gPlayers[a] <> nil) then
+          begin
+            if (gPlayers[a].UID = gPlayer1.UID) then
+              continue
+            else if (gPlayer2 <> nil) and (gPlayers[a].UID = gPlayer2.UID) then
+              continue;
+            gPlayers[a].setModel(gPlayers[a].FActualModelName);
           end;
         end
       end

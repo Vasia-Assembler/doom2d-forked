@@ -811,7 +811,7 @@ begin
 
   if Bot and (g_Force_Model_Get() <> 0) then
   begin
-    gPlayers[a].SetModel(g_Forced_Model_GetName());
+    if g_Forced_Model_GetName() <> '' then gPlayers[a].SetModel(g_Forced_Model_GetName());
     gPlayers[a].SetColor_Soft(g_Forced_Model_GetColor());
   end;
 
@@ -852,7 +852,7 @@ begin
     gPlayers[a] := TBot.Create();
     if (g_Force_Model_Get() <> 0) then
     begin
-      gPlayers[a].SetModel(g_Forced_Model_GetName());
+      if g_Forced_Model_GetName() <> '' then gPlayers[a].SetModel(g_Forced_Model_GetName());
       gPlayers[a].SetColor_Soft(g_Forced_Model_GetColor());
     end;
   end

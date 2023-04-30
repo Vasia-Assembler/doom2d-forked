@@ -481,7 +481,7 @@ begin
     SkipFist := SkipF;
     if (g_Force_Model_Get() <> 0) then
     begin
-      SetModel(g_Forced_Model_GetName());
+      if g_Forced_Model_GetName() <> '' then SetModel(g_Forced_Model_GetName());
       SetColor_Soft(g_Forced_Model_GetColor());
     end;
     Reset(True);
@@ -800,7 +800,7 @@ begin
 
   if (g_Force_Model_Get() <> 0) then
   begin
-    Pl.SetModel(g_Forced_Model_GetName());
+    if g_Forced_Model_GetName() <> '' then Pl.SetModel(g_Forced_Model_GetName());
     Pl.SetColor_Soft(g_Forced_Model_GetColor());
   end;
 
@@ -2435,7 +2435,7 @@ begin
 
   if (g_Force_Model_Get() <> 0) and not ((PID = NetPlrUID1) or (PID = NetPlrUID2))then
   begin
-    g_Player_Get(PID).setModel(g_Forced_Model_GetName());
+    if g_Forced_Model_GetName() <> '' then g_Player_Get(PID).setModel(g_Forced_Model_GetName());
     g_Player_Get(PID).SetColor_Soft(g_Forced_Model_GetColor());
   end;
 
@@ -2752,7 +2752,7 @@ begin
 
   if (g_Force_Model_Get() <> 0) then
   begin
-    Pl.SetModel(g_Forced_Model_GetName());
+    if g_Forced_Model_GetName() <> '' then Pl.SetModel(g_Forced_Model_GetName());
     Pl.SetColor_Soft(g_Forced_Model_GetColor());
   end;
 end;
