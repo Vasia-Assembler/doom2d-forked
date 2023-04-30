@@ -3762,8 +3762,16 @@ begin
     if (sY < 0) then sY := 0;
   end;
 
-  if (gBackSize.X <= gPlayerScreenSize.X) or (gMapInfo.Width <= sWidth) then c := 0 else c := trunc((gBackSize.X-gPlayerScreenSize.X)*sX/(gMapInfo.Width-sWidth));
-  if (gBackSize.Y <= gPlayerScreenSize.Y) or (gMapInfo.Height <= sHeight) then d := 0 else d := trunc((gBackSize.Y-gPlayerScreenSize.Y)*sY/(gMapInfo.Height-sHeight));
+  if g_dbg_centered_camera then
+  begin
+    c:= 0;
+    d := 0
+  end
+  else
+  begin
+    if (gBackSize.X <= gPlayerScreenSize.X) or (gMapInfo.Width <= sWidth) then c := 0 else c := trunc((gBackSize.X-gPlayerScreenSize.X)*sX/(gMapInfo.Width-sWidth));
+    if (gBackSize.Y <= gPlayerScreenSize.Y) or (gMapInfo.Height <= sHeight) then d := 0 else d := trunc((gBackSize.Y-gPlayerScreenSize.Y)*sY/(gMapInfo.Height-sHeight));
+  end;
 
   //r_smallmap_h: 0: left; 1: center; 2: right
   //r_smallmap_v: 0: top; 1: center; 2: bottom
