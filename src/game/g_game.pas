@@ -5515,7 +5515,7 @@ end;
 
 procedure GameCVars(P: SSArray);
 var
-  a, b: Integer;
+  a, b, c: Integer;
   stat: TPlayerStatArray;
   cmd: string;
 
@@ -5787,6 +5787,7 @@ begin
             else if (gPlayer2 <> nil) and (gPlayers[a].UID = gPlayer2.UID) then
               continue;
             gPlayers[a].setModel(g_Forced_Model_GetName());
+            gPlayers[a].setColor_Soft(g_Forced_Model_GetColor());
           end;
         end
       end
@@ -5801,11 +5802,49 @@ begin
             else if (gPlayer2 <> nil) and (gPlayers[a].UID = gPlayer2.UID) then
               continue;
             gPlayers[a].setModel(gPlayers[a].FActualModelName);
+            gPlayers[a].setColor_Soft(gPlayers[a].FColor);
           end;
         end
       end    
     end
-  end  
+  end
+  else if cmd = 'g_force_model_color' then
+  begin
+    if Length(P) = 4 then
+    begin
+      g_Forced_Model_SetColor(_RGB(EnsureRange(StrToIntDef(P[1], 0), 0, 255),
+                                         EnsureRange(StrToIntDef(P[2], 0), 0, 255),
+                                         EnsureRange(StrToIntDef(P[3], 0), 0, 255)));
+      if (g_Force_Model_Get() <> 0) and (gPlayers <> nil) then
+      begin
+        for a := Low(gPlayers) to High(gPlayers) do
+        begin
+          if (gPlayers[a] <> nil) then
+          begin
+            if (gPlayers[a].UID = gPlayer1.UID) then
+              continue
+            else if (gPlayer2 <> nil) and (gPlayers[a].UID = gPlayer2.UID) then
+              continue;
+            gPlayers[a].SetColor_Soft(g_Forced_Model_GetColor());
+          end;
+        end
+      end
+      else if (g_Force_Model_Get() = 0) and (gPlayers <> nil) then
+      begin
+        for a := Low(gPlayers) to High(gPlayers) do
+        begin
+          if (gPlayers[a] <> nil) then
+          begin
+            if (gPlayers[a].UID = gPlayer1.UID) then
+              continue
+            else if (gPlayer2 <> nil) and (gPlayers[a].UID = gPlayer2.UID) then
+              continue;
+            gPlayers[a].SetColor_Soft(gPlayers[a].FColor);
+          end;
+        end
+      end
+    end
+  end
   else if cmd = 'g_force_model_name' then
   begin
     if (Length(P) > 1) then

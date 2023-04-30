@@ -1073,6 +1073,7 @@ begin
   AddCommand('g_max_corpses', GameCVars);
   AddCommand('g_force_model', GameCVars);
   AddCommand('g_force_model_name', GameCVars);
+  AddCommand('g_force_model_color', GameCVars);
   AddCommand('g_gamemode', GameCVars);
   AddCommand('g_friendlyfire', GameCVars);
   AddCommand('g_friendly_hit_trace', GameCVars);
@@ -2190,6 +2191,10 @@ begin
   WriteLn(f, 'g_max_corpses ', g_Corpses_GetMax());
   WriteLn(f, 'g_force_model ', g_Force_Model_Get());
   WriteLn(f, 'g_force_model_name ', g_Forced_Model_GetName());
+  with g_Forced_Model_GetColor() do
+  begin
+    WriteLn(f, 'g_force_model_color ', R, ' ', G, ' ', B);
+  end;
   WriteLn(f, 'sv_intertime ', gDefInterTime);
 
   // gameplay settings
