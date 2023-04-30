@@ -11,9 +11,9 @@
 		<key>CFBundleIdentifier</key>
 		<string>org.doom2df</string>
 		<key>CFBundleName</key>
-		<string>Doom 2D: Forever</string>
+		<string>Doom 2D: Forked</string>
 		<key>CFBundleDisplayName</key>
-		<string>Doom 2D: Forever</string>
+		<string>Doom 2D: Forked</string>
 		<key>CFBundleIconFile</key>
 		<string>Doom2DF</string>
 		<key>CFBundleShortVersionString</key>

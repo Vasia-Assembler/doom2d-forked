@@ -1,25 +1,24 @@
-# Doom 2D Forever
+# Doom 2D Forked
 
 ## Description
-**Doom 2D: Forever** is a modern version of a Russian freeware doom game Doom 2D.
+**Doom 2D: Forked** is a modern version of a Russian freeware doom game Doom 2D.
 
 This open source multiplatform project, written from scratch, is designed to reproduce the original game with significant
 improvements in gameplay, graphics and logic.
 
-
-**NOTE** This is a fork. Upstream has the same name and can be found at https://repo.or.cz/d2df-sdl.git. 
+This is a fork of Doom 2D: Forever, whose developers are really pelutant children.
 
 ![MegaDM](docs/images/screenshots/screenshot-megadm.png)
 
 ## Install
 
 ### Flatpak
-Doom 2D: Forever has a Flatpak manifest, available at (https://github.com/Challenge9/org.doom2d.forever)
+Doom 2D: Forked has a Flatpak manifest, available at (https://github.com/Challenge9/org.doom2d.forked)
 
 ## Build
 ```
-  git clone --recurse-submodules https://github.com/Challenge9/doom2d-forever
-  cd doom2d-forever
+  git clone --recurse-submodules https://github.com/Challenge9/doom2d-forked
+  cd doom2d-forked
   git submodule update --init
   mkdir -p ./build/bin ./build/tmp
   bash script/game/download_essentials.sh ./build/

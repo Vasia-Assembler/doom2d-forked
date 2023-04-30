@@ -35,7 +35,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <application android:label="Doom2D Forever"
+    <application android:label="Doom2D Forked"
                  android:icon="@mipmap/ic_launcher"
                  android:allowBackup="true"
                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
@@ -44,7 +44,7 @@
 
         <meta-data android:name="SDL_ENV.SDL_ACCELEROMETER_AS_JOYSTICK" android:value="0"/>
 
-        <activity android:name="Launcher" android:label="Doom2D Forever" android:launchMode="singleInstance">
+        <activity android:name="Launcher" android:label="Doom2D Forked" android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -52,7 +52,7 @@
         </activity>
 
         <activity android:name="Doom2DF"
-            android:label="Doom2DF Forever"
+            android:label="Doom2DF Forked"
             android:alwaysRetainTaskState="true"
             android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape"

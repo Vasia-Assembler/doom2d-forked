@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.doom2d.forever</id>
+  <id>org.doom2d.forked</id>
   
-  <name>Doom 2D: Forever</name>
+  <name>Doom 2D: Forked</name>
   <summary>A remake of the classic Doom game in 2D.</summary>
   
   <metadata_license>CC0-1.0</metadata_license>
@@ -16,25 +16,25 @@
   
   <description>
     <p>
-      A fork with the same name of Doom 2D: Forever, an open source OpenGL remake of Doom 2D with many extra features, available for Windows, Android, and Linux, that includes single player and multiplayer modes.
+      An open source OpenGL remake of Doom 2D with many extra features, available for Windows, Android, and Linux, that includes single player and multiplayer modes.
     </p>
   </description>
   
-  <launchable type="desktop-id">org.doom2d.forever.desktop</launchable>
+  <launchable type="desktop-id">org.doom2d.forked.desktop</launchable>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/Challenge9/doom2d-forever/master/docs/images/screenshots/screenshot-megadm.png</image>
+      <image>https://raw.githubusercontent.com/Challenge9/doom2d-forked/master/docs/images/screenshots/screenshot-megadm.png</image>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/Challenge9/doom2d-forever/master/docs/images/screenshots/screenshot-castlevania.png</image>
+      <image>https://raw.githubusercontent.com/Challenge9/doom2d-forked/master/docs/images/screenshots/screenshot-castlevania.png</image>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/Challenge9/doom2d-forever/master/docs/images/screenshots/screenshot-prikolsoft.png</image>
+      <image>https://raw.githubusercontent.com/Challenge9/doom2d-forked/master/docs/images/screenshots/screenshot-prikolsoft.png</image>
     </screenshot>
   </screenshots>
   <releases>
     <release version="0.1.0" date="2023-04-30">
-      <description>The initial release of the fork.</description>
+      <description>The initial release of the Doom 2D: Forked.</description>
     </release>
   </releases>
 
@@ -44,5 +44,5 @@
     <content_attribute id="social-chat">mild</content_attribute>
   </content_rating>
 
-  <url type="homepage">https://github.com/Challenge9/doom2d-forever</url>
+  <url type="homepage">https://github.com/Challenge9/doom2d-forked</url>
 </component>

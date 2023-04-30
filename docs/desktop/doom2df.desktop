@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=0.1.0
+Name=Doom 2D Forked
+Exec=Doom2DF
+Icon=doom2df
+Terminal=false
+Type=Application
+Categories=Game;Shooter;ActionGame
+Comment=A modern version of classic freeware Doom 2D, including new mechanics, weapons and multiplayer!
+Comment[ru]=Современная версия классического бесплатного Doom 2D, включающая новые механики, оружие и мультиплеер!
+Keywords=Doom;Doom2D;Doom2D Forked;Forked;Shooter;Doom 2D;

@@ -277,7 +277,7 @@ procedure InitPath;
         for i := 0 to dirArr.count - 1 do
         begin
           s := NSStringToAnsiString(dirArr.objectAtIndex(i));
-          AddDir(result, e_CatPath(s, 'Doom 2D Forever'))
+          AddDir(result, e_CatPath(s, 'Doom 2D Forked'))
         end;
       {$ENDIF}
       {$IF DEFINED(ANDROID) AND DEFINED(USE_SDL2)}
@@ -332,7 +332,7 @@ procedure InitPath;
         for i := 0 to dirArr.count - 1 do
         begin
           s := NSStringToAnsiString(dirArr.objectAtIndex(i));
-          AddDir(result, e_CatPath(s, 'Doom 2D Forever'))
+          AddDir(result, e_CatPath(s, 'Doom 2D Forked'))
         end;
       {$ENDIF}
       {$IF DEFINED(ANDROID) AND DEFINED(USE_SDL2)}
@@ -464,7 +464,7 @@ begin
   if LogFileName <> '' then
     e_InitLog(LogFileName, TWriteMode.WM_NEWFILE);
   e_InitWritelnDriver();
-  e_WriteLog('Doom 2D: Forever version ' + GAME_VERSION + ' proto ' + IntToStr(NET_PROTOCOL_VER), TMsgType.Notify);
+  e_WriteLog('Doom 2D: Forked version ' + GAME_VERSION + ' proto ' + IntToStr(NET_PROTOCOL_VER), TMsgType.Notify);
   if gDebugMode then
   begin
     e_WriteLog('Build arch: ' + g_GetBuildArch(), TMsgType.Notify);
@@ -498,7 +498,7 @@ begin
       if forceBinDir = false then
         SDL_ShowSimpleMessageBox(
           SDL_MESSAGEBOX_ERROR, 
-          'Doom 2D Forever',
+          'Doom 2D Forked',
           PChar('WAD ' + GameWADName + ' not found in data directories.'),
           nil
         );

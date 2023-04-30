@@ -3,7 +3,7 @@
 ###########################################################################
 #   fheroes2: https://github.com/ihhub/fheroes2                           #
 #   Copyright (C) 2021 - 2023                                             #
-#   Challenge9: https://github.com/Challenge9/doom2d-forever              #
+#   Challenge9: https://github.com/Challenge9/doom2d-forked               #
 #   Copyright (C) 2023                                                    #
 #                                                                         #
 #   This program is free software; you can redistribute it and/or modify  #
@@ -54,7 +54,7 @@ function echo_stage {
     echo
 }
 
-echo_green "This script will download the game files for Doom 2D: Forever"
+echo_green "This script will download the game files for Doom 2D: Forked"
 echo_green "It may take a few minutes, please wait..."
 
 echo_stage "[1/3] determining the destination directory"

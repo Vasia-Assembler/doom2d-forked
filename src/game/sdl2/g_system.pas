@@ -49,7 +49,7 @@ implementation
     g_touch, g_options, g_window, g_console, g_game, g_menu, g_gui, g_main, g_basic;
 
   const
-    GameTitle = 'Doom 2D: Forever (SDL 2, %s)';
+    GameTitle = 'Doom 2D: Forked (SDL 2, %s)';
 
   var
     window: PSDL_Window;
