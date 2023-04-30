@@ -480,7 +480,10 @@ begin
     SwitchToEmpty := SwitchEmpty;
     SkipFist := SkipF;
     if (g_Force_Model_Get() <> 0) then
+    begin
       SetModel(g_Forced_Model_GetName());
+      SetColor_Soft(g_Forced_Model_GetColor());
+    end;
     Reset(True);
   end;
 
@@ -794,6 +797,12 @@ begin
 
   if (TmpSkipF <> Pl.SkipFist) then
     Pl.SkipFist := TmpSkipF;
+
+  if (g_Force_Model_Get() <> 0) then
+  begin
+    Pl.SetModel(g_Forced_Model_GetName());
+    Pl.SetColor_Soft(g_Forced_Model_GetColor());
+  end;
 
   MH_SEND_PlayerSettings(Pl.UID, TmpModel);
 end;
@@ -2402,8 +2411,6 @@ begin
   if (PID <> NetPlrUID1) and (PID <> NetPlrUID2) then
   begin
     if (Pl <> nil) then Exit;
-    if (g_Force_Model_Get() <> 0) then
-      Model := g_Forced_Model_GetName();
     DID := g_Player_Create(Model, Color, T, False);
     with g_Player_Get(DID) do
     begin
@@ -2424,6 +2431,12 @@ begin
       gPlayer2.Model.SetColor(Color.R, Color.G, Color.B);
       gPlayer2.ChangeTeam(T);
     end;
+  end;
+
+  if (g_Force_Model_Get() <> 0) and not ((PID = NetPlrUID1) or (PID = NetPlrUID2))then
+  begin
+    g_Player_Get(PID).setModel(g_Forced_Model_GetName());
+    g_Player_Get(PID).SetColor_Soft(g_Forced_Model_GetColor());
   end;
 
   if NetDeafLevel < 3 then 
@@ -2736,6 +2749,12 @@ begin
     TmpModel := g_Forced_Model_GetName();
   if TmpModel <> Pl.Model.GetName() then
     Pl.SetModel(TmpModel);
+
+  if (g_Force_Model_Get() <> 0) then
+  begin
+    Pl.SetModel(g_Forced_Model_GetName());
+    Pl.SetColor_Soft(g_Forced_Model_GetColor());
+  end;
 end;
 
 // ITEM

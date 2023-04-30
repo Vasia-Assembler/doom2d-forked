@@ -301,6 +301,7 @@ type
     procedure   ReleaseKeys();
     procedure   SetModel(ModelName: String);
     procedure   SetColor(Color: TRGB);
+    procedure   SetColor_Soft(Color: TRGB);
     function    GetColor(): TRGB;
     procedure   SetWeapon(W: Byte);
     function    IsKeyPressed(K: Byte): Boolean;
@@ -538,6 +539,8 @@ var
 function  Lerp(X, Y, Factor: Integer): Integer;
 procedure g_Force_Model_Set(Mode: Word);
 function g_Force_Model_Get(): Word;
+procedure g_Forced_Model_SetColor(Color: TRGB);
+function g_Forced_Model_GetColor(): TRGB;
 procedure g_Forced_Model_SetName(Model: String);
 function  g_Forced_Model_GetName(): String;
 procedure g_Player_Init();
@@ -660,6 +663,7 @@ const
 var
   ForceModel: Word = 0;
   ForcedModelName: String = STD_PLAYER_MODEL;
+  ForcedModelColor: TRGB = (R:255; G: 255; B: 255);
   BotNames: Array of String;
   BotList: Array of TBotProfile;
   SavedStates: Array of TPlayerSavedState;
@@ -693,6 +697,36 @@ end;
 function g_Force_Model_Get(): Word;
 begin
   Result := ForceModel;
+end;
+
+procedure g_Forced_Model_SetColor(Color: TRGB);
+begin
+  ForcedModelColor := Color;
+end;
+
+function g_Forced_Model_GetColor(): TRGB;
+begin
+  Result := ForcedModelColor;
+end;
+
+procedure g_Force_Model_Set(Mode: Word);
+begin
+  ForceModel := Mode;
+end;
+
+function g_Force_Model_Get(): Word;
+begin
+  Result := ForceModel;
+end;
+
+procedure g_Forced_Model_SetColor(Color: TRGB);
+begin
+  ForcedModelColor := Color;
+end;
+
+function g_Forced_Model_GetColor(): TRGB;
+begin
+  Result := ForcedModelColor;
 end;
 
 procedure g_Forced_Model_SetName(Model: String);
@@ -740,8 +774,6 @@ begin
 
   gPlayers[a].FActualModelName := ModelName;
   gPlayers[a].SetModel(ModelName);
-  if Bot and (g_Force_Model_Get() <> 0) then
-    gPlayers[a].SetModel(g_Forced_Model_GetName());
 
 // Нет модели - создание не возможно:
   if gPlayers[a].FModel = nil then
@@ -776,6 +808,12 @@ begin
 
   gPlayers[a].FUID := g_CreateUID(UID_PLAYER);
   gPlayers[a].FAlive := False;
+
+  if Bot and (g_Force_Model_Get() <> 0) then
+  begin
+    gPlayers[a].SetModel(g_Forced_Model_GetName());
+    gPlayers[a].SetColor_Soft(g_Forced_Model_GetColor());
+  end;
 
   Result := gPlayers[a].FUID;
 end;
@@ -813,7 +851,10 @@ begin
   begin
     gPlayers[a] := TBot.Create();
     if (g_Force_Model_Get() <> 0) then
+    begin
       gPlayers[a].SetModel(g_Forced_Model_GetName());
+      gPlayers[a].SetColor_Soft(g_Forced_Model_GetColor());
+    end;
   end
   else
     gPlayers[a] := TPlayer.Create();
@@ -1429,6 +1470,12 @@ end;
 procedure TPlayer.SetColor(Color: TRGB);
 begin
   FColor := Color;
+  if not (gGameSettings.GameMode in [GM_TDM, GM_CTF]) then
+    if FModel <> nil then FModel.Color := Color;
+end;
+
+procedure TPlayer.SetColor_Soft(Color: TRGB);
+begin
   if not (gGameSettings.GameMode in [GM_TDM, GM_CTF]) then
     if FModel <> nil then FModel.Color := Color;
 end;
