@@ -74,7 +74,7 @@ implementation
   ;
 
   const
-    GameTitle = 'Doom 2D: Forever (SDL 2, %s)';
+    GameTitle = 'Doom 2D: Forked (SDL 2, %s)';
 
   var
     window: PSDL_Window;

@@ -71,7 +71,7 @@ implementation
     g_options, g_console, g_game, g_basic;
 
   const
-    GameTitle = 'Doom 2D: Forever (SDL 1.2, %s, %s)';
+    GameTitle = 'Doom 2D: Forked (SDL 1.2, %s, %s)';
 
   var
     userResize: Boolean;

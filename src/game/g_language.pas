@@ -701,8 +701,8 @@ const
                                        'Скриншот сохранён в "%s"'),
     ('CONSOLE UNKNOWN',                'Unknown command "%s"',
                                        'Неизвестная команда "%s"'),
-    ('CONSOLE WELCOME',                'Welcome to Doom 2D: Forever %s',
-                                       'Добро пожаловать в Doom 2D: Forever %s'),
+    ('CONSOLE WELCOME',                'Welcome to Doom 2D: Forked %s',
+                                       'Добро пожаловать в Doom 2D: Forked %s'),
 
     ('GAME ERROR GET SPAWN',           'Can''t find a spawn point!',
                                        'Не удалось получить точку возрождения!'),
@@ -1325,7 +1325,7 @@ const
     ('MENU RESTART GAME PROMT',        'Do you want to restart level?',
                                        'Вы действительно хотите начать уровень заново?'),
     ('MENU EXIT PROMT',                'Chickening out already?',
-                                       'Вы действительно хотите выйти из Doom 2D: Forever?'),
+                                       'Вы действительно хотите выйти из Doom 2D: Forked?'),
     ('MENU SET DEFAULT PROMT',         'Load default settings?',
                                        'Изменить все настройки на стандартные?'),
     ('MENU LOAD SAVED PROMT',          'Load saved settings?',
@@ -1733,8 +1733,8 @@ const
     ('LOAD PORTS',                     'Forwarding ports via UPnP...',
                                        'Проброс портов через UPnP...'),
 
-    ('CREDITS CAP 1',                  'Doom 2D: Forever',
-                                       'Doom 2D: Forever'),
+    ('CREDITS CAP 1',                  'Doom 2D: Forked',
+                                       'Doom 2D: Forked'),
     ('CREDITS CAP 2',                  'version %s, protocol %d',
                                        'версия %s, протокол %d'),
     ('CREDITS A 1',                    'Project Creators:',
@@ -1901,8 +1901,8 @@ const
     ('TEXTURE ENDPIC',                 'ENDGAME_EN',
                                        'ENDGAME_RU'),
 
-    ('VERSION',                        'Doom 2D: Forever %s',
-                                       'Doom 2D: Forever %s'),
+    ('VERSION',                        'Doom 2D: Forked %s',
+                                       'Doom 2D: Forked %s'),
 
     ('FATAL ERROR',                    'Fatal error: %s',
                                        'Критическая ошибка: %s'),

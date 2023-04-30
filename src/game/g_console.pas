@@ -705,7 +705,7 @@ begin
 
   if (cmd = 'ver') or (cmd = 'version') then
   begin
-    conwriteln('Doom 2D: Forever v. ' + GAME_VERSION);
+    conwriteln('Doom 2D: Forked v. ' + GAME_VERSION);
     conwritefln('Net protocol v. %d', [NET_PROTOCOL_VER]);
     conwritefln('Build date: %s at %s', [GAME_BUILDDATE, GAME_BUILDTIME]);
   end;
