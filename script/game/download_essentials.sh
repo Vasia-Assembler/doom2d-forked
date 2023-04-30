@@ -36,7 +36,7 @@ BASE_URL="https://github.com/Challenge9/DF-Res/releases/download/v0.1.0"
 DOOMER_URL="${BASE_URL}/${DOOMER}"
 MAPPACK_URL="${BASE_URL}/${MAPPACK}"
 # EDITOR_URL="${BASE_URL}/${EDITOR}"
-GAME_URL="${BASE_URL}/${GAME}"
+GAME_URL="https://github.com/Challenge9/DF-Res/releases/download/v0.1.1/${GAME}"
 STANDART_URL="${BASE_URL}/${STANDART}"
 SHRSHADE_URL="${BASE_URL}/${SHRSHADE}"
 
@@ -97,9 +97,10 @@ fi
 
 echo_stage "[3/3] copying files"
 
-cp $MAPPACK maps/
-mv $MAPPACK maps/megawads/
-mv $DOOMER data/models
-mv $GAME data
-mv $STANDART wads
-mv $SHRSHADE wads
+install -Dm644 $MAPPACK -t maps/megawads/
+install -Dm644 $DOOMER -t data/models
+install -Dm644 $GAME -t data
+install -Dm644 $STANDART -t wads
+install -Dm644 $SHRSHADE -t wads
+
+rm $MAPPACK $DOOMER $GAME $STANDART $SHRSHADE

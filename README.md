@@ -21,7 +21,7 @@ Doom 2D: Forked has a Flatpak manifest, available at (https://github.com/Challen
   cd doom2d-forked
   git submodule update --init
   mkdir -p ./build/bin ./build/tmp
-  bash script/game/download_essentials.sh ./build/
+  bash script/game/download_essentials.sh ./build/bin
   cd src/game
   fpc -B -dUSE_SDLMIXER -FE../../build/bin -FU../../build/tmp Doom2DF.lpr
 ```
