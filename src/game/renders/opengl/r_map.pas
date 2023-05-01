@@ -1547,31 +1547,20 @@ implementation
   procedure r_Map_DrawPlayerIndicators (player: TPlayer; cx, cy, cw, ch: Integer);
     var i: Integer; p: TPlayer;
   begin
-    case gPlayerIndicator of
-      1:
-      if player <> nil then
+    for i := 0 to HIGH(gPlayers) do
+    begin
+      p := gPlayers[i];
+      if p <> nil then
       begin
-        r_Map_DrawIndicator(player, _RGB(255, 255, 255), cx, cy, cw, ch);
-      end;
-      2:
-      if gPlayers <> nil then
-      begin
-        for i := 0 to HIGH(gPlayers) do
+        if (player <> nil) and (p = player) then
         begin
-          p := gPlayers[i];
-          if p <> nil then
-          begin
-            if (player <> nil) and (p = player) then
-            begin
-              r_Map_DrawIndicator(p, _RGB(255, 255, 255), cx, cy, cw, ch);
-            end
-            else if (player = nil) or ((p.Team = player.Team) and (p.Team <> TEAM_NONE)) then
-            begin
-              case gPlayerIndicatorStyle of
-                0: r_Map_DrawIndicator(p, p.GetColor(), cx, cy, cw, ch);
-                1: r_Map_DrawIndicator(p, _RGB(192, 192, 192), cx, cy, cw, ch);
-              end;
-            end;
+          r_Map_DrawIndicator(p, _RGB(255, 255, 255), cx, cy, cw, ch);
+        end
+        else
+        begin
+          case gPlayerIndicatorStyle of
+            0: r_Map_DrawIndicator(p, p.GetColor(), cx, cy, cw, ch);
+            1: r_Map_DrawIndicator(p, _RGB(220, 220, 220), cx, cy, cw, ch);
           end;
         end;
       end;
