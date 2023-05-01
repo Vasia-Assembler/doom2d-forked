@@ -367,8 +367,8 @@ begin
                                   TEAM_RED, TEAM_BLUE);
   with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP2Menu').GetControl('mvP2Model')) do
   begin
-    gPlayer1Settings.Model := Model.GetName();
-    gPlayer1Settings.Color := Model.Color;
+    gPlayer2Settings.Model := Model.GetName();
+    gPlayer2Settings.Color := Model.Color;
   end;
 
   menu := TGUIMenu(g_GUI_GetWindow('OptionsPlayersP1WeaponMenu').GetControl('mOptionsPlayersP1WeaponMenu'));

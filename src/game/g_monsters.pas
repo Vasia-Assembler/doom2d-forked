@@ -1079,7 +1079,7 @@ procedure g_Monsters_Free (clearGrid: Boolean=true);
 var
   a: Integer;
 begin
-  if gDebugMode then e_LogWritefln('Cleared monster data (clearGrid=%s)', [clearGrid]);
+  e_LogWritefln('Cleared monster data (clearGrid=%s)', [clearGrid]);
   if (clearGrid) then
   begin
     monsGrid.Free();
@@ -1099,7 +1099,7 @@ begin
   monsGrid.Free();
   monsGrid := TMonsterGrid.Create(x, y, w, h);
   //clearUidMap(); // why not?
-  if gDebugMode then e_LogWritefln('%s', ['Recreated monster tree']);
+  e_LogWritefln('%s', ['Recreated monster tree']);
 end;
 
 
@@ -2088,7 +2088,6 @@ label
   _end;
 begin
   fall := True;
-  bubbles := True;
 
 // Монстр статичен пока идет warmup
   if (gLMSRespawn > LMS_RESPAWN_NONE) then exit;
@@ -2187,7 +2186,6 @@ begin
 
 // Возможно, создаем пузырьки в воде:
   if WordBool(st and MOVE_INWATER) and (Random(32) = 0) then
-  begin
     case FMonsterType of
       MONSTER_FISH:
       begin
@@ -3134,7 +3132,6 @@ begin
   sx := 0; // SHUT UP COMPILER
   sy := 0;
   fall := True;
-  bubbles := True;
 
 // Монстр статичен пока идет warmup
   if (gLMSRespawn > LMS_RESPAWN_NONE) then exit;
@@ -3201,7 +3198,6 @@ begin
 
 // Возможно, создаем пузырьки в воде:
   if WordBool(st and MOVE_INWATER) and (Random(32) = 0) then
-  begin
     case FMonsterType of
       MONSTER_FISH:
       begin

@@ -50,7 +50,7 @@ interface
 implementation
 
   uses
-    {$I ../../../nogl/noGLuses.inc}
+    {$I ../../../thirdparty/nogl/noGLuses.inc}
     SysUtils, Classes, Math,
     e_log, utils
   ;

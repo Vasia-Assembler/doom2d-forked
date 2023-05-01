@@ -18,7 +18,7 @@ unit r_textures;
 interface
 
   uses
-    {$I ../../../nogl/noGLuses.inc}
+    {$I ../../../thirdparty/nogl/noGLuses.inc}
     g_base, g_animations,  // TRectHW, TAnimInfo
     utils,
     r_atlas, r_fonts

@@ -31,7 +31,7 @@ interface
 implementation
 
   uses
-    {$I ../../../nogl/noGLuses.inc}
+    {$I ../../../thirdparty/nogl/noGLuses.inc}
     {$IFDEF ENABLE_SYSTEM}
       g_system,
     {$ENDIF}

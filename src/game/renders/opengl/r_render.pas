@@ -85,7 +85,7 @@ interface
 implementation
 
   uses
-    {$I ../../../nogl/noGLuses.inc}
+    {$I ../../../thirdparty/nogl/noGLuses.inc}
     Imaging, ImagingTypes, ImagingUtility, (* for screenshots *)
     {$IFDEF ENABLE_MENU}
       r_gui,
@@ -353,7 +353,7 @@ implementation
   begin
     ASSERT(p <> nil);
 
-    if gShowGoals and (gGameSettings.GameMode in [GM_TDM, GM_CTF]) then
+    if gShowScore and (gGameSettings.GameMode in [GM_TDM, GM_CTF]) then
     begin
       (* RED TEAM GOALS *)
       fw := 0;
@@ -370,7 +370,7 @@ implementation
           r_Common_DrawTexture(f, x + w - 16, y + 240 - 72 - 4, f.width, f.height, TBasePoint.BP_RIGHTUP);
         end;
       end;
-      r_Common_DrawText(IntToStr(gTeamStat[TEAM_RED].Goals), x + w - 16 - fw, y + 240 - 72 - 4, TEAMCOLOR[TEAM_RED].R, TEAMCOLOR[TEAM_RED].G, TEAMCOLOR[TEAM_RED].B, 255, menufont, TBasePoint.BP_RIGHTUP);
+      r_Common_DrawText(IntToStr(gTeamStat[TEAM_RED].Score), x + w - 16 - fw, y + 240 - 72 - 4, TEAMCOLOR[TEAM_RED].R, TEAMCOLOR[TEAM_RED].G, TEAMCOLOR[TEAM_RED].B, 255, menufont, TBasePoint.BP_RIGHTUP);
 
       (* BLUE TEAM GOALS *)
       fw := 0;
@@ -387,7 +387,7 @@ implementation
           r_Common_DrawTexture(f, x + w - 16, y + 240 - 32 - 4, f.width, f.height, TBasePoint.BP_RIGHTUP);
         end;
       end;
-      r_Common_DrawText(IntToStr(gTeamStat[TEAM_BLUE].Goals), x + w - 16 - fw, y + 240 - 32 - 4, TEAMCOLOR[TEAM_BLUE].R, TEAMCOLOR[TEAM_BLUE].G, TEAMCOLOR[TEAM_BLUE].B, 255, menufont, TBasePoint.BP_RIGHTUP);
+      r_Common_DrawText(IntToStr(gTeamStat[TEAM_BLUE].Score), x + w - 16 - fw, y + 240 - 32 - 4, TEAMCOLOR[TEAM_BLUE].R, TEAMCOLOR[TEAM_BLUE].G, TEAMCOLOR[TEAM_BLUE].B, 255, menufont, TBasePoint.BP_RIGHTUP);
     end;
 
     if gGameSettings.GameType in [GT_CUSTOM, GT_SERVER, GT_CLIENT] then
@@ -612,7 +612,7 @@ implementation
             end;
          end;
          r_Common_DrawText(s, x, yy, r, g, b, 255, stdfont, TBasePoint.BP_LEFTUP);
-         r_Common_DrawText(IntToStr(cs.TeamStat[team].Goals), x + tw, yy, r, g, b, 255, stdfont, TBasePoint.BP_UP);
+         r_Common_DrawText(IntToStr(cs.TeamStat[team].Score), x + tw, yy, r, g, b, 255, stdfont, TBasePoint.BP_UP);
          if endview = false then
            r_Common_DrawText(_lc[I_GAME_PING], x + w1, yy, r, g, b, 255, stdfont, TBasePoint.BP_UP);
          r_Common_DrawText(_lc[I_GAME_FRAGS], x + w1 + w2, yy, r, g, b, 255, stdfont, TBasePoint.BP_UP);
@@ -746,8 +746,8 @@ implementation
       r_Common_DrawText(s, x + w div 2, y + yoff, 200, 200, 200, 255, stdfont, TBasePoint.BP_UP);
       INC(yoff, ch + ch div 2);
       case cs.GameMode of
-        GM_DM, GM_TDM: s := Format(_lc[I_GAME_FRAG_LIMIT], [gGameSettings.GoalLimit]);
-        GM_CTF:        s := Format(_lc[I_GAME_SCORE_LIMIT], [gGameSettings.GoalLimit]);
+        GM_DM, GM_TDM: s := Format(_lc[I_GAME_FRAG_LIMIT], [gGameSettings.ScoreLimit]);
+        GM_CTF:        s := Format(_lc[I_GAME_SCORE_LIMIT], [gGameSettings.ScoreLimit]);
         GM_COOP:       s := _lc[I_GAME_MONSTERS] + ' ' + IntToStr(gCoopMonstersKilled) + '/' + IntToStr(gTotalMonsters);
         otherwise      s := '';
       end;
@@ -805,8 +805,8 @@ implementation
 
     if endview and (cs.GameMode in [GM_TDM, GM_CTF]) then
     begin
-      if cs.TeamStat[TEAM_RED].Goals > cs.TeamStat[TEAM_BLUE].Goals then s := _lc[I_GAME_WIN_RED]
-      else if cs.TeamStat[TEAM_BLUE].Goals > cs.TeamStat[TEAM_RED].Goals then s := _lc[I_GAME_WIN_BLUE]
+      if cs.TeamStat[TEAM_RED].Score > cs.TeamStat[TEAM_BLUE].Score then s := _lc[I_GAME_WIN_RED]
+      else if cs.TeamStat[TEAM_BLUE].Score > cs.TeamStat[TEAM_RED].Score then s := _lc[I_GAME_WIN_BLUE]
       else s := _lc[I_GAME_WIN_DRAW];
       r_Common_DrawText(s, x + w div 2, y + yoff, 255, 255, 255, 255, stdfont, TBasePoint.BP_UP);
       INC(yoff, ch);

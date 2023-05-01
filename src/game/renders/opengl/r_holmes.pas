@@ -38,7 +38,7 @@ var
 implementation
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   geom,
   e_log,
   g_basic, g_grid, g_player, g_monsters,

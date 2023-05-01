@@ -47,7 +47,7 @@ interface
 implementation
 
   uses
-    {$I ../../../nogl/noGLuses.inc}
+    {$I ../../../thirdparty/nogl/noGLuses.inc}
     Math, SysUtils,
     e_log,
     binheap, MAPDEF, utils,

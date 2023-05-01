@@ -131,7 +131,7 @@ var
 implementation
 
 uses
-  {$INCLUDE ../nogl/noGLuses.inc}
+  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   sdlcarcass,
   fui_wadread,
   utils;

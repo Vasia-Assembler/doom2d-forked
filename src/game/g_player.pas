@@ -689,16 +689,6 @@ begin
   Result := g_Player_Get(UID1).FTeam = g_Player_Get(UID2).FTeam;
 end;
 
-procedure g_Force_Model_Set(Mode: Word);
-begin
-  ForceModel := Mode;
-end;
-
-function g_Force_Model_Get(): Word;
-begin
-  Result := ForceModel;
-end;
-
 procedure g_Forced_Model_SetColor(Color: TRGB);
 begin
   ForcedModelColor := Color;
@@ -717,16 +707,6 @@ end;
 function g_Force_Model_Get(): Word;
 begin
   Result := ForceModel;
-end;
-
-procedure g_Forced_Model_SetColor(Color: TRGB);
-begin
-  ForcedModelColor := Color;
-end;
-
-function g_Forced_Model_GetColor(): TRGB;
-begin
-  Result := ForcedModelColor;
 end;
 
 procedure g_Forced_Model_SetName(Model: String);

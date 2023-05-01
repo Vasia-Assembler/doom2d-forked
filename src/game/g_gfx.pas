@@ -241,7 +241,7 @@ begin
   FillDWord(awakeMapHlm[0], Length(awakeMapHlm), 0);
   {$ENDIF}
   //{$IF DEFINED(D2F_DEBUG)}
-  if gDebugMode then e_LogWritefln('particle awake map: %sx%s (for grid of size %sx%s)', [awakeMapW, awakeMapH, mapGrid.gridWidth, mapGrid.gridHeight]);
+  // if gDebugMode then e_LogWritefln('particle awake map: %sx%s (for grid of size %sx%s)', [awakeMapW, awakeMapH, mapGrid.gridWidth, mapGrid.gridHeight]);
   //{$ENDIF}
   awakeDirty := true;
   awmClear();
