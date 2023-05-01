@@ -6,7 +6,7 @@
 This open source multiplatform project, written from scratch, is designed to reproduce the original game with significant
 improvements in gameplay, graphics and logic.
 
-This is a fork of Doom 2D: Forever, whose developers are really pelutant children.
+This is a fork of Doom 2D: Forever.
 
 ![MegaDM](docs/images/screenshots/screenshot-megadm.png)
 
