@@ -2845,6 +2845,7 @@ begin
   PGUID := Integer(M.ReadLongWord());
   Tex := M.ReadLongInt();
   AnimTime := M.ReadLongWord();
+  M.ReadByte();
   Loop := M.ReadByte();
 
   TP := g_Map_PanelByGUID(PGUID);
