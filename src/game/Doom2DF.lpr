@@ -828,35 +828,38 @@ end;
   procedure InitPrep;
   begin
     e_WriteLog('Doom 2D: Forever version ' + GAME_VERSION + ' proto ' + IntToStr(NET_PROTOCOL_VER), TMsgType.Notify);
-    e_WriteLog('Build arch: ' + g_GetBuildArch(), TMsgType.Notify);
-    e_WriteLog('Build date: ' + GAME_BUILDDATE + ' ' + GAME_BUILDTIME, TMsgType.Notify);
-    e_WriteLog('Build hash: ' + g_GetBuildHash(), TMsgType.Notify);
-    e_WriteLog('Build by: ' + g_GetBuilderName(), TMsgType.Notify);
+    if gDebugMode then
+    begin
+      e_WriteLog('Build arch: ' + g_GetBuildArch(), TMsgType.Notify);
+      e_WriteLog('Build date: ' + GAME_BUILDDATE + ' ' + GAME_BUILDTIME, TMsgType.Notify);
+      e_WriteLog('Build hash: ' + g_GetBuildHash(), TMsgType.Notify);
+      e_WriteLog('Build by: ' + g_GetBuilderName(), TMsgType.Notify);
 
-    e_LogWritefln('Force bin dir: %s', [forceBinDir], TMsgType.Notify);
-    e_LogWritefln('BINARY PATH: [%s]', [binPath], TMsgType.Notify);
+      e_LogWritefln('Force bin dir: %s', [forceBinDir], TMsgType.Notify);
+      e_LogWritefln('BINARY PATH: [%s]', [binPath], TMsgType.Notify);
 
-    PrintDirs('DataDirs', DataDirs);
-    PrintDirs('ModelDirs', ModelDirs);
-    PrintDirs('MegawadDirs', MegawadDirs);
-    PrintDirs('MapDirs', MapDirs);
-    PrintDirs('WadDirs', WadDirs);
+      PrintDirs('DataDirs', DataDirs);
+      PrintDirs('ModelDirs', ModelDirs);
+      PrintDirs('MegawadDirs', MegawadDirs);
+      PrintDirs('MapDirs', MapDirs);
+      PrintDirs('WadDirs', WadDirs);
 
-    PrintDirs('LogDirs', LogDirs);
-    PrintDirs('SaveDirs', SaveDirs);
-    PrintDirs('CacheDirs', CacheDirs);
-    PrintDirs('ConfigDirs', ConfigDirs);
-    PrintDirs('ScreenshotDirs', ScreenshotDirs);
-    PrintDirs('StatsDirs', StatsDirs);
-    PrintDirs('MapDownloadDirs', MapDownloadDirs);
-    PrintDirs('WadDownloadDirs', WadDownloadDirs);
+      PrintDirs('LogDirs', LogDirs);
+      PrintDirs('SaveDirs', SaveDirs);
+      PrintDirs('CacheDirs', CacheDirs);
+      PrintDirs('ConfigDirs', ConfigDirs);
+      PrintDirs('ScreenshotDirs', ScreenshotDirs);
+      PrintDirs('StatsDirs', StatsDirs);
+      PrintDirs('MapDownloadDirs', MapDownloadDirs);
+      PrintDirs('WadDownloadDirs', WadDownloadDirs);
+    end;
 
     {$IFDEF HEADLESS}
       {$IFDEF USE_SDLMIXER}
         NoSound := False; // hope env has set SDL_AUDIODRIVER to dummy
       {$ELSE}
         NoSound := True; // FMOD backend will sort it out
-      {$ENDIF}
+    {$ENDIF}
     {$ELSE}
       NoSound := False;
     {$ENDIF}
@@ -966,8 +969,8 @@ end;
           else
             timiditycfg := '';
         end;
-        e_LogWritefln('TIMIDITY_CFG = "%s"', [timiditycfg]);
-        e_LogWritefln('SDL_NATIVE_MUSIC = "%s"', [GetEnvironmentVariable('SDL_NATIVE_MUSIC')]);
+        if gDebugMode then e_LogWritefln('TIMIDITY_CFG = "%s"', [timiditycfg]);
+        if gDebugMode then e_LogWritefln('SDL_NATIVE_MUSIC = "%s"', [GetEnvironmentVariable('SDL_NATIVE_MUSIC')]);
       {$ENDIF}
       e_InitSoundSystem(NoSound);
       {$IFDEF USE_SDLMIXER}

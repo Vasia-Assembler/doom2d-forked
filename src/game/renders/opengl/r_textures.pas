@@ -549,7 +549,6 @@ implementation
   begin
     currentTexture2D := 0;
     maxTileSize := r_Textures_GetMaxHardwareSize();
-    e_LogWritefln('Texture Tile Size: %s', [maxTileSize]);
   end;
 
   procedure r_Textures_Finalize;
