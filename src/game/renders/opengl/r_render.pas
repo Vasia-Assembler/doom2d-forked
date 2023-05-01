@@ -1244,7 +1244,7 @@ implementation
 
     if gPauseMain and gGameOn {$IFDEF ENABLE_MENU}and (g_ActiveWindow = nil){$ENDIF} then
     begin
-      r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+      r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
       r_Common_DrawText(_lc[I_MENU_PAUSE], gScreenWidth div 2, gScreenHeight div 2, 255, 255, 255, 255, menufont, TBasePoint.BP_CENTER);
     end;
 
@@ -1258,7 +1258,7 @@ implementation
           r_Common_DrawBackground(GameWad + ':TEXTURES/TITLE');
           {$IFDEF ENABLE_MENU}
             if g_ActiveWindow <> nil then
-              r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+              r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
           {$ENDIF}
         end;
         STATE_FOLD:
@@ -1280,7 +1280,7 @@ implementation
 
           {$IFDEF ENABLE_MENU}
             if g_ActiveWindow <> nil then
-              r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+              r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
           {$ENDIF}
         end;
         STATE_INTERSINGLE, STATE_INTERTEXT, STATE_INTERPIC:
@@ -1295,7 +1295,7 @@ implementation
             r_Render_DrawSingleStats;
             {$IFDEF ENABLE_MENU}
               if g_ActiveWindow <> nil then
-                r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+                r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
             {$ENDIF}
           end;
         end;
@@ -1307,13 +1307,13 @@ implementation
             r_Common_DrawBackground(GameWad + ':TEXTURES/' + _lc[I_TEXTURE_ENDPIC]);
           {$IFDEF ENABLE_MENU}
             if g_ActiveWindow <> nil then
-              r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+              r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
           {$ENDIF}
         end;
         STATE_SLIST:
         begin
           r_Common_DrawBackground(GameWad + ':TEXTURES/TITLE');
-          r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+          r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
           r_Render_DrawServerList(slCurrent, slTable);
         end;
       end;
@@ -1323,7 +1323,7 @@ implementation
       if g_ActiveWindow <> nil then
       begin
         if gGameOn then
-          r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 105);
+          r_Draw_FillRect(0, 0, gScreenWidth, gScreenHeight, 0, 0, 0, 150);
         r_GUI_Draw_Window(g_ActiveWindow);
       end;
     {$ENDIF}
