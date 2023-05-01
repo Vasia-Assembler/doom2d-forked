@@ -7252,14 +7252,15 @@ begin
   begin
     if Length(P) = 1 then
     begin
-      if g_Game_IsServer and (gGameSettings.GameType <> GT_SINGLE) then
+      if gGameSettings.GameType <> GT_NONE then
       begin
-        g_Console_Add(cmd + ' <MAP>');
-        g_Console_Add(cmd + ' <WAD> [MAP]')
-      end
-      else
-      begin
-        g_Console_Add(_lc[I_MSG_GM_UNAVAIL])
+        g_Console_Add('Wad: ' + g_ExtractWadNameNoPath(gMapInfo.Map));
+        g_Console_Add('Map: ' + gCurrentMap.MapName);
+        g_Console_Add('Description: ' + gCurrentMap.MapDesc);
+        g_Console_Add('Author: ' + gCurrentMap.MapAuthor);
+        g_Console_Add('Music: ' + gCurrentMap.MusicName);
+        g_Console_Add('Sky: ' + gCurrentMap.SkyName);
+        g_Console_Add('Size: ' + Format('%dx%d', [gCurrentMap.Width, gCurrentMap.Height]));
       end
     end
     else
