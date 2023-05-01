@@ -55,7 +55,6 @@ function g_CollidePlayer(X, Y: Integer; Width, Height: Word): Boolean; inline;
 function g_PatchLength(X1, Y1, X2, Y2: Integer): Word;
 function g_TraceVector(X1, Y1, X2, Y2: Integer): Boolean; // `true`: no wall hit
 function g_GetAcidHit(X, Y: Integer; Width, Height: Word): Byte;
-function g_Look(a, b: PObj; d: TDirection): Boolean;
 procedure IncMax(var A: Integer; B, Max: Integer); overload;
 procedure IncMax(var A: Single; B, Max: Single); overload;
 procedure IncMax(var A: Integer; Max: Integer); overload;
@@ -77,8 +76,6 @@ function Sign(A: Single): ShortInt; overload;
 function PointToRect(X, Y, X1, Y1: Integer; Width, Height: Word): Integer;
 function GetAngle(baseX, baseY, pointX, PointY: Integer): SmallInt;
 function GetAngle2(vx, vy: Integer): SmallInt;
-function GetLines(Text: string; FontID: DWORD; MaxWidth: Word): SSArray;
-procedure Sort(var a: SSArray);
 function Sscanf(const s: string; const fmt: string;
                 const Pointers: array of Pointer): Integer;
 function InDWArray(a: DWORD; arr: DWArray): Boolean;
@@ -101,8 +98,8 @@ var
 implementation
 
 uses
-  Math, geom, e_log, g_map, g_gfx, g_player, SysUtils, MAPDEF,
-  StrUtils, e_graphics, g_monsters, g_items, g_game;
+  Math, geom, e_log, g_map, g_player, SysUtils, MAPDEF,
+  StrUtils, g_monsters, g_items, g_game;
 
 {$PUSH}
 {$WARN 2054 OFF} // unknwon env var
@@ -567,23 +564,6 @@ begin
   Result := tab[a];
 end;
 
-function g_Look(a, b: PObj; d: TDirection): Boolean;
-begin
-  if not gmon_dbg_los_enabled then begin result := false; exit; end; // always "wall hit"
-
-  if ((b^.X > a^.X) and (d = TDirection.D_LEFT)) or
-     ((b^.X < a^.X) and (d = TDirection.D_RIGHT)) then
-  begin
-    Result := False;
-    Exit;
-  end;
-
-  Result := g_TraceVector(a^.X+a^.Rect.X+(a^.Rect.Width div 2),
-                          a^.Y+a^.Rect.Y+(a^.Rect.Height div 2),
-                          b^.X+b^.Rect.X+(b^.Rect.Width div 2),
-                          b^.Y+b^.Rect.Y+(b^.Rect.Height div 2));
-end;
-
 function GetAngle(baseX, baseY, pointX, PointY: Integer): SmallInt;
 var
   c: Single;
@@ -741,62 +721,6 @@ begin
       Str := Trim(Str);
       Exit;
     end;
-end;
-
-function GetLines (Text: string; FontID: DWORD; MaxWidth: Word): SSArray;
-  var i, j, len, lines: Integer;
-
-  function GetLine (j, i: Integer): String;
-  begin
-    result := Copy(text, j, i - j + 1);
-  end;
-
-  function GetWidth (j, i: Integer): Integer;
-    var w, h: Word;
-  begin
-    e_CharFont_GetSize(FontID, GetLine(j, i), w, h);
-    result := w
-  end;
-
-begin
-  result := nil; lines := 0;
-  j := 1; i := 1; len := Length(Text);
-  // e_LogWritefln('GetLines @%s len=%s [%s]', [MaxWidth, len, Text]);
-  while j <= len do
-  begin
-    (* --- Get longest possible sequence --- *)
-    while (i + 1 <= len) and (GetWidth(j, i + 1) <= MaxWidth) do Inc(i);
-    (* --- Do not include part of word --- *)
-    if (i < len) and (text[i] <> ' ') then
-      while (i >= j) and (text[i] <> ' ') do Dec(i);
-    (* --- Do not include spaces --- *)
-    while (i >= j) and (text[i] = ' ') do Dec(i);
-    (* --- Add line --- *)
-    SetLength(result, lines + 1);
-    result[lines] := GetLine(j, i);
-    // e_LogWritefln('  -> (%s:%s::%s) [%s]', [j, i, GetWidth(j, i), result[lines]]);
-    Inc(lines);
-    (* --- Skip spaces --- *)
-    while (i <= len) and (text[i] = ' ') do Inc(i);
-    j := i + 2;
-  end;
-end;
-
-procedure Sort(var a: SSArray);
-var
-  i, j: Integer;
-  s: string;
-begin
-  if a = nil then Exit;
-
-  for i := High(a) downto Low(a) do
-    for j := Low(a) to High(a)-1 do
-      if LowerCase(a[j]) > LowerCase(a[j+1]) then
-      begin
-        s := a[j];
-        a[j] := a[j+1];
-        a[j+1] := s;
-      end;
 end;
 
 function Sscanf(const s: String; const fmt: String;

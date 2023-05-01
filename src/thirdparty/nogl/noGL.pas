@@ -43,6 +43,12 @@ interface
 
   const
     GL_NO_ERROR = 0;
+    GL_INVALID_ENUM = $0500;
+    GL_INVALID_VALUE = $0501;
+    GL_INVALID_OPERATION = $0502;
+    GL_STACK_OVERFLOW = $0503;
+    GL_STACK_UNDERFLOW = $0504;
+    GL_OUT_OF_MEMORY = $0505;
     GL_NEAREST = $2600;
     GL_DEPTH_TEST = $0B71;
     GL_SCISSOR_TEST = $0C11;
@@ -57,6 +63,7 @@ interface
     GL_ZERO = $0;
     GL_POINTS = $0000;
     GL_LINES = $0001;
+    GL_LINE_LOOP = $0002;
     GL_DST_COLOR = $0306;
     GL_SRC_COLOR = $0300;
     GL_ONE_MINUS_DST_COLOR = $0307;
@@ -69,6 +76,7 @@ interface
     GL_TEXTURE_WRAP_S = $2802;
     GL_TEXTURE_WRAP_T = $2803;
     GL_REPEAT = $2901;
+    GL_CLAMP_TO_EDGE = $812F;
     GL_TEXTURE_MIN_FILTER = $2801;
     GL_TEXTURE_MAG_FILTER = $2800;
     GL_RGBA = $1908;
@@ -125,6 +133,7 @@ interface
     GL_VERSION = $1F02;
     GL_EXTENSIONS = $1F03;
     GL_SHADING_LANGUAGE_VERSION = $8B8C;
+    GL_MAX_TEXTURE_SIZE = $0D33;
 
 //  const
 //    GL_CULL_FACE = $0B44;
@@ -172,6 +181,7 @@ interface
 
   procedure glReadPixels(x, y: GLint; width, height: GLsizei; format, atype: GLenum; pixels: Pointer);
 
+  procedure glOrtho (left, right, bottom, top, near, far: GLdouble);
   procedure glLoadIdentity;
   procedure glScissor(x, y: GLint; width, height: GLsizei);
   procedure glViewport(x, y: GLint; width, height: GLsizei);

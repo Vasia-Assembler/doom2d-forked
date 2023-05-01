@@ -17,380 +17,67 @@ unit g_window;
 
 interface
 
-uses
-  utils;
+  procedure g_Game_ClearLoading;
+  procedure g_Game_SetLoadingText (const text: String; maxval: Integer; rewrite: Boolean);
+  procedure g_Game_StepLoading (value: Integer = -1);
 
-function SDLMain (): Integer;
-procedure ResetTimer ();
-procedure ProcessLoading (forceUpdate: Boolean = False);
-
-var
-  gwin_has_stencil: Boolean = false;
-  gwin_k8_enable_light_experiments: Boolean = false;
-  g_dbg_aimline_on: Boolean = false;
-  g_dbg_input: Boolean = False;
+  procedure ProcessLoading (forceUpdate: Boolean=false);
 
 implementation
 
-uses
-{$IFDEF WINDOWS}Windows,{$ENDIF}
-{$IFDEF ENABLE_HOLMES}
-  g_holmes, sdlcarcass, fui_ctls,
-{$ENDIF}
-{$INCLUDE ../thirdparty/nogl/noGLuses.inc}
-  SysUtils, Classes, MAPDEF, Math,
-  e_graphics, e_log, e_texture, g_main,
-  g_console, e_input, g_options, g_game,
-  g_basic, g_textures, e_sound, g_sound, g_menu, ENet, g_net,
-  g_map, g_gfx, g_monsters, xprofiler,
-  g_touch, g_gui, g_system, g_netmaster;
+  uses
+    {$IFDEF ENABLE_RENDER}
+      r_render,
+    {$ENDIF}
+    {$IFDEF ENABLE_SYSTEM}
+      g_system,
+    {$ENDIF}
+    {$IFDEF ENABLE_MENU}
+      g_gui,
+    {$ENDIF}
+    e_sound, g_net
+  ;
 
-
-const
-  ProgressUpdateMSecs = 35; //1;//100;
-
-var
-  Time, Time_Delta, Time_Old: Int64;
-  Frame: Int64;
-  flag: Boolean;
-  wNeedTimeReset: Boolean = false;
-  wMinimized: Boolean = false;
-  wLoadingQuit: Boolean = false;
-
-procedure ResetTimer ();
-begin
-  wNeedTimeReset := true;
-end;
-
-{$IFNDEF HEADLESS}
-var
-  prevLoadingUpdateTime: UInt64 = 0;
-{$ENDIF}
-
-procedure ProcessLoading (forceUpdate: Boolean);
-{$IFNDEF HEADLESS}
-var
-  stt: UInt64;
-{$ENDIF}
-begin
-  if sys_HandleInput() = True then
-    Exit;
-
-{$IFNDEF HEADLESS}
-  if not wMinimized then
+  procedure ProcessLoading (forceUpdate: Boolean = False);
   begin
-    if not forceUpdate then
-    begin
-      stt := getTimeMilli();
-      forceUpdate := (stt < prevLoadingUpdateTime) or (stt-prevLoadingUpdateTime >= ProgressUpdateMSecs);
-    end;
-
-    if forceUpdate then
-    begin
-      e_SetRendertarget(True);
-      e_SetViewPort(0, 0, gScreenWidth, gScreenHeight);
-
-      DrawMenuBackground('INTER');
-      e_DarkenQuadWH(0, 0, gScreenWidth, gScreenHeight, 150);
-      DrawLoadingStat();
-      g_Console_Draw(True);
-
-      e_SetRendertarget(False);
-      e_SetViewPort(0, 0, gWinSizeX, gWinSizeY);
-      e_BlitFramebuffer(gWinSizeX, gWinSizeY);
-
-      sys_Repaint;
-      prevLoadingUpdateTime := getTimeMilli();
-    end;
-  end;
-{$ENDIF}
-
-  e_SoundUpdate();
-
-  // TODO: At the moment, I left here only host network processing, because the client code must
-  // handle network events on its own. Otherwise separate network cases that use different calls to
-  // enet_host_service() WILL lose their packets (for example, resource downloading). So they have
-  // to handle everything by themselves. But in general, this MUST be removed completely, since
-  // updating the window should never affect the network. Use single enet_host_service(), period.
-  if NetMode = NET_SERVER
-    then g_Net_Host_Update();
-end;
-
-
-function ProcessMessage (): Boolean;
-var
-  i, t: Integer;
-begin
-  result := sys_HandleInput();
-
-  Time := sys_GetTicks();
-  Time_Delta := Time-Time_Old;
-
-  flag := false;
-
-  if wNeedTimeReset then
-  begin
-    Frame := 0;
-    Time_Delta := 28;
-    wNeedTimeReset := false;
+    {$IFDEF ENABLE_MENU}
+      g_ActiveWindow := nil;
+    {$ENDIF}
+    {$IFDEF ENABLE_RENDER}
+      r_Render_DrawLoading(forceUpdate);
+    {$ENDIF}
   end;
 
-  g_Map_ProfilersBegin();
-  g_Mons_ProfilersBegin();
-
-  t := Time_Delta div 28;
-  if (t > 0) then
+  procedure g_Game_ClearLoading;
   begin
-    flag := true;
-    for i := 1 to t do
-      Update();
+    {$IFDEF ENABLE_MENU}
+      g_ActiveWindow := nil;
+    {$ENDIF}
+    {$IFDEF ENABLE_RENDER}
+      r_Render_ClearLoading;
+    {$ENDIF}
   end;
 
-  g_Map_ProfilersEnd();
-  g_Mons_ProfilersEnd();
-
-  if wLoadingQuit then
+  procedure g_Game_SetLoadingText (const text: String; maxval: Integer; rewrite: Boolean);
   begin
-    g_Game_Free();
-    g_Game_Quit();
+    {$IFDEF ENABLE_MENU}
+      g_ActiveWindow := nil;
+    {$ENDIF}
+    {$IFDEF ENABLE_RENDER}
+      if maxval < 0 then maxval := 0;
+      r_Render_SetLoading(text, maxval);
+    {$ENDIF}
   end;
 
-  if (gExit = EXIT_QUIT) then
+  procedure g_Game_StepLoading (value: Integer = -1);
   begin
-    result := true;
-    exit;
+    {$IFDEF ENABLE_MENU}
+      g_ActiveWindow := nil;
+    {$ENDIF}
+    {$IFDEF ENABLE_RENDER}
+      if value < 0 then value := 1;
+      r_Render_StepLoading(value);
+    {$ENDIF}
   end;
 
-  // Время предыдущего обновления
-  if flag then
-    Time_Old := Time - (Time_Delta mod 28);
-
-  // don't wait if VSync is on, GL already probably waits enough
-  if gLerpActors then
-    flag := (Time - Frame >= gFrameTime) or gVSync;
-
-  if flag then
-  begin
-    if (not wMinimized) then
-    begin
-      if gPause or (not gLerpActors) or (gState = STATE_FOLD) then
-        gLerpFactor := 1.0
-      else
-        gLerpFactor := nmin(1.0, (Time - Time_Old) / 28.0);
-      Draw;
-      sys_Repaint
-    end;
-    Frame := Time
-  end
-  else
-    sys_Delay(1);
-
-  e_SoundUpdate();
-end;
-
-function GLExtensionList (): SSArray;
-var
-  s: PChar;
-  i, j, num: GLint;
-begin
-  result := nil;
-  s := glGetString(GL_EXTENSIONS);
-  if s <> nil then
-  begin
-    num := 0;
-    i := 0;
-    j := 0;
-    while (s[i] <> #0) and (s[i] = ' ') do Inc(i);
-    while (s[i] <> #0) do
-    begin
-      while (s[i] <> #0) and (s[i] <> ' ') do Inc(i);
-      SetLength(result, num+1);
-      result[num] := Copy(s, j+1, i-j);
-      while (s[i] <> #0) and (s[i] = ' ') do Inc(i);
-      j := i;
-      Inc(num);
-    end;
-  end;
-end;
-
-function GLExtensionSupported (ext: AnsiString): Boolean;
-var
-  exts: SSArray;
-  e: AnsiString;
-begin
-  result := false;
-  exts := GLExtensionList();
-  for e in exts do
-  begin
-    //writeln('<', e, '> : [', ext, '] = ', strEquCI1251(e, ext));
-    if (strEquCI1251(e, ext)) then begin result := true; exit; end;
-  end;
-end;
-
-procedure PrintGLSupportedExtensions;
-begin
-  if gDebugMode then
-  begin
-    e_LogWritefln('GL Vendor: %s', [glGetString(GL_VENDOR)]);
-    e_LogWritefln('GL Renderer: %s', [glGetString(GL_RENDERER)]);
-    e_LogWritefln('GL Version: %s', [glGetString(GL_VERSION)]);
-    e_LogWritefln('GL Shaders: %s', [glGetString(GL_SHADING_LANGUAGE_VERSION)]);
-    e_LogWritefln('GL Extensions: %s', [glGetString(GL_EXTENSIONS)]);
-  end;
-end;
-
-function SDLMain (): Integer;
-var
-  idx: Integer;
-  arg: AnsiString;
-  mdfo: TStream;
-  {$IFDEF ENABLE_HOLMES}
-  itmp: Integer;
-  valres: Word;
-  {$ENDIF}
-begin
-{$IFDEF HEADLESS}
-  e_NoGraphics := true;
-{$ENDIF}
-
-  idx := 1;
-  while (idx <= ParamCount) do
-  begin
-    arg := ParamStr(idx);
-    Inc(idx);
-    if arg = '--jah' then g_profile_history_size := 100;
-    if arg = '--no-particles' then gpart_dbg_enabled := false;
-    if arg = '--no-los' then gmon_dbg_los_enabled := false;
-
-    if arg = '--profile-render' then g_profile_frame_draw := true;
-    if arg = '--profile-coldet' then g_profile_collision := true;
-    if arg = '--profile-los' then g_profile_los := true;
-
-    if arg = '--no-part-phys' then gpart_dbg_phys_enabled := false;
-    if arg = '--no-part-physics' then gpart_dbg_phys_enabled := false;
-    if arg = '--no-particles-phys' then gpart_dbg_phys_enabled := false;
-    if arg = '--no-particles-physics' then gpart_dbg_phys_enabled := false;
-    if arg = '--no-particle-phys' then gpart_dbg_phys_enabled := false;
-    if arg = '--no-particle-physics' then gpart_dbg_phys_enabled := false;
-
-    if arg = '--debug-input' then g_dbg_input := True;
-
-    {.$IF DEFINED(D2F_DEBUG)}
-    if arg = '--aimline' then g_dbg_aimline_on := true;
-    {.$ENDIF}
-
-{$IFDEF ENABLE_HOLMES}
-    if arg = '--holmes' then begin g_holmes_enabled := true; g_Game_SetDebugMode(); end;
-
-    if (arg = '--holmes-ui-scale') or (arg = '-holmes-ui-scale') then
-    begin
-      if (idx <= ParamCount) then
-      begin
-        if not conParseFloat(fuiRenderScale, ParamStr(idx)) then fuiRenderScale := 1.0;
-        Inc(idx);
-      end;
-    end;
-
-    if (arg = '--holmes-font') or (arg = '-holmes-font') then
-    begin
-      if (idx <= ParamCount) then
-      begin
-        itmp := 0;
-        val(ParamStr(idx), itmp, valres);
-        {$IFNDEF HEADLESS}
-        if (valres = 0) and (not g_holmes_imfunctional) then
-        begin
-          case itmp of
-            8: uiContext.font := 'win8';
-            14: uiContext.font := 'win14';
-            16: uiContext.font := 'win16';
-          end;
-        end;
-        {$ELSE}
-        // fuck off, fpc!
-        itmp := itmp;
-        valres := valres;
-        {$ENDIF}
-        Inc(idx);
-      end;
-    end;
-{$ENDIF}
-
-    if (arg = '--game-scale') or (arg = '-game-scale') then
-    begin
-      if (idx <= ParamCount) then
-      begin
-        if not conParseFloat(g_dbg_scale, ParamStr(idx)) then g_dbg_scale := 1.0;
-        Inc(idx);
-      end;
-    end;
-
-    if (arg = '--write-mapdef') or (arg = '-write-mapdef') then
-    begin
-      mdfo := createDiskFile('mapdef.txt');
-      mdfo.WriteBuffer(defaultMapDef[1], Length(defaultMapDef));
-      mdfo.Free();
-      Halt(0);
-    end;
-
-    if (arg = '--pixel-scale') or (arg = '-pixel-scale') then
-    begin
-      if (idx <= ParamCount) then
-      begin
-        if not conParseFloat(r_pixel_scale, ParamStr(idx)) then r_pixel_scale := 1.0;
-        Inc(idx);
-      end;
-    end;
-  end;
-
-{$IFNDEF USE_SYSSTUB}
-  PrintGLSupportedExtensions;
-  glLegacyNPOT := not (GLExtensionSupported('GL_ARB_texture_non_power_of_two') or GLExtensionSupported('GL_OES_texture_npot'));
-{$ELSE}
-  glLegacyNPOT := False;
-  glRenderToFBO := False;
-{$ENDIF}
-  if glNPOTOverride and glLegacyNPOT then
-  begin
-    glLegacyNPOT := true;
-    if gDebugMode then e_logWriteln('NPOT texture emulation: FORCED');
-  end
-  else
-  begin
-    if gDebugMode then
-    begin
-      if (glLegacyNPOT) then e_logWriteln('NPOT texture emulation: enabled')
-      else e_logWriteln('NPOT texture emulation: disabled');
-    end;
-  end;
-
-  Init;
-  Time_Old := sys_GetTicks();
-
-  g_Net_InitLowLevel();
-
-  // Командная строка
-  if (ParamCount > 0) then g_Game_Process_Params();
-
-{$IFNDEF HEADLESS}
-  // Запрос языка
-  if (not gGameOn) and gAskLanguage then g_Menu_AskLanguage();
-{$ENDIF}
-
-  if gDebugMode then e_WriteLog('Entering the main loop', TMsgType.Notify);
-
-  // main loop
-  while not ProcessMessage() do begin end;
-
-  g_Net_Slist_ShutdownAll();
-
-  Release();
-
-  g_Net_DeinitLowLevel();
-  result := 0;
-end;
-
-
-initialization
-  conRegVar('d_input', @g_dbg_input, '', '')
 end.

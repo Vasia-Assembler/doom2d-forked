@@ -15,6 +15,10 @@
 {$INCLUDE ../shared/a_modes.inc}
 unit sdlcarcass;
 
+  {$IFNDEF USE_SDL2}
+    {$FATAL SDL2 required for flexui sdlcarcass}
+  {$ENDIF}
+
 interface
 
 uses
@@ -68,7 +72,6 @@ implementation
 
 uses
   SysUtils, Classes,
-  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   {$IF DEFINED(LINUX) OR DEFINED(ANDROID)}
     unixtype, linux
   {$ELSEIF DEFINED(WINDOWS)}

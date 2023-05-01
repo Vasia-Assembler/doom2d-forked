@@ -181,7 +181,7 @@ procedure MH_SEND_ItemSpawn(Quiet: Boolean; IID: Word; ID: Integer = NET_EVERYON
 procedure MH_SEND_ItemDestroy(Quiet: Boolean; IID: Word; ID: Integer = NET_EVERYONE);
 procedure MH_SEND_ItemPos(IID: Word; ID: Integer = NET_EVERYONE);
 // PANEL
-procedure MH_SEND_PanelTexture(PGUID: Integer; AnimLoop: Byte; ID: Integer = NET_EVERYONE);
+procedure MH_SEND_PanelTexture(PGUID: Integer; ID: Integer = NET_EVERYONE);
 procedure MH_SEND_PanelState(PGUID: Integer; ID: Integer = NET_EVERYONE);
 // MONSTER
 procedure MH_SEND_MonsterSpawn(UID: Word; ID: Integer = NET_EVERYONE);
@@ -283,11 +283,27 @@ function IsValidFilePath(const S: String): Boolean;
 
 implementation
 
-uses
-  Math, ENet, e_input, e_graphics, e_log,
-  g_textures, g_gfx, g_sound, g_console, g_basic, g_options, g_main,
-  g_game, g_player, g_map, g_panel, g_items, g_weapons, g_phys, g_gui,
-  g_language, g_monsters, g_netmaster, utils, wadreader, MAPDEF;
+  uses
+    {$IFDEF ENABLE_MENU}
+      g_gui,
+    {$ENDIF}
+    {$IFDEF ENABLE_GFX}
+      g_gfx,
+    {$ENDIF}
+    {$IFDEF ENABLE_GIBS}
+      g_gibs,
+    {$ENDIF}
+    {$IFDEF ENABLE_SHELLS}
+      g_shells,
+    {$ENDIF}
+    {$IFDEF ENABLE_CORPSES}
+      g_corpses,
+    {$ENDIF}
+    Math, ENet, e_input, e_log, g_base, g_basic,
+    g_sound, g_console, g_options, g_window,
+    g_game, g_player, g_map, g_panel, g_items, g_weapons, g_phys,
+    g_language, g_monsters, g_netmaster, utils, wadreader, MAPDEF
+  ;
 
 const
   NET_KEY_LEFT     = 1 shl 0;
@@ -767,7 +783,9 @@ begin
     Pl.Name := TmpName;
   end;
 
-  if TmpModel <> Pl.Model.Name then
+  if (g_Force_Model_Get() <> 0) then
+    TmpModel := g_Forced_Model_GetName();
+  if TmpModel <> Pl.Model.GetName() then
     Pl.SetModel(TmpModel);
 
   if (TmpWeapSwitch <> Pl.WeapSwitchMode) then
@@ -907,7 +925,7 @@ procedure MH_SEND_Everything(CreatePlayers: Boolean {= False}; ID: Integer {= NE
   begin
     result := false; // don't stop
     MH_SEND_PanelState(pan.guid, ID); // anyway, to sync mplats
-    if (pan.CanChangeTexture) then MH_SEND_PanelTexture(pan.guid, pan.LastAnimLoop, ID);
+    if (pan.CanChangeTexture) then MH_SEND_PanelTexture(pan.guid, ID);
   end;
 
 var
@@ -1413,7 +1431,7 @@ begin
   NetOut.Write(PID);
   NetOut.Write(Pl.Name);
   if Mdl = '' then
-    NetOut.Write(Pl.Model.Name)
+    NetOut.Write(Pl.Model.GetName())
   else
     NetOut.Write(Mdl);
   NetOut.Write(Pl.FColor.R);
@@ -1476,22 +1494,18 @@ end;
 
 // PANEL
 
-procedure MH_SEND_PanelTexture(PGUID: Integer; AnimLoop: Byte; ID: Integer = NET_EVERYONE);
+procedure MH_SEND_PanelTexture(PGUID: Integer; ID: Integer = NET_EVERYONE);
 var
   TP: TPanel;
 begin
   TP := g_Map_PanelByGUID(PGUID);
   if (TP = nil) then exit;
 
-  with TP do
-  begin
-    NetOut.Write(Byte(NET_MSG_PTEX));
-    NetOut.Write(LongWord(PGUID));
-    NetOut.Write(FCurTexture);
-    NetOut.Write(FCurFrame);
-    NetOut.Write(FCurFrameCount);
-    NetOut.Write(AnimLoop);
-  end;
+  NetOut.Write(Byte(NET_MSG_PTEX));
+  NetOut.Write(LongWord(PGUID));
+  NetOut.Write(TP.FCurTexture);
+  NetOut.Write(TP.AnimTime);
+  NetOut.Write(TP.LastAnimLoop);
 
   g_Net_Host_Send(ID, True, NET_CHAN_LARGEDATA);
 end;
@@ -1730,8 +1744,6 @@ var
   Kind: Byte;
   X, Y: Integer;
   Ang: SmallInt;
-  Anim: TAnimation;
-  ID: LongWord;
 begin
   if not gGameOn then Exit;
   Kind := M.ReadByte();
@@ -1741,90 +1753,75 @@ begin
 
   case Kind of
     NET_GFX_SPARK:
-      g_GFX_Spark(X, Y, 2 + Random(2), Ang, 0, 0);
-
+    begin
+      {$IFDEF ENABLE_GFX}
+        g_GFX_Spark(X, Y, 2 + Random(2), Ang, 0, 0);
+      {$ENDIF}
+    end;
     NET_GFX_TELE:
     begin
-      if g_Frames_Get(ID, 'FRAMES_TELEPORT') then
-      begin
-        Anim := TAnimation.Create(ID, False, 3);
-        g_GFX_OnceAnim(X, Y, Anim);
-        Anim.Free();
-      end;
+      {$IFDEF ENABLE_GFX}
+        g_GFX_QueueEffect(R_GFX_TELEPORT_FAST, X, Y);
+      {$ENDIF}
       if Ang = 1 then
         g_Sound_PlayExAt('SOUND_GAME_TELEPORT', X, Y);
     end;
-
     NET_GFX_EXPLODE:
     begin
-      if g_Frames_Get(ID, 'FRAMES_EXPLODE_ROCKET') then
-      begin
-        Anim := TAnimation.Create(ID, False, 6);
-        Anim.Blending := False;
-        g_GFX_OnceAnim(X-64, Y-64, Anim);
-        Anim.Free();
-      end;
+      {$IFDEF ENABLE_GFX}
+        g_GFX_QueueEffect(R_GFX_EXPLODE_ROCKET, X - 64, Y - 64);
+      {$ENDIF}
       if Ang = 1 then
         g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEROCKET', X, Y);
     end;
-
     NET_GFX_BFGEXPL:
     begin
-      if g_Frames_Get(ID, 'FRAMES_EXPLODE_BFG') then
-      begin
-        Anim := TAnimation.Create(ID, False, 6);
-        Anim.Blending := False;
-        g_GFX_OnceAnim(X-64, Y-64, Anim);
-        Anim.Free();
-      end;
+      {$IFDEF ENABLE_GFX}
+        g_GFX_QueueEffect(R_GFX_EXPLODE_BFG, X - 64, Y - 64);
+      {$ENDIF}
       if Ang = 1 then
         g_Sound_PlayExAt('SOUND_WEAPON_EXPLODEBFG', X, Y);
     end;
-
     NET_GFX_BFGHIT:
     begin
-      if g_Frames_Get(ID, 'FRAMES_BFGHIT') then
-      begin
-        Anim := TAnimation.Create(ID, False, 4);
-        g_GFX_OnceAnim(X-32, Y-32, Anim);
-        Anim.Free();
-      end;
+      {$IFDEF ENABLE_GFX}
+        g_GFX_QueueEffect(R_GFX_BFG_HIT, X - 32, Y - 32);
+      {$ENDIF}
     end;
-
     NET_GFX_FIRE:
     begin
-      if g_Frames_Get(ID, 'FRAMES_FIRE') then
-      begin
-        Anim := TAnimation.Create(ID, False, 4);
-        g_GFX_OnceAnim(X, Y, Anim);
-        Anim.Free();
-      end;
+      {$IFDEF ENABLE_GFX}
+        g_GFX_QueueEffect(R_GFX_FIRE, X, Y);
+      {$ENDIF}
       if Ang = 1 then
         g_Sound_PlayExAt('SOUND_FIRE', X, Y);
     end;
-
     NET_GFX_RESPAWN:
     begin
-      if g_Frames_Get(ID, 'FRAMES_ITEM_RESPAWN') then
-      begin
-        Anim := TAnimation.Create(ID, False, 4);
-        g_GFX_OnceAnim(X, Y, Anim);
-        Anim.Free();
-      end;
+      {$IFDEF ENABLE_GFX}
+        g_GFX_QueueEffect(R_GFX_ITEM_RESPAWN, X, Y);
+      {$ENDIF}
       if Ang = 1 then
         g_Sound_PlayExAt('SOUND_ITEM_RESPAWNITEM', X, Y);
     end;
-
     NET_GFX_SHELL1:
-      g_Player_CreateShell(X, Y, 0, -2, SHELL_BULLET);
-
+    begin
+      {$IFDEF ENABLE_SHELLS}
+        g_Shells_Create(X, Y, 0, -2, SHELL_BULLET);
+      {$ENDIF}
+    end;
     NET_GFX_SHELL2:
-      g_Player_CreateShell(X, Y, 0, -2, SHELL_SHELL);
-
+    begin
+      {$IFDEF ENABLE_SHELLS}
+        g_Shells_Create(X, Y, 0, -2, SHELL_SHELL);
+      {$ENDIF}
+    end;
     NET_GFX_SHELL3:
     begin
-      g_Player_CreateShell(X, Y, 0, -2, SHELL_SHELL);
-      g_Player_CreateShell(X, Y, 0, -2, SHELL_SHELL);
+      {$IFDEF ENABLE_SHELLS}
+        g_Shells_Create(X, Y, 0, -2, SHELL_SHELL);
+        g_Shells_Create(X, Y, 0, -2, SHELL_SHELL);
+      {$ENDIF}
     end;
   end;
 end;
@@ -2150,7 +2147,15 @@ begin
 
     NET_EV_LMS_START:
     begin
-      g_Player_RemoveAllCorpses;
+      {$IFDEF ENABLE_GIBS}
+        g_Gibs_RemoveAll;
+      {$ENDIF}
+      {$IFDEF ENABLE_SHELLS}
+        g_Shells_RemoveAll;
+      {$ENDIF}
+      {$IFDEF ENABLE_CORPSES}
+        g_Corpses_RemoveAll;
+      {$ENDIF}
       gLMSRespawn := LMS_RESPAWN_NONE;
       g_Game_Message(_lc[I_MESSAGE_LMS_START], 144);
     end;
@@ -2739,7 +2744,10 @@ begin
       g_Console_Add(Format(_lc[I_PLAYER_NAME], [Pl.Name, TmpName]), True);
     Pl.Name := TmpName;
   end;
-  if TmpModel <> Pl.Model.Name then
+
+  if (g_Force_Model_Get() <> 0) then
+    TmpModel := g_Forced_Model_GetName();
+  if TmpModel <> Pl.Model.GetName() then
     Pl.SetModel(TmpModel);
 
   if (g_Force_Model_Get() <> 0) then
@@ -2754,11 +2762,9 @@ end;
 procedure MC_RECV_ItemSpawn(var M: TMsg);
 var
   ID: Word;
-  AID: DWord;
   X, Y, VX, VY: Integer;
   T: Byte;
   Quiet, Fall{, Resp}: Boolean;
-  Anim: TAnimation;
   it: PItem;
 begin
   if not gGameOn then Exit;
@@ -2782,12 +2788,9 @@ begin
   if not Quiet then
   begin
     g_Sound_PlayExAt('SOUND_ITEM_RESPAWNITEM', X, Y);
-    if g_Frames_Get(AID, 'FRAMES_ITEM_RESPAWN') then
-    begin
-      Anim := TAnimation.Create(AID, False, 4);
-      g_GFX_OnceAnim(X+(it.Obj.Rect.Width div 2)-16, Y+(it.Obj.Rect.Height div 2)-16, Anim);
-      Anim.Free();
-    end;
+    {$IFDEF ENABLE_GFX}
+      g_GFX_QueueEffect(R_GFX_ITEM_RESPAWN, X+(it.Obj.Rect.Width div 2)-16, Y+(it.Obj.Rect.Height div 2)-16);
+    {$ENDIF}
   end;
 end;
 
@@ -2835,18 +2838,13 @@ end;
 // PANEL
 
 procedure MC_RECV_PanelTexture(var M: TMsg);
-var
-  TP: TPanel;
-  PGUID: Integer;
-  Tex, Fr: Integer;
-  Loop, Cnt: Byte;
+  var TP: TPanel; PGUID, Tex: Integer; AnimTime: LongWord; Loop: Byte;
 begin
   if not gGameOn then Exit;
 
   PGUID := Integer(M.ReadLongWord());
   Tex := M.ReadLongInt();
-  Fr := M.ReadLongInt();
-  Cnt := M.ReadByte();
+  AnimTime := M.ReadLongWord();
   Loop := M.ReadByte();
 
   TP := g_Map_PanelByGUID(PGUID);
@@ -2854,7 +2852,7 @@ begin
   begin
     // switch texture
     TP.SetTexture(Tex, Loop);
-    TP.SetFrame(Fr, Cnt);
+    TP.SetFrame(AnimTime);
   end;
 end;
 
@@ -3225,7 +3223,11 @@ begin
   kByte := 0;
   Predict := NetPredictSelf; // and (not NetGotKeys);
 
+{$IFDEF DISABLE_MENU}
+  if (not gConsoleShow) and (not gChatShow) then
+{$ELSE}
   if (not gConsoleShow) and (not gChatShow) and (g_ActiveWindow = nil) then
+{$ENDIF}
   begin
     strafeDir := P1MoveButton shr 4;
     P1MoveButton := P1MoveButton and $0F;

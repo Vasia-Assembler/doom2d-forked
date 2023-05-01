@@ -49,7 +49,6 @@ var
   gAdvCorpses: Boolean;
   gAdvBlood: Boolean;
   gAdvGibs: Boolean;
-  gGibsCount: Integer;
   gBloodCount: Integer;
   gFlash: Integer;
   gDrawBackGround: Boolean;
@@ -76,16 +75,69 @@ var
   gsItemRespawnTime: Word = 60;
   gsWarmupTime: Word = 30;
 
+{$IFDEF HEADLESS}
+  e_NoGraphics: Boolean = True;
+{$ELSE}
+  e_NoGraphics: Boolean = False;
+{$ENDIF}
+  g_dbg_scale: Single = 1.0;
+  r_pixel_scale: Single = 1.0;
+
+  gwin_has_stencil: Boolean = false;
+  gwin_k8_enable_light_experiments: Boolean = false;
+  g_dbg_aimline_on: Boolean = false;
+  g_dbg_input: Boolean = False;
+
+  var (* touch *)
+    g_touch_enabled: Boolean = False;
+    g_touch_size: Single = 1.0;
+    g_touch_offset: Single = 50.0;
+    g_touch_fire: Boolean = True;
+    g_touch_alt: Boolean = False;
+
+  {--- Read-only dirs ---}
+  GameWAD: string;
+  DataDirs: SSArray;
+  ModelDirs: SSArray;
+  MegawadDirs: SSArray;
+  MapDirs: SSArray;
+  WadDirs: SSArray;
+  AllMapDirs: SSArray; // Maps + Megawads
+
+  {--- Read-Write dirs ---}
+  LogFileName: string;
+  LogDirs: SSArray;
+  SaveDirs: SSArray;
+  CacheDirs: SSArray;
+  ConfigDirs: SSArray;
+  ScreenshotDirs: SSArray;
+  StatsDirs: SSArray;
+  MapDownloadDirs: SSArray;
+  WadDownloadDirs: SSArray;
+
+  GameWADName: string = 'GAME';
+
 implementation
 
 uses
-  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
   {$IFDEF USE_SDL2}
     SDL2,
   {$ENDIF}
-  e_log, e_input, g_console, g_window, g_sound, g_gfx, g_player, Math,
-  g_map, g_net, g_netmaster, SysUtils, CONFIG, g_game, g_main, e_texture,
-  g_items, wadreader, e_graphics, g_touch, envvars, g_system;
+  {$IFDEF ENABLE_GFX}
+    g_gfx,
+  {$ENDIF}
+  {$IFDEF ENABLE_GIBS}
+    g_gibs,
+  {$ENDIF}
+  {$IFDEF ENABLE_SHELLS}
+    g_shells,
+  {$ENDIF}
+  {$IFDEF ENABLE_CORPSES}
+    g_corpses,
+  {$ENDIF}
+  e_log, e_input, g_console, g_sound, g_player, Math,
+  g_map, g_net, g_netmaster, SysUtils, CONFIG, g_game,
+  g_items, wadreader, envvars;
 
   var
     machine: Integer;
@@ -235,11 +287,19 @@ begin
   end;
 
   (* section Game *)
-  g_GFX_SetMax(2000);
-  g_Shells_SetMax(300);
-  g_Gibs_SetMax(150);
-  g_Corpses_SetMax(20);
-  gGibsCount := 32;
+  {$IFDEF ENABLE_GFX}
+    g_GFX_SetMax(2000);
+  {$ENDIF}
+  {$IFDEF ENABLE_SHELLS}
+    g_Shells_SetMax(DefaultShellMax);
+  {$ENDIF}
+  {$IFDEF ENABLE_CORPSES}
+    g_Corpses_SetMax(DefaultCorpsesMax);
+  {$ENDIF}
+  {$IFDEF ENABLE_GIBS}
+    g_Gibs_SetMax(DefaultGibsMax);
+    gGibsCount := DefaultGibsCount;
+  {$ENDIF}
   gBloodCount := 4;
   gAdvBlood := True;
   gAdvCorpses := True;
@@ -251,7 +311,6 @@ begin
   gChatBubble := 4;
   wadoptDebug := False;
   wadoptFast := False;
-  e_FastScreenshots := True;
   gDefaultMegawadStart := DF_Default_Megawad_Start;
   g_dbg_scale := 1.0;
   gSaveStats := False;
@@ -334,6 +393,8 @@ initialization
   conRegVar('r_texfilter', @gTextureFilter, '', '');
   conRegVar('r_npot', @glNPOTOverride, '', '');
   conRegVar('r_interp', @gLerpActors, '', 'interpolate actors');
+  conRegVar('r_scale', @g_dbg_scale, 0.01, 100.0, 'render scale', '',  false);
+  conRegVar('r_resolution_scale', @r_pixel_scale, 0.01, 100.0, 'upscale factor', '', false);
 
   (* Sound *)
   conRegVar('s_nosound', @gNoSound, '', '');
@@ -350,7 +411,9 @@ initialization
   {$ENDIF}
 
   (* Game *)
-  conRegVar('g_gibs_count', @gGibsCount, '', '');
+  {$IFDEF ENABLE_GIBS}
+    conRegVar('g_gibs_count', @gGibsCount, '', '');
+  {$ENDIF}
   conRegVar('g_blood_count', @gBloodCount, '', '');
   conRegVar('g_adv_blood', @gAdvBlood, '', '');
   conRegVar('g_adv_corpses', @gAdvCorpses, '', '');
@@ -362,9 +425,17 @@ initialization
   conRegVar('r_chat_bubble', @gChatBubble, '', '');
   conRegVar('sfs_debug', @wadoptDebug, '', '');
   conRegVar('sfs_fastmode', @wadoptFast, '', '');
-  conRegVar('g_fast_screenshots', @e_FastScreenshots, '', '');
   conRegVar('g_default_megawad', @gDefaultMegawadStart, '', '');
   conRegVar('g_save_stats', @gSaveStats, '', '');
   conRegVar('g_screenshot_stats', @gScreenshotStats, '', '');
   conRegVar('g_lastmap', @gsMap, '', '');
+
+  conRegVar('d_input', @g_dbg_input, '', '');
+
+  (* touch *)
+  conRegVar('touch_enable', @g_touch_enabled, 'enable/disable virtual buttons', 'draw buttons');
+  conRegVar('touch_fire', @g_touch_fire, 'enable/disable fire when press virtual up/down', 'fire when press up/down');
+  conRegVar('touch_size', @g_touch_size, 0.1, 10, 'size of virtual buttons', 'button size');
+  conRegVar('touch_offset', @g_touch_offset, 0, 100, '', '');
+  conRegVar('touch_alt', @g_touch_alt, 'althernative virtual buttons layout', 'althernative layout');
 end.

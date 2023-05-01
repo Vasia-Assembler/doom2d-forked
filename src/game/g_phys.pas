@@ -17,8 +17,7 @@ unit g_phys;
 
 interface
 
-uses
-  e_graphics;
+  uses g_base;
 
 type
   PObj = ^TObj;
@@ -33,7 +32,6 @@ type
     slopeFramesLeft: Integer; // frames left to go
     // for frame interpolation
     oldX, oldY: Integer;
-    procedure lerp(t: Single; out fX, fY: Integer);
   end;
 
 const
@@ -77,19 +75,17 @@ var
 
 implementation
 
-uses
-  g_map, g_basic, Math, g_player, g_console, SysUtils,
-  g_sound, g_gfx, MAPDEF, g_monsters, g_game, utils;
+  uses
+    {$IFDEF ENABLE_GFX}
+      g_gfx,
+    {$ENDIF}
+    g_map, g_basic, Math, g_player, g_console, SysUtils,
+    g_sound, MAPDEF, g_monsters, g_game, utils
+  ;
 
 
 const
   SmoothSlopeFrames = 4;
-
-procedure TObj.lerp(t: Single; out fX, fY: Integer);
-begin
-  fX := nlerp(oldX, X, t);
-  fY := nlerp(oldY, Y, t);
-end;
 
 function g_Obj_StayOnStep(Obj: PObj): Boolean; inline;
 begin
@@ -226,11 +222,13 @@ begin
       g_Sound_PlayExAt('SOUND_GAME_BULK2', Obj^.X, Obj^.Y);
   end;
 
-  g_GFX_Water(Obj^.X+Obj^.Rect.X+(Obj^.Rect.Width div 2),
-              Obj^.Y+Obj^.Rect.Y+(Obj^.Rect.Height div 2),
-              Min(5*(abs(Obj^.Vel.X)+abs(Obj^.Vel.Y)), 50),
-              -Obj^.Vel.X, -Obj^.Vel.Y,
-              Obj^.Rect.Width, 16, Color);
+  {$IFDEF ENABLE_GFX}
+    g_GFX_Water(Obj^.X+Obj^.Rect.X+(Obj^.Rect.Width div 2),
+                Obj^.Y+Obj^.Rect.Y+(Obj^.Rect.Height div 2),
+                Min(5*(abs(Obj^.Vel.X)+abs(Obj^.Vel.Y)), 50),
+                -Obj^.Vel.X, -Obj^.Vel.Y,
+                Obj^.Rect.Width, 16, Color);
+  {$ENDIF}
 end;
 
 

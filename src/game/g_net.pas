@@ -21,7 +21,7 @@ uses
   e_log, e_msg, utils, ENet, Classes, md5, MAPDEF{$IFDEF USE_MINIUPNPC}, miniupnpc;{$ELSE};{$ENDIF}
 
 const
-  NET_PROTOCOL_VER = 188;
+  NET_PROTOCOL_VER = 189;
 
   NET_MAXCLIENTS = 24;
   NET_CHANS = 12;
@@ -267,9 +267,9 @@ implementation
 
 uses
   SysUtils,
-  e_input, e_res,
+  e_input, e_res, g_options,
   g_nethandler, g_netmsg, g_netmaster, g_player, g_window, g_console,
-  g_main, g_game, g_language, g_weapons, ctypes, g_system, g_map;
+  g_game, g_language, g_weapons, ctypes, g_map;
 
 const
   FILE_CHUNK_SIZE = 8192;
@@ -2017,7 +2017,7 @@ begin
   end;
 
   // предупредить что ждем слишком долго через N секунд
-  TimeoutTime := sys_GetTicks() + NET_CONNECT_TIMEOUT;
+  TimeoutTime := GetTickCount64() + NET_CONNECT_TIMEOUT;
 
   OuterLoop := True;
   while OuterLoop do
@@ -2038,7 +2038,7 @@ begin
       end;
     end;
 
-    T := sys_GetTicks();
+    T := GetTickCount64();
     if T > TimeoutTime then
     begin
       TimeoutTime := T + NET_CONNECT_TIMEOUT * 100; // одного предупреждения хватит

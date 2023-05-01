@@ -19,9 +19,17 @@ interface
 
   uses Utils;
 
-  (* --- Utils --- *)
-  function sys_GetTicks (): Int64;
-  procedure sys_Delay (ms: Integer);
+  type
+    TGLProfile = (Core, Compat, Common, CommonLite);
+
+  type
+    TGLDisplayInfo = record
+      w, h, bpp: Integer;
+      fullscreen: Boolean;
+      maximized: Boolean;
+      major, minor: Integer;
+      profile: TGLProfile;
+    end;
 
   (* --- Graphics --- *)
   function sys_GetDisplayModes (bpp: Integer): SSArray;
@@ -29,24 +37,41 @@ interface
   procedure sys_EnableVSync (yes: Boolean);
   procedure sys_Repaint;
 
+  function sys_SetDisplayModeGL (const info: TGLDisplayInfo): Boolean;
+
   (* --- Input --- *)
   function sys_HandleInput (): Boolean;
   procedure sys_RequestQuit;
+
+{$IFDEF ENABLE_TOUCH}
+  function sys_IsTextInputActive (): Boolean;
+  procedure sys_ShowKeyboard (yes: Boolean);
+{$ENDIF}
 
   (* --- Init --- *)
   procedure sys_Init;
   procedure sys_Final;
 
+  var (* hooks *)
+    sys_CharPress: procedure (ch: AnsiChar) = nil;
+    sys_ScreenResize: procedure (w, h: Integer) = nil;
+
 implementation
 
   uses
-    SysUtils, SDL2, Math, ctypes,
-    e_log, e_graphics, e_input, e_sound,
-    {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
     {$IFDEF ENABLE_HOLMES}
-      g_holmes, sdlcarcass, fui_ctls,
+      sdlcarcass,
     {$ENDIF}
-    g_touch, g_options, g_window, g_console, g_game, g_menu, g_gui, g_main, g_basic;
+    {$IFDEF ENABLE_RENDER}
+      r_render,
+    {$ENDIF}
+    {$IFDEF ENABLE_MENU}
+      g_gui,
+    {$ENDIF}
+    SysUtils, SDL2, Math, ctypes,
+    e_log, e_input, e_sound,
+    g_options, g_console, g_game, g_basic
+  ;
 
   const
     GameTitle = 'Doom 2D: Forked (SDL 2, %s)';
@@ -59,90 +84,15 @@ implementation
     JoystickHandle: array [0..e_MaxJoys - 1] of PSDL_Joystick;
     JoystickHatState: array [0..e_MaxJoys - 1, 0..e_MaxJoyHats - 1, HAT_LEFT..HAT_DOWN] of Boolean;
     JoystickZeroAxes: array [0..e_MaxJoys - 1, 0..e_MaxJoyAxes - 1] of Integer;
+    rMajor, rMinor, rProfile: Integer;
 
-  (* --------- Utils --------- *)
-
-  function sys_GetTicks (): Int64;
-  begin
-    result := SDL_GetTicks()
-  end;
-
-  procedure sys_Delay (ms: Integer);
-  begin
-    SDL_Delay(ms)
-  end;
+{$IFDEF ENABLE_TOUCH}
+  var (* touch *)
+    angleFire: Boolean;
+    keyFinger: array [VK_FIRSTKEY..VK_LASTKEY] of Integer;
+{$ENDIF}
 
   (* --------- Graphics --------- *)
-
-  function LoadGL: Boolean;
-    var ltmp: Integer;
-  begin
-    result := true;
-    {$IFDEF NOGL_INIT}
-      nogl_Init;
-      if glRenderToFBO and (not nogl_ExtensionSupported('GL_OES_framebuffer_object')) then
-      begin
-        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
-        glRenderToFBO := false;
-      end;
-    {$ELSE}
-      if glRenderToFBO and (not Load_GL_ARB_framebuffer_object) then
-      begin
-        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
-        glRenderToFBO := false;
-      end;
-    {$ENDIF}
-    if SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, @ltmp) = 0 then
-    begin
-      if gDebugMode then e_LogWritefln('stencil buffer size: %s', [ltmp]);
-      gwin_has_stencil := (ltmp > 0);
-    end;
-  end;
-
-  procedure FreeGL;
-  begin
-    {$IFDEF NOGL_INIT}
-    nogl_Quit();
-    {$ENDIF}
-  end;
-
-  procedure UpdateSize (w, h: Integer);
-  begin
-    gWinSizeX := w;
-    gWinSizeY := h;
-    gRC_Width := w;
-    gRC_Height := h;
-    if glRenderToFBO then
-    begin
-      // store real window size in gWinSize, downscale resolution now
-      w := round(w / r_pixel_scale);
-      h := round(h / r_pixel_scale);
-      if not e_ResizeFramebuffer(w, h) then
-      begin
-        if gDebugMode then e_LogWriteln('GL: could not create framebuffer, falling back to --no-fbo');
-        glRenderToFBO := False;
-        w := gWinSizeX;
-        h := gWinSizeY;
-      end;
-    end;
-    gScreenWidth := w;
-    gScreenHeight := h;
-    {$IFDEF ENABLE_HOLMES}
-      fuiScrWdt := w;
-      fuiScrHgt := h;
-    {$ENDIF}
-    e_ResizeWindow(w, h);
-    e_InitGL;
-    g_Game_SetupScreenSize;
-    {$IFNDEF ANDROID}
-      (* This will fix menu reset on keyboard showing *)
-      g_Menu_Reset;
-    {$ENDIF}
-    g_Game_ClearLoading;
-    {$IFDEF ENABLE_HOLMES}
-      if assigned(oglInitCB) then oglInitCB;
-    {$ENDIF}
-  end;
 
   function GetTitle (): AnsiString;
     var info: AnsiString;
@@ -161,20 +111,18 @@ implementation
     result := false;
     if window = nil then
     begin
-      {$IFDEF USE_GLES1}
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-      {$ELSE}
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, rMajor);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, rMinor);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, rProfile);
+      if rProfile in [SDL_GL_CONTEXT_PROFILE_CORE, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY] then
+      begin
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8); // lights; it is enough to have 1-bit stencil buffer for lighting, but...
-      {$ENDIF}
+      end;
       flags := SDL_WINDOW_OPENGL or SDL_WINDOW_RESIZABLE;
       if fullScreen then flags := flags or SDL_WINDOW_FULLSCREEN;
       if maximized then flags := flags or SDL_WINDOW_MAXIMIZED;
@@ -195,12 +143,6 @@ implementation
         context := SDL_GL_CreateContext(window);
         if context <> nil then
         begin
-          if not LoadGL then
-          begin
-            e_LogWriteln('GL: unable to load OpenGL functions', TMsgType.Fatal);
-            SDL_GL_DeleteContext(context); context := nil;
-            exit;
-          end;
           if (fullscreen = false) and (maximized = false) and (wc = false) then
           begin
             SDL_GetWindowPosition(window, @x, @y);
@@ -210,7 +152,8 @@ implementation
           gWinMaximized := maximized;
           gRC_FullScreen := fullscreen;
           gRC_Maximized := maximized;
-          UpdateSize(w, h);
+          if @sys_ScreenResize <> nil then
+            sys_ScreenResize(w, h);
           result := true
         end
         else
@@ -251,7 +194,8 @@ implementation
       gWinMaximized := maximized;
       gRC_FullScreen := fullscreen;
       gRC_Maximized := maximized;
-      UpdateSize(w, h);
+      if @sys_ScreenResize <> nil then
+        sys_ScreenResize(w, h);
       result := true
     end
   end;
@@ -303,7 +247,29 @@ implementation
 
   function sys_SetDisplayMode (w, h, bpp: Integer; fullScreen, maximized: Boolean): Boolean;
   begin
+    {$IFDEF USE_GLES1}
+      rMajor := 1;
+      rMinor := 1;
+      rProfile := SDL_GL_CONTEXT_PROFILE_ES;
+    {$ELSE}
+      rMajor := 2;
+      rMinor := 1;
+      rProfile := SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
+    {$ENDIF}
     result := InitWindow(w, h, bpp, fullScreen, maximized)
+  end;
+
+  function sys_SetDisplayModeGL (const info: TGLDisplayInfo): Boolean;
+  begin
+    rMajor := info.major;
+    rMinor := info.minor;
+    case info.profile of
+      TGLProfile.Core: rProfile := SDL_GL_CONTEXT_PROFILE_CORE;
+      TGLProfile.Compat: rProfile := SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
+      TGLProfile.Common: rProfile := SDL_GL_CONTEXT_PROFILE_ES;
+      TGLProfile.CommonLite: rProfile := SDL_GL_CONTEXT_PROFILE_ES;
+    end;
+    result := InitWindow(info.w, info.h, info.bpp, info.fullscreen, info.maximized);
   end;
 
   (* --------- Joystick --------- *)
@@ -451,6 +417,140 @@ implementation
     end
   end;
 
+  (* --------- Touch --------- *)
+
+{$IFDEF ENABLE_TOUCH}
+  function sys_IsTextInputActive (): Boolean;
+  begin
+    Result := SDL_IsTextInputActive() = SDL_True
+  end;
+
+  procedure sys_ShowKeyboard (yes: Boolean);
+  begin
+    if g_dbg_input then
+      e_LogWritefln('g_Touch_ShowKeyboard(%s)', [yes]);
+    (* on desktop we always receive text (needed for cheats) *)
+    if yes or (SDL_HasScreenKeyboardSupport() = SDL_FALSE) then
+      SDL_StartTextInput
+    else
+      SDL_StopTextInput
+  end;
+
+  procedure HandleTouch (const ev: TSDL_TouchFingerEvent);
+    var
+      x, y, i, finger: Integer;
+
+    function IntersectControl(ctl, xx, yy: Integer): Boolean;
+      {$IFDEF ENABLE_RENDER}
+        var x, y, w, h: Integer; founded: Boolean;
+      {$ENDIF}
+    begin
+      {$IFDEF ENABLE_RENDER}
+        r_Render_GetKeyRect(ctl, x, y, w, h, founded);
+        Result := founded and (xx >= x) and (yy >= y) and (xx <= x + w) and (yy <= y + h);
+      {$ELSE}
+        Result := False
+      {$ENDIF}
+    end;
+
+    procedure KeyUp (finger, i: Integer);
+    begin
+      if g_dbg_input then
+        e_LogWritefln('Input Debug: g_touch.KeyUp, finger=%s, key=%s', [finger, i]);
+
+      keyFinger[i] := 0;
+      e_KeyUpDown(i, False);
+      g_Console_ProcessBind(i, False);
+
+      (* up/down + fire hack *)
+{$IFDEF ENABLE_MENU}
+      if g_touch_fire and (gGameSettings.GameType <> GT_NONE) and (g_ActiveWindow = nil) and angleFire then
+{$ELSE}
+      if g_touch_fire and (gGameSettings.GameType <> GT_NONE) and angleFire then
+{$ENDIF}
+      begin
+        if (i = VK_UP) or (i = VK_DOWN) then
+        begin
+          angleFire := False;
+          keyFinger[VK_FIRE] := 0;
+          e_KeyUpDown(VK_FIRE, False);
+          g_Console_ProcessBind(VK_FIRE, False)
+        end
+      end
+    end;
+
+    procedure KeyDown (finger, i: Integer);
+    begin
+      if g_dbg_input then
+        e_LogWritefln('Input Debug: g_touch.KeyDown, finger=%s, key=%s', [finger, i]);
+
+      keyFinger[i] := finger;
+      e_KeyUpDown(i, True);
+      g_Console_ProcessBind(i, True);
+
+      (* up/down + fire hack *)
+{$IFDEF ENABLE_MENU}
+      if g_touch_fire and (gGameSettings.GameType <> GT_NONE) and (g_ActiveWindow = nil) then
+{$ELSE}
+      if g_touch_fire and (gGameSettings.GameType <> GT_NONE) then
+{$ENDIF}
+      begin
+        if i = VK_UP then
+        begin
+          angleFire := True;
+          keyFinger[VK_FIRE] := -1;
+          e_KeyUpDown(VK_FIRE, True);
+          g_Console_ProcessBind(VK_FIRE, True)
+        end
+        else if i = VK_DOWN then
+        begin
+          angleFire := True;
+          keyFinger[VK_FIRE] := -1;
+          e_KeyUpDown(VK_FIRE, True);
+          g_Console_ProcessBind(VK_FIRE, True)
+        end
+      end
+    end;
+
+    procedure KeyMotion (finger, i: Integer);
+    begin
+      if keyFinger[i] <> finger then
+      begin
+        KeyUp(finger, i);
+        KeyDown(finger, i)
+      end
+    end;
+
+  begin
+    if not g_touch_enabled then
+      Exit;
+
+    finger := ev.fingerId + 2;
+    x := Trunc(ev.x * gWinSizeX);
+    y := Trunc(ev.y * gWinSizeY);
+
+    for i := VK_FIRSTKEY to VK_LASTKEY do
+    begin
+      if IntersectControl(i, x, y) then
+      begin
+        if ev.type_ = SDL_FINGERUP then
+          KeyUp(finger, i)
+        else if ev.type_ = SDL_FINGERMOTION then
+          KeyMotion(finger, i)
+        else if ev.type_ = SDL_FINGERDOWN then
+          keyDown(finger, i)
+      end
+      else if keyFinger[i] = finger then
+      begin
+        if ev.type_ = SDL_FINGERUP then
+          KeyUp(finger, i)
+        else if ev.type_ = SDL_FINGERMOTION then
+          KeyUp(finger, i)
+      end
+    end
+  end;
+{$ENDIF} // TOUCH
+
   (* --------- Input --------- *)
 
   function HandleWindow (var ev: TSDL_WindowEvent): Boolean;
@@ -459,7 +559,9 @@ implementation
     if g_dbg_input then
       e_LogWritefln('Window Event: event = %s, data1 = %s, data2 = %s', [ev.event, ev.data1, ev.data2]);
     case ev.event of
-      SDL_WINDOWEVENT_RESIZED: UpdateSize(ev.data1, ev.data2);
+      SDL_WINDOWEVENT_RESIZED:
+        if @sys_ScreenResize <> nil then
+          sys_ScreenResize(ev.data1, ev.data2);
       SDL_WINDOWEVENT_EXPOSED: sys_Repaint;
       SDL_WINDOWEVENT_CLOSE: result := true;
       SDL_WINDOWEVENT_MOVED:
@@ -533,8 +635,9 @@ implementation
     sch := AnsiChar(wchar2win(ch));
     if g_dbg_input then
       e_LogWritefln('Input Debug: text, text="%s", ch = %s, sch = %s', [ev.text, Ord(ch), Ord(sch)]);
-    if IsValid1251(Word(ch)) and IsPrintable1251(ch) then
-      CharPress(sch);
+    if @sys_CharPress <> nil then
+      if IsValid1251(Word(ch)) and IsPrintable1251(ch) then
+        sys_CharPress(sch)
   end;
 
   function sys_HandleInput (): Boolean;
@@ -554,7 +657,9 @@ implementation
         SDL_JOYDEVICEADDED: HandleJoyAdd(ev.jdevice);
         SDL_JOYDEVICEREMOVED: HandleJoyRemove(ev.jdevice);
         SDL_TEXTINPUT: HandleTextInput(ev.text);
-        SDL_FINGERMOTION, SDL_FINGERDOWN, SDL_FINGERUP: g_Touch_HandleEvent(ev.tfinger);
+        {$IFDEF ENABLE_TOUCH}
+          SDL_FINGERMOTION, SDL_FINGERDOWN, SDL_FINGERUP: HandleTouch(ev.tfinger);
+        {$ENDIF}
         {$IFDEF ENABLE_HOLMES}
           SDL_MOUSEBUTTONDOWN, SDL_MOUSEBUTTONUP, SDL_MOUSEWHEEL, SDL_MOUSEMOTION: fuiOnSDLEvent(ev);
         {$ENDIF}
@@ -592,6 +697,12 @@ implementation
         e_LogWritefln('SDL: Init subsystem failed: %s', [SDL_GetError()]);
     {$ENDIF}
     SDL_ShowCursor(SDL_DISABLE);
+    {$IFDEF ENABLE_TOUCH}
+      sys_ShowKeyboard(FALSE);
+      g_touch_enabled := SDL_GetNumTouchDevices() > 0;
+    {$ELSE}
+      g_touch_enabled := False;
+    {$ENDIF}
   end;
 
   procedure sys_Final;
@@ -599,7 +710,6 @@ implementation
     if gDebugMode then e_WriteLog('Releasing SDL2', TMsgType.Notify);
     if context <> nil then
     begin
-      FreeGL;
       SDL_GL_DeleteContext(context);
       context := nil;
     end;

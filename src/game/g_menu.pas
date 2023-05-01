@@ -20,8 +20,6 @@ interface
 procedure g_Menu_Init();
 procedure g_Menu_Free();
 procedure g_Menu_Reset();
-procedure LoadStdFont(cfgres, texture: string; var FontID: DWORD);
-procedure LoadFont(txtres, fntres: string; var FontID: DWORD);
 procedure g_Menu_AskLanguage();
 
 procedure g_Menu_Show_SaveMenu();
@@ -33,8 +31,6 @@ procedure g_Menu_Show_EndGameMenu();
 procedure g_Menu_Show_QuitGameMenu();
 
 var
-  gMenuFont: DWORD;
-  gMenuSmallFont: DWORD;
   PromptIP: string;
   PromptPort: Word;
   TempScale: Integer = -1;
@@ -43,14 +39,31 @@ var
 implementation
 
 uses
-  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
-  g_gui, g_textures, e_graphics, g_main, g_window, g_game, g_map,
-  g_basic, g_console, g_sound, g_gfx, g_player, g_options, g_weapons,
+  {$IFDEF ENABLE_GFX}
+    g_gfx,
+  {$ENDIF}
+  {$IFDEF ENABLE_GIBS}
+    g_gibs,
+  {$ENDIF}
+  {$IFDEF ENABLE_SHELLS}
+    g_shells,
+  {$ENDIF}
+  {$IFDEF ENABLE_CORPSES}
+    g_corpses,
+  {$ENDIF}
+  {$IFDEF ENABLE_RENDER}
+    r_render,
+  {$ENDIF}
+  {$IFDEF ENABLE_SYSTEM}
+    g_system,
+  {$ENDIF}
+  g_gui, g_game, g_map,
+  g_base, g_basic, g_console, g_sound, g_player, g_options, g_weapons,
   e_log, SysUtils, CONFIG, g_playermodel, DateUtils,
   MAPDEF, Math, g_saveload,
-  e_texture, g_language, e_res,
-  g_net, g_netmsg, g_netmaster, g_items, e_input, g_touch,
-  utils, wadreader, g_system;
+  g_language, e_res,
+  g_net, g_netmsg, g_netmaster, g_items, e_input,
+  utils, wadreader;
 
 
 type TYNCallback = procedure (yes:Boolean);
@@ -76,7 +89,7 @@ begin
   TYNCallback(ctl.UserData)(false);
 end;
 
-function CreateYNMenu (WinName, Text: String; MaxLen: Word; FontID: DWORD; ActionProc: TYNCallback): TGUIWindow;
+function CreateYNMenu (WinName, Text: String; MaxLen: Word; ActionProc: TYNCallback): TGUIWindow;
 var
   menu: TGUIMenu;
 begin
@@ -86,7 +99,7 @@ begin
   begin
     //OnKeyDownEx := @YNKeyDownProc;
     //UserData := @ActionProc;
-    menu := TGUIMenu(Result.AddChild(TGUIMenu.Create(gMenuSmallFont, gMenuSmallFont, '')));
+    menu := TGUIMenu(Result.AddChild(TGUIMenu.Create(False, False, '')));
     with menu do
     begin
       Name := '__temp_yes_no_menu:'+WinName;
@@ -108,7 +121,6 @@ procedure ProcApplyOptions();
 var
   menu: TGUIMenu;
   i: Integer;
-  ovs: Boolean;
 begin
   menu := TGUIMenu(g_GUI_GetWindow('OptionsVideoMenu').GetControl('mOptionsVideoMenu'));
 
@@ -117,10 +129,7 @@ begin
   else
     gBPP := 32;
 
-  ovs := gVSync;
   gVSync := TGUISwitch(menu.GetControl('swVSync')).ItemIndex = 0;
-  if (ovs <> gVSync) then
-    sys_EnableVSync(gVSync);
 
   gTextureFilter := TGUISwitch(menu.GetControl('swTextureFilter')).ItemIndex = 0;
   glNPOTOverride := not (TGUISwitch(menu.GetControl('swLegacyNPOT')).ItemIndex = 0);
@@ -141,18 +150,28 @@ begin
 
   menu := TGUIMenu(g_GUI_GetWindow('OptionsGameMenu').GetControl('mOptionsGameMenu'));
 
-  g_GFX_SetMax(TGUIScroll(menu.GetControl('scParticlesCount')).Value*1000);
-  g_Shells_SetMax(TGUIScroll(menu.GetControl('scShellsMax')).Value*30);
-  g_Gibs_SetMax(TGUIScroll(menu.GetControl('scGibsMax')).Value*25);
-  g_Corpses_SetMax(TGUIScroll(menu.GetControl('scCorpsesMax')).Value*5);
+  {$IFDEF ENABLE_GFX}
+    g_GFX_SetMax(TGUIScroll(menu.GetControl('scParticlesCount')).Value*1000);
+  {$ENDIF}
+  {$IFDEF ENABLE_SHELLS}
+    g_Shells_SetMax(TGUIScroll(menu.GetControl('scShellsMax')).Value*30);
+  {$ENDIF}
+  {$IFDEF ENABLE_GIBS}
+    g_Gibs_SetMax(TGUIScroll(menu.GetControl('scGibsMax')).Value*25);
+  {$ENDIF}
+  {$IFDEF ENABLE_CORPSES}
+    g_Corpses_SetMax(TGUIScroll(menu.GetControl('scCorpsesMax')).Value*5);
+  {$ENDIF}
 
-  case TGUISwitch(menu.GetControl('swGibsCount')).ItemIndex of
-    0: gGibsCount := 0;
-    1: gGibsCount := 8;
-    2: gGibsCount := 16;
-    3: gGibsCount := 32;
-    else gGibsCount := 48;
-  end;
+  {$IFDEF ENABLE_GIBS}
+    case TGUISwitch(menu.GetControl('swGibsCount')).ItemIndex of
+      0: gGibsCount := 0;
+      1: gGibsCount := 8;
+      2: gGibsCount := 16;
+      3: gGibsCount := 32;
+      else gGibsCount := 48;
+    end;
+  {$ENDIF}
 
   gBloodCount := TGUISwitch(menu.GetControl('swBloodCount')).ItemIndex;
   gFlash := TGUISwitch(menu.GetControl('swScreenFlash')).ItemIndex;
@@ -338,7 +357,7 @@ begin
                                   TEAM_RED, TEAM_BLUE);
   with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP1Menu').GetControl('mvP1Model')) do
   begin
-    gPlayer1Settings.Model := Model.Name;
+    gPlayer1Settings.Model := Model.GetName();
     gPlayer1Settings.Color := Model.Color;
   end;
 
@@ -348,7 +367,7 @@ begin
                                   TEAM_RED, TEAM_BLUE);
   with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP2Menu').GetControl('mvP2Model')) do
   begin
-    gPlayer2Settings.Model := Model.Name;
+    gPlayer2Settings.Model := Model.GetName();
     gPlayer2Settings.Color := Model.Color;
   end;
 
@@ -376,6 +395,17 @@ begin
     begin
       gPlayer2Settings.WeaponPreferences[i] := TGUISwitch(menu.GetControl(IntToStr(i))).ItemIndex;
     end;
+  end;
+
+  menu := TGUIMenu(g_GUI_GetWindow('OptionsPlayersP2Menu').GetControl('mOptionsPlayersP2Menu'));
+
+  gPlayer2Settings.Name := b_Text_Unformat(TGUIEdit(menu.GetControl('edP2Name')).Text);
+  gPlayer2Settings.Team := IfThen(TGUISwitch(menu.GetControl('swP2Team')).ItemIndex = 0,
+                                  TEAM_RED, TEAM_BLUE);
+  with TGUIModelView(g_GUI_GetWindow('OptionsPlayersP2Menu').GetControl('mvP2Model')) do
+  begin
+    gPlayer2Settings.Model := Model.GetName();
+    gPlayer2Settings.Color := Model.Color;
   end;
 
   if gPlayer1Settings.Name = '' then gPlayer1Settings.Name := GenPlayerName(1);
@@ -587,10 +617,18 @@ begin
 
   menu := TGUIMenu(g_GUI_GetWindow('OptionsGameMenu').GetControl('mOptionsGameMenu'));
 
-  TGUIScroll(menu.GetControl('scParticlesCount')).Value := g_GFX_GetMax() div 1000;
-  TGUIScroll(menu.GetControl('scShellsMax')).Value := g_Shells_GetMax() div 30;
-  TGUIScroll(menu.GetControl('scGibsMax')).Value := g_Gibs_GetMax() div 25;
-  TGUIScroll(menu.GetControl('scCorpsesMax')).Value := g_Corpses_GetMax() div 5;
+  {$IFDEF ENABLE_GFX}
+    TGUIScroll(menu.GetControl('scParticlesCount')).Value := g_GFX_GetMax() div 1000;
+  {$ENDIF}
+  {$IFDEF ENABLE_SHELLS}
+    TGUIScroll(menu.GetControl('scShellsMax')).Value := g_Shells_GetMax() div 30;
+  {$ENDIF}
+  {$IFDEF ENABLE_GIBS}
+    TGUIScroll(menu.GetControl('scGibsMax')).Value := g_Gibs_GetMax() div 25;
+  {$ENDIF}
+  {$IFDEF ENABLE_CORPSES}
+    TGUIScroll(menu.GetControl('scCorpsesMax')).Value := g_Corpses_GetMax() div 5;
+  {$ENDIF}
   TGUISwitch(menu.GetControl('swBloodCount')).ItemIndex := gBloodCount;
 
   with TGUISwitch(menu.GetControl('swScreenFlash')) do
@@ -605,14 +643,18 @@ begin
   with TGUISwitch(menu.GetControl('swGibsType')) do
     if gAdvGibs then ItemIndex := 1 else ItemIndex := 0;
 
-  with TGUISwitch(menu.GetControl('swGibsCount')) do
-    case gGibsCount of
-      0: ItemIndex := 0;
-      8: ItemIndex := 1;
-      16: ItemIndex := 2;
-      32: ItemIndex := 3;
-      else ItemIndex := 4;
+  {$IFDEF ENABLE_GIBS}
+    with TGUISwitch(menu.GetControl('swGibsCount')) do
+    begin
+      case gGibsCount of
+        0: ItemIndex := 0;
+        8: ItemIndex := 1;
+        16: ItemIndex := 2;
+        32: ItemIndex := 3;
+        else ItemIndex := 4;
+      end;
     end;
+  {$ENDIF}
 
   with TGUISwitch(menu.GetControl('swBackGround')) do
     if gDrawBackGround then ItemIndex := 0 else ItemIndex := 1;
@@ -879,8 +921,9 @@ begin
 
   slWaitStr := _lc[I_NET_SLIST_WAIT];
 
-  g_Game_Draw;
-  sys_Repaint;
+  {$IFDEF ENABLE_RENDER}
+    r_Render_Draw;
+  {$ENDIF}
 
   slReturnPressed := True;
   if g_Net_Slist_Fetch(slCurrent) then
@@ -1052,119 +1095,9 @@ begin
   ProcChangeColor(nil);
 end;
 
-procedure LoadStdFont(cfgres, texture: string; var FontID: DWORD);
-var
-  cwdt, chgt: Byte;
-  spc: ShortInt;
-  ID: DWORD;
-  wad: TWADFile;
-  cfgdata: Pointer;
-  cfglen: Integer;
-  config: TConfig;
-begin
-  cfglen := 0;
-
-  wad := TWADFile.Create;
-  if wad.ReadFile(GameWAD) then
-    wad.GetResource('FONTS/'+cfgres, cfgdata, cfglen);
-  wad.Free();
-
-  if cfglen <> 0 then
-  begin
-    g_Texture_CreateWADEx('FONT_STD', GameWAD+':FONTS\'+texture);
-
-    config := TConfig.CreateMem(cfgdata, cfglen);
-    cwdt := Min(Max(config.ReadInt('FontMap', 'CharWidth', 0), 0), 255);
-    chgt := Min(Max(config.ReadInt('FontMap', 'CharHeight', 0), 0), 255);
-    spc := Min(Max(config.ReadInt('FontMap', 'Kerning', 0), -128), 127);
-
-    if g_Texture_Get('FONT_STD', ID) then
-      e_TextureFontBuild(ID, FontID, cwdt, chgt, spc);
-
-    config.Free();
-  end;
-
-  if cfglen <> 0 then FreeMem(cfgdata);
-end;
-
-procedure LoadFont(txtres, fntres: string; var FontID: DWORD);
-var
-  cwdt, chgt: Byte;
-  spc: ShortInt;
-  CharID: DWORD;
-  wad: TWADFile;
-  cfgdata, fntdata: Pointer;
-  cfglen, fntlen: Integer;
-  config: TConfig;
-  chrwidth: Integer;
-  a: Byte;
-begin
-  cfglen := 0;
-  fntlen := 0;
-
-  wad := TWADFile.Create;
-  if wad.ReadFile(GameWAD) then
-  begin
-    wad.GetResource('FONTS/'+txtres, cfgdata, cfglen);
-    wad.GetResource('FONTS/'+fntres, fntdata, fntlen);
-  end;
-  wad.Free();
-
-  if cfglen <> 0 then
-  begin
-    config := TConfig.CreateMem(cfgdata, cfglen);
-    cwdt := Min(Max(config.ReadInt('FontMap', 'CharWidth', 0), 0), 255);
-    chgt := Min(Max(config.ReadInt('FontMap', 'CharHeight', 0), 0), 255);
-
-    spc := Min(Max(config.ReadInt('FontMap', 'Kerning', 0), -128), 127);
-    FontID := e_CharFont_Create(spc);
-
-    for a := 0 to 255 do
-    begin
-      chrwidth := config.ReadInt(IntToStr(a), 'Width', 0);
-      if chrwidth = 0 then Continue;
-
-      if e_CreateTextureMemEx(fntdata, fntlen, CharID, cwdt*(a mod 16), chgt*(a div 16),
-                              cwdt, chgt) then
-        e_CharFont_AddChar(FontID, CharID, Chr(a), chrwidth);
-    end;
-
-    config.Free();
-  end;
-
-  if cfglen <> 0 then FreeMem(cfgdata);
-  if fntlen <> 0 then FreeMem(fntdata);
-end;
-
 procedure MenuLoadData();
 begin
   e_WriteLog('Loading menu data...', TMsgType.Notify);
-
-  g_Texture_CreateWADEx('MAINMENU_LOGO', GameWAD+':TEXTURES\MAINLOGO');
-  g_Texture_CreateWADEx('MAINMENU_MARKER1', GameWAD+':TEXTURES\MARKER1');
-  g_Texture_CreateWADEx('MAINMENU_MARKER2', GameWAD+':TEXTURES\MARKER2');
-  g_Texture_CreateWADEx('SCROLL_LEFT', GameWAD+':TEXTURES\SLEFT');
-  g_Texture_CreateWADEx('SCROLL_RIGHT', GameWAD+':TEXTURES\SRIGHT');
-  g_Texture_CreateWADEx('SCROLL_MIDDLE', GameWAD+':TEXTURES\SMIDDLE');
-  g_Texture_CreateWADEx('SCROLL_MARKER', GameWAD+':TEXTURES\SMARKER');
-  g_Texture_CreateWADEx('EDIT_LEFT', GameWAD+':TEXTURES\ELEFT');
-  g_Texture_CreateWADEx('EDIT_RIGHT', GameWAD+':TEXTURES\ERIGHT');
-  g_Texture_CreateWADEx('EDIT_MIDDLE', GameWAD+':TEXTURES\EMIDDLE');
-  g_Texture_CreateWADEx('BOX1', GameWAD+':TEXTURES\BOX1');
-  g_Texture_CreateWADEx('BOX2', GameWAD+':TEXTURES\BOX2');
-  g_Texture_CreateWADEx('BOX3', GameWAD+':TEXTURES\BOX3');
-  g_Texture_CreateWADEx('BOX4', GameWAD+':TEXTURES\BOX4');
-  g_Texture_CreateWADEx('BOX5', GameWAD+':TEXTURES\BOX5');
-  g_Texture_CreateWADEx('BOX6', GameWAD+':TEXTURES\BOX6');
-  g_Texture_CreateWADEx('BOX7', GameWAD+':TEXTURES\BOX7');
-  g_Texture_CreateWADEx('BOX8', GameWAD+':TEXTURES\BOX8');
-  g_Texture_CreateWADEx('BOX9', GameWAD+':TEXTURES\BOX9');
-  g_Texture_CreateWADEx('BSCROLL_UP_A', GameWAD+':TEXTURES\SCROLLUPA');
-  g_Texture_CreateWADEx('BSCROLL_UP_U', GameWAD+':TEXTURES\SCROLLUPU');
-  g_Texture_CreateWADEx('BSCROLL_DOWN_A', GameWAD+':TEXTURES\SCROLLDOWNA');
-  g_Texture_CreateWADEx('BSCROLL_DOWN_U', GameWAD+':TEXTURES\SCROLLDOWNU');
-  g_Texture_CreateWADEx('BSCROLL_MIDDLE', GameWAD+':TEXTURES\SCROLLMIDDLE');
-  g_Texture_CreateWADEx('NOPIC', GameWAD+':TEXTURES\NOPIC');
 
   g_Sound_CreateWADEx('MENU_SELECT', GameWAD+':SOUNDS\MENUSELECT');
   g_Sound_CreateWADEx('MENU_OPEN', GameWAD+':SOUNDS\MENUOPEN');
@@ -1177,35 +1110,6 @@ end;
 
 procedure MenuFreeData();
 begin
-  e_CharFont_Remove(gMenuFont);
-  e_CharFont_Remove(gMenuSmallFont);
-
-  g_Texture_Delete('MAINMENU_LOGO');
-  g_Texture_Delete('MAINMENU_MARKER1');
-  g_Texture_Delete('MAINMENU_MARKER2');
-  g_Texture_Delete('SCROLL_LEFT');
-  g_Texture_Delete('SCROLL_RIGHT');
-  g_Texture_Delete('SCROLL_MIDDLE');
-  g_Texture_Delete('SCROLL_MARKER');
-  g_Texture_Delete('EDIT_LEFT');
-  g_Texture_Delete('EDIT_RIGHT');
-  g_Texture_Delete('EDIT_MIDDLE');
-  g_Texture_Delete('BOX1');
-  g_Texture_Delete('BOX2');
-  g_Texture_Delete('BOX3');
-  g_Texture_Delete('BOX4');
-  g_Texture_Delete('BOX5');
-  g_Texture_Delete('BOX6');
-  g_Texture_Delete('BOX7');
-  g_Texture_Delete('BOX8');
-  g_Texture_Delete('BOX9');
-  g_Texture_Delete('BSCROLL_UP_A');
-  g_Texture_Delete('BSCROLL_UP_U');
-  g_Texture_Delete('BSCROLL_DOWN_A');
-  g_Texture_Delete('BSCROLL_DOWN_U');
-  g_Texture_Delete('BSCROLL_MIDDLE');
-  g_Texture_Delete('NOPIC');
-
   g_Sound_Delete('MENU_SELECT');
   g_Sound_Delete('MENU_OPEN');
   g_Sound_Delete('MENU_CLOSE');
@@ -1448,7 +1352,7 @@ end;
 procedure ProcOptionsPlayersMIMenu();
 var
   s, a: string;
-  b: TModelInfo;
+  i: Integer;
 begin
   if g_ActiveWindow.Name = 'OptionsPlayersP1Menu' then s := 'P1' else s := 'P2';
 
@@ -1456,15 +1360,14 @@ begin
 
   if a = '' then Exit;
 
-  b := g_PlayerModel_GetInfo(a);
-
+  i := g_PlayerModel_GetIndex(a);
   with TGUIMenu(g_GUI_GetWindow('OptionsPlayersMIMenu').GetControl('mOptionsPlayersMIMenu')) do
   begin
-    TGUILabel(GetControl('lbName')).Text := b.Name;
-    TGUILabel(GetControl('lbAuthor')).Text := b.Author;
-    TGUIMemo(GetControl('meComment')).SetText(b.Description);
+    TGUILabel(GetControl('lbName')).Text := PlayerModelsArray[i].Name;
+    TGUILabel(GetControl('lbAuthor')).Text := PlayerModelsArray[i].Author;
+    TGUIMemo(GetControl('meComment')).SetText(PlayerModelsArray[i].Description);
 
-    if b.HaveWeapon then
+    if PlayerModelsArray[i].HaveWeapon then
       TGUILabel(GetControl('lbWeapon')).Text := _lc[I_MENU_YES]
     else
       TGUILabel(GetControl('lbWeapon')).Text := _lc[I_MENU_NO];
@@ -1513,8 +1416,7 @@ begin
   with TGUIModelView(g_ActiveWindow.GetControl('mv'+s+'Model')) do
   begin
     NextAnim();
-    Model.GetCurrentAnimation.Loop := True;
-    Model.GetCurrentAnimationMask.Loop := True;
+    Model.AnimState.Loop := True;
   end;
 end;
 
@@ -2002,7 +1904,11 @@ begin
 
   with TGUIListBox(menu.GetControl('lsResolution')) do
   begin
-    list := sys_GetDisplayModes(gBPP);
+    {$IFDEF ENABLE_SYSTEM}
+      list := sys_GetDisplayModes(gBPP);
+    {$ELSE}
+      list := nil;
+    {$ENDIF}
     if list <> nil then
     begin
       Items := list;
@@ -2100,7 +2006,7 @@ var
 begin
   Menu := TGUIWindow.Create('FirstLanguageMenu');
 
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', ' '))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, ' '))) do // space to prevent show logo
   begin
     Name := 'mmFirstLanguageMenu';
     AddButton(@ProcSetFirstRussianLanguage, 'Русский', '');
@@ -2128,7 +2034,7 @@ begin
     a := _lc[I_MENU_PLAYER_1]
   else
     a := _lc[I_MENU_PLAYER_2];
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, a))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, a))) do
   begin
     Name := 'mOptionsPlayers'+s+'Menu';
     with AddEdit(_lc[I_MENU_PLAYER_NAME]) do
@@ -2194,7 +2100,7 @@ var
   //list: SSArray;
 begin
   Menu := TGUIWindow.Create('MainMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, 'MAINMENU_LOGO', _lc[I_MENU_MAIN_MENU]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, '' (*_lc[I_MENU_MAIN_MENU]*) ))) do
   begin
     Name := 'mmMainMenu';
     AddButton(nil, _lc[I_MENU_NEW_GAME], 'NewGameMenu');
@@ -2204,7 +2110,7 @@ begin
     AddButton(@ProcAuthorsMenu, _lc[I_MENU_AUTHORS], 'AuthorsMenu');
     AddButton(nil, _lc[I_MENU_EXIT], 'ExitMenu');
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(Format(_lc[I_VERSION], [GAME_VERSION]), gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(Format(_lc[I_VERSION], [GAME_VERSION]), False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := gScreenWidth-GetWidth-8;
@@ -2215,7 +2121,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('NewGameMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_NEW_GAME]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_NEW_GAME]))) do
   begin
     Name := 'mmNewGameMenu';
     AddButton(@ProcSingle1Player, _lc[I_MENU_1_PLAYER]);
@@ -2227,7 +2133,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('NetGameMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_MULTIPLAYER]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_MULTIPLAYER]))) do
   begin
     Name := 'mmNetGameMenu';
     AddButton(@ProcRecallAddress, _lc[I_MENU_START_CLIENT], 'NetClientMenu');
@@ -2237,7 +2143,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('NetServerMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_START_SERVER]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_START_SERVER]))) do
   begin
     Name := 'mNetServerMenu';
     with AddEdit(_lc[I_NET_SERVER_NAME]) do
@@ -2451,7 +2357,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('NetClientMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_START_CLIENT]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_START_CLIENT]))) do
   begin
     Name := 'mNetClientMenu';
 
@@ -2493,7 +2399,7 @@ begin
 
   Menu := TGUIWindow.Create('LoadMenu');
   Menu.OnShow := ProcLoadMenu;
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_LOAD_GAME]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_LOAD_GAME]))) do
   begin
     Name := 'mmLoadMenu';
 
@@ -2511,7 +2417,7 @@ begin
 
   Menu := TGUIWindow.Create('SaveMenu');
   Menu.OnShow := ProcSaveMenu;
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_SAVE_GAME]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_SAVE_GAME]))) do
   begin
     Name := 'mmSaveMenu';
 
@@ -2528,7 +2434,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('CustomGameMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_CUSTOM_GAME]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_CUSTOM_GAME]))) do
   begin
     Name := 'mCustomGameMenu';
     with AddLabel(_lc[I_MENU_MAP]) do
@@ -2699,7 +2605,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('CampaignMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_CAMPAIGN]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_CAMPAIGN]))) do
   begin
     Name := 'mCampaignMenu';
 
@@ -2762,7 +2668,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('SelectMapMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_SELECT_MAP]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_SELECT_MAP]))) do
   begin
     Name := 'mSelectMapMenu';
     with AddFileList(_lc[I_MENU_MAP_WAD], 12, 4) do
@@ -2813,7 +2719,7 @@ begin
       X := GetControl('lsMapWAD').X+TGUIListBox(GetControl('lsMapWAD')).GetWidth()+2;
       Y := GetControl('lsMapWAD').Y;
     end;
-    with TGUILabel(Menu.AddChild(TGUILabel.Create('', gMenuSmallFont))) do
+    with TGUILabel(Menu.AddChild(TGUILabel.Create('', False))) do
     begin
       Name := 'lbMapScale';
       FixedLength := 8;
@@ -2830,7 +2736,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_OPTIONS]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_OPTIONS]))) do
   begin
     Name := 'mmOptionsMenu';
     AddButton(nil, _lc[I_MENU_VIDEO_OPTIONS], 'OptionsVideoMenu');
@@ -2847,12 +2753,11 @@ begin
   Menu.DefControl := 'mmOptionsMenu';
   g_GUI_AddWindow(Menu);
 
-  Menu := CreateYNMenu('SavedOptionsMenu', _lc[I_MENU_LOAD_SAVED_PROMT], Round(gScreenWidth*0.6),
-                       gMenuSmallFont, @ProcSavedMenuKeyDown);
+  Menu := CreateYNMenu('SavedOptionsMenu', _lc[I_MENU_LOAD_SAVED_PROMT], Round(gScreenWidth*0.6), @ProcSavedMenuKeyDown);
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsVideoMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_VIDEO_OPTIONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_VIDEO_OPTIONS]))) do
   begin
     Name := 'mOptionsVideoMenu';
     AddButton(@ProcVideoOptionsRes, _lc[I_MENU_VIDEO_RESOLUTION], 'OptionsVideoResMenu');
@@ -2894,7 +2799,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsVideoResMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_RESOLUTION_SELECT]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_RESOLUTION_SELECT]))) do
   begin
     Name := 'mOptionsVideoResMenu';
     with AddLabel(_lc[I_MENU_RESOLUTION_CURRENT]) do
@@ -2929,7 +2834,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsSoundMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_SOUND_OPTIONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_SOUND_OPTIONS]))) do
   begin
     Name := 'mOptionsSoundMenu';
     with AddScroll(_lc[I_MENU_SOUND_MUSIC_LEVEL]) do
@@ -2983,7 +2888,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsGameMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_GAME_OPTIONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_GAME_OPTIONS]))) do
   begin
     Name := 'mOptionsGameMenu';
     with AddScroll(_lc[I_MENU_GAME_PARTICLES_COUNT]) do
@@ -3113,7 +3018,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_CONTROLS_OPTIONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_CONTROLS_OPTIONS]))) do
   begin
     Name := 'mOptionsControlsMenu';
     AddLine(_lc[I_MENU_CONTROL_GLOBAL]);
@@ -3143,7 +3048,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsP1Menu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_PLAYER_1_KBD]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_PLAYER_1_KBD]))) do
   begin
     Name := 'mOptionsControlsP1Menu';
     AddKeyRead2(_lc[I_MENU_CONTROL_LEFT]).Name := _lc[I_MENU_CONTROL_LEFT];
@@ -3162,7 +3067,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsP1MenuWeapons');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_PLAYER_1_WEAPONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_PLAYER_1_WEAPONS]))) do
   begin
     Name := 'mOptionsControlsP1MenuWeapons';
     for i := WP_FIRST to WP_LAST do
@@ -3173,7 +3078,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsP2Menu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_PLAYER_2_KBD]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_PLAYER_2_KBD]))) do
   begin
     Name := 'mOptionsControlsP2Menu';
     AddKeyRead2(_lc[I_MENU_CONTROL_LEFT]).Name := _lc[I_MENU_CONTROL_LEFT];
@@ -3192,7 +3097,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsP2MenuWeapons');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_PLAYER_2_WEAPONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_PLAYER_2_WEAPONS]))) do
   begin
     Name := 'mOptionsControlsP2MenuWeapons';
     for i := WP_FIRST to WP_LAST do
@@ -3203,7 +3108,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsJoystickMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_CONTROL_JOYSTICKS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_CONTROL_JOYSTICKS]))) do
   begin
     Name := 'mOptionsControlsJoystickMenu';
     for i := 0 to e_MaxJoys - 1 do
@@ -3217,7 +3122,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsControlsTouchMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_CONTROL_TOUCH]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_CONTROL_TOUCH]))) do
   begin
     Name := 'mOptionsControlsTouchMenu';
     with AddSwitch(_lc[I_MENU_CONTROL_TOUCH_ALT]) do
@@ -3250,7 +3155,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPlayersMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_PLAYER_OPTIONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_PLAYER_OPTIONS]))) do
   begin
     Name := 'mOptionsPlayersMenu';
     AddButton(nil, _lc[I_MENU_PLAYER_1], 'OptionsPlayersP1Menu');
@@ -3263,7 +3168,7 @@ begin
   CreatePlayerOptionsMenu('P2');
 
   Menu := TGUIWindow.Create('OptionsPlayersMIMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_MODEL_INFO]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_MODEL_INFO]))) do
   begin
     Name := 'mOptionsPlayersMIMenu';
     with AddLabel(_lc[I_MENU_MODEL_NAME]) do
@@ -3293,7 +3198,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPlayersP1WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON]))) do
   begin
     Name := 'mOptionsPlayersP1WeaponMenu';
     with AddSwitch(_lc[I_MENU_WEAPON_SWITCH]) do
@@ -3322,7 +3227,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPreferencesP1WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_1]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_1]))) do
   begin
     Name := 'mOptionsPreferencesP1WeaponMenu';
     for i := WP_FIRST to WP_LAST do
@@ -3352,7 +3257,7 @@ begin
 
 
   Menu := TGUIWindow.Create('OptionsPlayersP2WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON]))) do
   begin
     Name := 'mOptionsPlayersP2WeaponMenu';
     with AddSwitch(_lc[I_MENU_WEAPON_SWITCH]) do
@@ -3381,7 +3286,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('OptionsPreferencesP2WeaponMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_2]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_WEAPON_PRIORITY_PLAYER_2]))) do
   begin
     Name := 'mOptionsPreferencesP2WeaponMenu';
     for i := WP_FIRST to WP_LAST do
@@ -3410,7 +3315,7 @@ begin
   g_GUI_AddWindow(Menu);  
 
   Menu := TGUIWindow.Create('OptionsLanguageMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_LANGUAGE_OPTIONS]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_LANGUAGE_OPTIONS]))) do
   begin
     Name := 'mOptionsLanguageMenu';
     AddButton(@ProcSetRussianLanguage, _lc[I_MENU_LANGUAGE_RUSSIAN]);
@@ -3420,24 +3325,23 @@ begin
   Menu.DefControl := 'mOptionsLanguageMenu';
   g_GUI_AddWindow(Menu);
 
-  Menu := CreateYNMenu('DefaultOptionsMenu', _lc[I_MENU_SET_DEFAULT_PROMT], Round(gScreenWidth*0.6),
-                       gMenuSmallFont, @ProcDefaultMenuKeyDown);
+  Menu := CreateYNMenu('DefaultOptionsMenu', _lc[I_MENU_SET_DEFAULT_PROMT], Round(gScreenWidth*0.6), @ProcDefaultMenuKeyDown);
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('AuthorsMenu');
-  Menu.BackTexture := 'INTER';
+  Menu.BackTexture := GameWad + ':/TEXTURES/INTER';
   Menu.OnClose := ProcAuthorsClose;
 
 // Заголовок:
   _y := 16;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CAP_1], gMenuFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CAP_1], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := (gScreenWidth div 2)-(GetWidth() div 2);
     Y := _y;
     _y := _y+GetHeight();
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(Format(_lc[I_CREDITS_CAP_2], [GAME_VERSION, NET_PROTOCOL_VER]), gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(Format(_lc[I_CREDITS_CAP_2], [GAME_VERSION, NET_PROTOCOL_VER]), False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := (gScreenWidth div 2)-(GetWidth() div 2);
@@ -3446,63 +3350,63 @@ begin
   end;
 // Что делал: Кто делал
   cx := gScreenWidth div 2 - 320 + 64;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_1], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_1], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := cx;
     Y := _y;
     _y := _y+22;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_1_1], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_1_1], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
     Y := _y;
     _y := _y+36;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_2], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_2], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := cx;
     Y := _y;
     _y := _y+22;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_2_1], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_2_1], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
     Y := _y;
     _y := _y+22;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_2_2], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_2_2], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
     Y := _y;
     _y := _y+36;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_3], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_3], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := cx;
     Y := _y;
     _y := _y+22;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_3_1], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_3_1], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X :=  cx+32;
     Y := _y;
    _y := _y+36;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_4], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_4], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := cx;
     Y := _y;
     _y := _y+22;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_4_1], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_A_4_1], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
@@ -3510,35 +3414,35 @@ begin
     _y := gScreenHeight - 128;
   end;
 // Заключение:
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CAP_3], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CAP_3], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := cx;
     Y := _y;
     _y := _y+16;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_1], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_1], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
     Y := _y;
     _y := _y+GetHeight();
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_2], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_2], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
     Y := _y;
     _y := _y+GetHeight();
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_3], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_3], False))) do
   begin
     Color := _RGB(255, 255, 255);
     X := cx+32;
     Y := _y;
     _y := gScreenHeight - 32;
   end;
-  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_4], gMenuSmallFont))) do
+  with TGUILabel(Menu.AddChild(TGUILabel.Create(_lc[I_CREDITS_CLO_4], False))) do
   begin
     Color := _RGB(255, 0, 0);
     X := gScreenWidth div 2 - GetWidth() div 2;
@@ -3546,12 +3450,11 @@ begin
   end;
   g_GUI_AddWindow(Menu);
 
-  Menu := CreateYNMenu('ExitMenu', _lc[I_MENU_EXIT_PROMT], Round(gScreenWidth*0.6),
-                       gMenuSmallFont, @ProcExitMenuKeyDown);
+  Menu := CreateYNMenu('ExitMenu', _lc[I_MENU_EXIT_PROMT], Round(gScreenWidth*0.6), @ProcExitMenuKeyDown);
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('GameSingleMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_MAIN_MENU]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_MAIN_MENU]))) do
   begin
     Name := 'mmGameSingleMenu';
     AddButton(nil, _lc[I_MENU_LOAD_GAME], 'LoadMenu');
@@ -3567,16 +3470,14 @@ begin
   Menu.OnShow := ProcGMShow;
   g_GUI_AddWindow(Menu);
 
-  Menu := CreateYNMenu('EndGameMenu', _lc[I_MENU_END_GAME_PROMT], Round(gScreenWidth*0.6),
-                       gMenuSmallFont, @ProcEndMenuKeyDown);
+  Menu := CreateYNMenu('EndGameMenu', _lc[I_MENU_END_GAME_PROMT], Round(gScreenWidth*0.6), @ProcEndMenuKeyDown);
   g_GUI_AddWindow(Menu);
 
-  Menu := CreateYNMenu('RestartGameMenu', _lc[I_MENU_RESTART_GAME_PROMT], Round(gScreenWidth*0.6),
-                       gMenuSmallFont, @ProcRestartMenuKeyDown);
+  Menu := CreateYNMenu('RestartGameMenu', _lc[I_MENU_RESTART_GAME_PROMT], Round(gScreenWidth*0.6), @ProcRestartMenuKeyDown);
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('GameCustomMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_MAIN_MENU]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_MAIN_MENU]))) do
   begin
     Name := 'mmGameCustomMenu';
     AddButton(nil, _lc[I_MENU_CHANGE_PLAYERS], 'TeamMenu');
@@ -3594,7 +3495,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('GameServerMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_MAIN_MENU]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_MAIN_MENU]))) do
   begin
     Name := 'mmGameServerMenu';
     AddButton(nil, _lc[I_MENU_CHANGE_PLAYERS], 'TeamMenu');
@@ -3610,7 +3511,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('GameClientMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_MAIN_MENU]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_MAIN_MENU]))) do
   begin
     Name := 'mmGameClientMenu';
     AddButton(nil, _lc[I_MENU_CHANGE_PLAYERS], 'TeamMenu');
@@ -3624,7 +3525,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('ClientPasswordMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuSmallFont, gMenuSmallFont, _lc[I_MENU_ENTERPASSWORD]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(False, False, _lc[I_MENU_ENTERPASSWORD]))) do
   begin
     Name := 'mClientPasswordMenu';
     with AddEdit(_lc[I_NET_SERVER_PASSWORD]) do
@@ -3642,7 +3543,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('GameSetGameMenu');
-  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(gMenuFont, gMenuSmallFont, _lc[I_MENU_SET_GAME]))) do
+  with TGUIMenu(Menu.AddChild(TGUIMenu.Create(True, False, _lc[I_MENU_SET_GAME]))) do
   begin
     Name := 'mGameSetGameMenu';
     with AddSwitch(_lc[I_MENU_TEAM_DAMAGE]) do
@@ -3713,7 +3614,7 @@ begin
   g_GUI_AddWindow(Menu);
 
   Menu := TGUIWindow.Create('TeamMenu');
-  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(gMenuFont, '', _lc[I_MENU_CHANGE_PLAYERS]))) do
+  with TGUIMainMenu(Menu.AddChild(TGUIMainMenu.Create(True, _lc[I_MENU_CHANGE_PLAYERS]))) do
   begin
     Name := 'mmTeamMenu';
     AddButton(@ProcJoinRed, _lc[I_MENU_JOIN_RED], '').Name := 'tmJoinRed';
@@ -3838,16 +3739,11 @@ end;
 procedure g_Menu_Init();
 begin
   MenuLoadData();
-  g_GUI_Init();
   CreateAllMenus();
 end;
 
 procedure g_Menu_Free();
 begin
-  g_GUI_Destroy();
-
-  e_WriteLog('Releasing menu data...', TMsgType.Notify);
-
   MenuFreeData();
 end;
 

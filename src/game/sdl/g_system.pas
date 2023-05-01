@@ -19,23 +19,43 @@ interface
 
   uses Utils;
 
-  (* --- Utils --- *)
-  function sys_GetTicks (): Int64;
-  procedure sys_Delay (ms: Integer);
+  type
+    TGLProfile = (Core, Compat, Common, CommonLite);
+
+    TGLDisplayInfo = record
+      w, h, bpp: Integer;
+      fullscreen: Boolean;
+      maximized: Boolean;
+      major, minor: Integer;
+      profile: TGLProfile;
+    end;
 
   (* --- Graphics --- *)
+
   function sys_GetDisplayModes (bpp: Integer): SSArray;
   function sys_SetDisplayMode (w, h, bpp: Integer; fullscreen, maximized: Boolean): Boolean;
   procedure sys_EnableVSync (yes: Boolean);
   procedure sys_Repaint;
 
+  function sys_SetDisplayModeGL (const info: TGLDisplayInfo): Boolean;
+
   (* --- Input --- *)
+
   function sys_HandleInput (): Boolean;
   procedure sys_RequestQuit;
+
+{$IFDEF ENABLE_TOUCH}
+  function sys_IsTextInputActive (): Boolean;
+  procedure sys_ShowKeyboard (yes: Boolean);
+{$ENDIF}
 
   (* --- Init --- *)
   procedure sys_Init;
   procedure sys_Final;
+
+  var (* hooks *)
+    sys_CharPress: procedure (ch: AnsiChar) = nil;
+    sys_ScreenResize: procedure (w, h: Integer) = nil;
 
 implementation
 
@@ -47,9 +67,8 @@ implementation
       {$ENDIF}
     {$ENDIF}
     SysUtils, SDL, Math,
-    {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
-    e_log, e_graphics, e_input, e_sound,
-    g_options, g_window, g_console, g_game, g_menu, g_gui, g_main, g_basic;
+    e_log, e_input, e_sound,
+    g_options, g_console, g_game, g_basic;
 
   const
     GameTitle = 'Doom 2D: Forked (SDL 1.2, %s, %s)';
@@ -63,83 +82,7 @@ implementation
     JoystickHatState: array [0..e_MaxJoys - 1, 0..e_MaxJoyHats - 1, HAT_LEFT..HAT_DOWN] of Boolean;
     JoystickZeroAxes: array [0..e_MaxJoys - 1, 0..e_MaxJoyAxes - 1] of Integer;
 
-  (* --------- Utils --------- *)
-
-  function sys_GetTicks (): Int64;
-  begin
-    result := SDL_GetTicks()
-  end;
-
-  procedure sys_Delay (ms: Integer);
-  begin
-    SDL_Delay(ms)
-  end;
-
   (* --------- Graphics --------- *)
-
-  function LoadGL: Boolean;
-    var ltmp: Integer;
-  begin
-    result := true;
-    {$IFDEF NOGL_INIT}
-      nogl_Init;
-      if glRenderToFBO and (not nogl_ExtensionSupported('GL_OES_framebuffer_object')) then
-      begin
-        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
-        glRenderToFBO := false;
-      end;
-    {$ELSE}
-      if glRenderToFBO and (not Load_GL_ARB_framebuffer_object) then
-      begin
-        if gDebugMode then e_LogWriteln('GL: framebuffer objects not supported; disabling FBO rendering');
-        glRenderToFBO := false;
-      end;
-    {$ENDIF}
-    if SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, ltmp) = 0 then
-    begin
-      if gDebugMode then e_LogWritefln('stencil buffer size: %s', [ltmp]);
-      gwin_has_stencil := (ltmp > 0);
-    end;
-  end;
-
-  procedure FreeGL;
-  begin
-    {$IFDEF NOGL_INIT}
-    nogl_Quit();
-    {$ENDIF}
-  end;
-
-  procedure UpdateSize (w, h: Integer);
-  begin
-    gWinSizeX := w;
-    gWinSizeY := h;
-    gRC_Width := w;
-    gRC_Height := h;
-    if glRenderToFBO then
-    begin
-      // store real window size in gWinSize, downscale resolution now
-      w := round(w / r_pixel_scale);
-      h := round(h / r_pixel_scale);
-      if not e_ResizeFramebuffer(w, h) then
-      begin
-        e_LogWriteln('GL: could not create framebuffer, falling back to --no-fbo');
-        glRenderToFBO := False;
-        w := gWinSizeX;
-        h := gWinSizeY;
-      end;
-    end;
-    gScreenWidth := w;
-    gScreenHeight := h;
-    {$IFDEF ENABLE_HOLMES}
-      fuiScrWdt := w;
-      fuiScrHgt := h;
-    {$ENDIF}
-    e_ResizeWindow(w, h);
-    e_InitGL;
-    g_Game_SetupScreenSize;
-    g_Menu_Reset;
-    g_Game_ClearLoading;
-  end;
 
   function GetDriver (): AnsiString;
     var buf: array [0..31] of AnsiChar;
@@ -178,16 +121,12 @@ implementation
       screen := SDL_SetVideoMode(w, h, bpp, flags);
       if screen <> nil then
       begin
-        if not LoadGL then
-        begin
-          e_LogWriteln('GL: unable to load OpenGL functions', TMsgType.Fatal);
-          exit;
-        end;
         title := GetTitle();
         SDL_WM_SetCaption(PChar(title), nil);
         gFullScreen := fullscreen;
         gRC_FullScreen := fullscreen;
-        UpdateSize(w, h);
+        if @sys_ScreenResize <> nil then
+          sys_ScreenResize(w, h);
         result := True
       end
     end
@@ -229,6 +168,14 @@ implementation
   function sys_SetDisplayMode (w, h, bpp: Integer; fullscreen, maximized: Boolean): Boolean;
   begin
     result := InitWindow(w, h, bpp, fullscreen)
+  end;
+
+  function sys_SetDisplayModeGL (const info: TGLDisplayInfo): Boolean;
+  begin
+    result := false;
+    case info.profile of
+      TGLProfile.Compat: result := InitWindow(info.w, info.h, info.bpp, info.fullscreen);
+    end;
   end;
 
   (* --------- Joystick --------- *)
@@ -529,6 +476,18 @@ implementation
   end;
 {$ENDIF}
 
+{$IFDEF ENABLE_TOUCH}
+  procedure sys_ShowKeyboard (yes: Boolean);
+  begin
+    // stub
+  end;
+
+  function sys_IsTextInputActive (): Boolean;
+  begin
+    Result := false
+  end;
+{$ENDIF}
+
   function Key2Stub (key: Integer): Integer;
     var x: Integer;
   begin
@@ -646,16 +605,17 @@ implementation
     begin
       g_Console_ProcessBindRepeat(key)
     end;
-    if down and IsValid1251(ev.keysym.unicode) and IsPrintable1251(ch) then
-      CharPress(ch)
+    if @sys_CharPress <> nil then
+      if down and IsValid1251(ev.keysym.unicode) and IsPrintable1251(ch) then
+        sys_CharPress(ch)
   end;
 
   procedure HandleResize (var ev: TSDL_ResizeEvent);
   begin
     if g_dbg_input then
       e_LogWritefln('Input Debug: SDL_VIDEORESIZE %s %s', [ev.w, ev.h]);
-    if modeResize = 1 then
-      UpdateSize(ev.w, ev.h)
+    if (modeResize = 1) and (@sys_ScreenResize <> nil) then
+      sys_ScreenResize(ev.w, ev.h)
     else if modeResize > 1 then
       InitWindow(ev.w, ev.h, gBPP, gFullscreen)
   end;
@@ -715,10 +675,7 @@ implementation
     for i := 0 to e_MaxJoys - 1 do
       RemoveJoystick(i);
     if screen <> nil then
-    begin
-      FreeGL;
-      SDL_FreeSurface(screen)
-    end;
+      SDL_FreeSurface(screen);
     SDL_Quit
   end;
 

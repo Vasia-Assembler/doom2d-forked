@@ -99,6 +99,10 @@ implementation
   begin
   end;
 
+  procedure glOrtho (left, right, bottom, top, near, far: GLdouble);
+  begin
+  end;
+
   procedure glLoadIdentity;
   begin
   end;

@@ -10,7 +10,6 @@ implementation
     GL_TEXTURE_COORD_ARRAY = $8078;
     GL_TRIANGLES = $0004;
     GL_TEXTURE0 = $84C0;
-    GL_INVALID_ENUM = $0500;
 
   const
     ValPerVertex = 2;
@@ -57,6 +56,8 @@ implementation
     es_glFlush: procedure; cdecl;
     es_glFinish: procedure; cdecl;
 
+    es_glMultMatrixf: procedure (m: PGLfloat); cdecl;
+    es_glOrthof: procedure (left, right, bottom, top, near, far: GLfloat); cdecl;
     es_glLoadIdentity: procedure; cdecl;
     es_glMatrixMode: procedure (mode: GLenum); cdecl;
     es_glLoadMatrixf: procedure (m: PGLfloat); cdecl;
@@ -173,7 +174,7 @@ implementation
   procedure glBegin(mode: GLenum);
   begin
     assert(cmds.mode = GL_INVALID_ENUM);
-    assert((mode = GL_POINTS) or (mode = GL_LINES) or (mode = GL_QUADS));
+    assert((mode = GL_POINTS) or (mode = GL_LINES) or (mode = GL_QUADS) or (mode = GL_LINE_LOOP));
     cmds.mode := mode;
     SetLength(cmds.v, 0);
     SetLength(cmds.c, 0);
@@ -230,15 +231,16 @@ implementation
   begin
     i := Length(x);
     vpx := Length(v);
-    if (cmds.mode = GL_QUADS) and (i div vpx mod 4 = 3) then
+    if (cmds.mode = GL_QUADS) and (i div vpx mod 6 = 3) then
     begin
-      for j := 0 to vpx - 1 do
-        AddFloatRaw(x, x[i - 3*vpx + j]);
-      for j := 0 to vpx - 1 do
-        AddFloatRaw(x, x[i - 1*vpx + j]);
+      for j := 0 to vpx - 1 do AddFloatRaw(x, x[i - 1*vpx + j]);
+      for j := 0 to vpx - 1 do AddFloatRaw(x, v[j]);
+      for j := 0 to vpx - 1 do AddFloatRaw(x, x[i - 3*vpx + j]);
+    end
+    else
+    begin
+      for j := 0 to vpx - 1 do AddFloatRaw(x, v[j]);
     end;
-    for j := 0 to vpx - 1 do
-      AddFloatRaw(x, v[j]);
   end;
 
 (* ---------- end internals ---------- *)
@@ -296,6 +298,34 @@ implementation
 
 
 
+  procedure glOrtho (left, right, bottom, top, near, far: GLdouble);
+    var m: array [0..15] of GLfloat;
+  begin
+    if assigned(es_glOrthof) then
+    begin
+      es_glOrthof(left, right, bottom, top, near, far);
+    end
+    else
+    begin
+      m[0] := 2 / (right - left);
+      m[1] := 0;
+      m[2] := 0;
+      m[3] := 0;
+      m[4] := 0;
+      m[5] := 2 / (top - bottom);
+      m[6] := 0;
+      m[7] := 0;
+      m[8] := 0;
+      m[9] := 0;
+      m[10] := -2 / (far - near);
+      m[11] := 0;
+      m[12] := -((right + left) / (right - left));
+      m[13] := -((top + bottom) / (top - bottom));
+      m[14] := -((far + near) / (far - near));
+      m[15] := 1;
+      es_glMultMatrixf(@m[0]);
+    end;
+  end;
 
   procedure glLoadIdentity;
   begin
@@ -509,6 +539,8 @@ implementation
     es_glFlush := SDL_GL_GetProcAddress('glFlush');
     es_glFinish := SDL_GL_GetProcAddress('glFinish');
 
+    es_glMultMatrixf := SDL_GL_GetProcAddress('glMultMatrixf');
+    es_glOrthof := SDL_GL_GetProcAddress('glOrthof');
     es_glLoadIdentity := SDL_GL_GetProcAddress('glLoadIdentity');
     es_glMatrixMode := SDL_GL_GetProcAddress('glMatrixMode');
     es_glLoadMatrixf := SDL_GL_GetProcAddress('glLoadMatrixf');
@@ -577,6 +609,8 @@ implementation
     es_glFlush := nil;
     es_glFinish := nil;
 
+    es_glMultMatrixf := nil;
+    es_glOrthof := nil;
     es_glLoadIdentity := nil;
     es_glMatrixMode := nil;
     es_glLoadMatrixf := nil;

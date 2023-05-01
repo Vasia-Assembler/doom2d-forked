@@ -19,17 +19,13 @@ unit g_gfx;
 
 interface
 
-uses
-  e_log, g_textures;
+uses e_log;
 
 const
   BLOOD_NORMAL = 0;
   BLOOD_SPARKS = 1;
   BLOOD_CSPARKS = 2;
   BLOOD_COMBINE = 3;
-
-  ONCEANIM_NONE  = 0;
-  ONCEANIM_SMOKE = 1;
 
   MARK_FREE     = 0;
   MARK_WALL     = 1;
@@ -44,6 +40,30 @@ const
   MARK_LIQUID   = MARK_WATER or MARK_ACID;
   MARK_LIFT     = MARK_LIFTDOWN or MARK_LIFTUP or MARK_LIFTLEFT or MARK_LIFTRIGHT;
 
+  R_GFX_NONE = 0;
+  R_GFX_TELEPORT = 1;
+  R_GFX_FLAME = 2;
+  R_GFX_EXPLODE_ROCKET = 3;
+  R_GFX_EXPLODE_BFG = 4;
+  R_GFX_BFG_HIT = 5;
+  R_GFX_FIRE = 6;
+  R_GFX_ITEM_RESPAWN = 7;
+  R_GFX_SMOKE = 8;
+  R_GFX_EXPLODE_SKELFIRE = 9;
+  R_GFX_EXPLODE_PLASMA = 10;
+  R_GFX_EXPLODE_BSPFIRE = 11;
+  R_GFX_EXPLODE_IMPFIRE = 12;
+  R_GFX_EXPLODE_CACOFIRE = 13;
+  R_GFX_EXPLODE_BARONFIRE = 14;
+  R_GFX_TELEPORT_FAST = 15;
+  R_GFX_SMOKE_TRANS = 16;
+  R_GFX_FLAME_RAND = 17;
+  R_GFX_LAST = 17;
+
+  R_GFX_FLAME_WIDTH = 32;
+  R_GFX_FLAME_HEIGHT = 32;
+  R_GFX_SMOKE_WIDTH = 32;
+  R_GFX_SMOKE_HEIGHT = 32;
 
 procedure g_GFX_Init ();
 procedure g_GFX_Free ();
@@ -59,13 +79,11 @@ procedure g_GFX_Bubbles (fX, fY: Integer; count: Word; devX, devY: Byte);
 procedure g_GFX_SetMax (count: Integer);
 function  g_GFX_GetMax (): Integer;
 
-procedure g_GFX_OnceAnim (X, Y: Integer; Anim: TAnimation; AnimType: Byte = 0);
-
 procedure g_Mark (x, y, Width, Height: Integer; t: Byte; st: Boolean=true);
 
-procedure g_GFX_Update ();
-procedure g_GFX_Draw ();
+procedure g_GFX_QueueEffect (AnimType, X, Y: Integer);
 
+procedure g_GFX_Update ();
 
 var
   gpart_dbg_enabled: Boolean = true;
@@ -75,79 +93,72 @@ var
 //WARNING: only for Holmes!
 function awmIsSetHolmes (x, y: Integer): Boolean; inline;
 
+  type (* private state *)
+    TPartType = (Blood, Spark, Bubbles, Water);
+    TPartState = (Free, Normal, Stuck, Sleeping);
+    TFloorType = (Wall, LiquidIn, LiquidOut);
+      // Wall: floorY is just before floor
+      // LiquidIn: floorY is liquid *start* (i.e. just in a liquid)
+      // LiquidOut: floorY is liquid *end* (i.e. just out of a liquid)
+    TEnvType = (EAir, ELiquid, EWall); // where particle is now
+
+    // note: this MUST be record, so we can keep it in
+    // dynamic array and has sequential memory access pattern
+    PParticle = ^TParticle;
+    TParticle = record
+      x, y: Integer;
+      oldX, oldY: Integer;
+      velX, velY: Single;
+      accelX, accelY: Single;
+      state: TPartState;
+      particleType: TPartType;
+      red, green, blue: Byte;
+      alpha: Byte;
+      time, liveTime, waitTime: Word;
+      stickDX: Integer; // STATE_STICK: -1,1: stuck to a wall; 0: stuck to ceiling
+      justSticked: Boolean; // not used
+      floorY: Integer; // actually, floor-1; `Unknown`: unknown
+      floorType: TFloorType;
+      env: TEnvType; // where particle is now
+      ceilingY: Integer; // actually, ceiling+1; `Unknown`: unknown
+      wallEndY: Integer; // if we stuck to a wall, this is where wall ends
+
+      //k8: sorry, i have to emulate virtual methods this way, 'cause i haet `Object`
+      procedure thinkerBloodAndWater ();
+      procedure thinkerSpark ();
+      procedure thinkerBubble ();
+
+      procedure findFloor (force: Boolean=false); // this updates `floorY` if forced or Unknown
+      procedure findCeiling (force: Boolean=false); // this updates `ceilingY` if forced or Unknown
+
+      procedure freeze (); inline; // remove velocities and acceleration
+      procedure sleep (); inline; // switch to sleep mode
+
+      function checkAirStreams (): Boolean; // `true`: affected by air stream
+
+      function alive (): Boolean; inline;
+      procedure die (); inline;
+      procedure think (); inline;
+    end;
+
+  var (* private state *)
+    Particles: array of TParticle = nil;
 
 implementation
 
-uses
-  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
-  g_map, g_panel, g_basic, Math, e_graphics,
-  g_options, g_console, SysUtils, g_triggers, MAPDEF,
-  g_game, g_language, g_net, utils, xprofiler;
+  uses
+    {$IFDEF ENABLE_RENDER}
+      r_render,
+    {$ENDIF}
+    g_map, g_panel, Math, utils,
+    g_options, SysUtils, MAPDEF
+  ;
 
 
 const
   Unknown = Integer($7fffffff);
 
-
-type
-  TPartType = (Blood, Spark, Bubbles, Water);
-  TPartState = (Free, Normal, Stuck, Sleeping);
-  TFloorType = (Wall, LiquidIn, LiquidOut);
-    // Wall: floorY is just before floor
-    // LiquidIn: floorY is liquid *start* (i.e. just in a liquid)
-    // LiquidOut: floorY is liquid *end* (i.e. just out of a liquid)
-  TEnvType = (EAir, ELiquid, EWall); // where particle is now
-
-  // note: this MUST be record, so we can keep it in
-  // dynamic array and has sequential memory access pattern
-  PParticle = ^TParticle;
-  TParticle = record
-    x, y: Integer;
-    oldX, oldY: Integer;
-    velX, velY: Single;
-    accelX, accelY: Single;
-    state: TPartState;
-    particleType: TPartType;
-    red, green, blue: Byte;
-    alpha: Byte;
-    time, liveTime, waitTime: Word;
-    stickDX: Integer; // STATE_STICK: -1,1: stuck to a wall; 0: stuck to ceiling
-    justSticked: Boolean; // not used
-    floorY: Integer; // actually, floor-1; `Unknown`: unknown
-    floorType: TFloorType;
-    env: TEnvType; // where particle is now
-    ceilingY: Integer; // actually, ceiling+1; `Unknown`: unknown
-    wallEndY: Integer; // if we stuck to a wall, this is where wall ends
-
-    //k8: sorry, i have to emulate virtual methods this way, 'cause i haet `Object`
-    procedure thinkerBloodAndWater ();
-    procedure thinkerSpark ();
-    procedure thinkerBubble ();
-
-    procedure findFloor (force: Boolean=false); // this updates `floorY` if forced or Unknown
-    procedure findCeiling (force: Boolean=false); // this updates `ceilingY` if forced or Unknown
-
-    procedure freeze (); inline; // remove velocities and acceleration
-    procedure sleep (); inline; // switch to sleep mode
-
-    function checkAirStreams (): Boolean; // `true`: affected by air stream
-
-    function alive (): Boolean; inline;
-    procedure die (); inline;
-    procedure think (); inline;
-  end;
-
-  TOnceAnim = record
-    AnimType:   Byte;
-    x, y:       Integer;
-    oldX, oldY: Integer;
-    Animation:  TAnimation;
-  end;
-
-
 var
-  Particles: array of TParticle = nil;
-  OnceAnims: array of TOnceAnim = nil;
   MaxParticles: Integer = 0;
   CurrentParticle: Integer = 0;
   // awakeMap has one bit for each map grid cell; on g_Mark,
@@ -162,6 +173,12 @@ var
   awakeMapHlm: packed array of LongWord = nil;
   {$ENDIF}
 
+  procedure g_GFX_QueueEffect (AnimType, X, Y: Integer);
+  begin
+    {$IFDEF ENABLE_RENDER}
+      r_Render_QueueEffect(AnimType, X, Y)
+    {$ENDIF}
+  end;
 
 // ////////////////////////////////////////////////////////////////////////// //
 function awmIsSetHolmes (x, y: Integer): Boolean; inline;
@@ -224,7 +241,7 @@ begin
   FillDWord(awakeMapHlm[0], Length(awakeMapHlm), 0);
   {$ENDIF}
   //{$IF DEFINED(D2F_DEBUG)}
-  if gDebugMode then e_LogWritefln('particle awake map: %sx%s (for grid of size %sx%s)', [awakeMapW, awakeMapH, mapGrid.gridWidth, mapGrid.gridHeight]);
+  // if gDebugMode then e_LogWritefln('particle awake map: %sx%s (for grid of size %sx%s)', [awakeMapW, awakeMapH, mapGrid.gridWidth, mapGrid.gridHeight]);
   //{$ENDIF}
   awakeDirty := true;
   awmClear();
@@ -1546,51 +1563,6 @@ begin
   result := MaxParticles;
 end;
 
-
-function FindOnceAnim (): DWORD;
-var
-  i: Integer;
-begin
-  if OnceAnims <> nil then
-    for i := 0 to High(OnceAnims) do
-      if OnceAnims[i].Animation = nil then
-      begin
-        Result := i;
-        Exit;
-      end;
-
-  if OnceAnims = nil then
-    begin
-      SetLength(OnceAnims, 16);
-      Result := 0;
-    end
-  else
-    begin
-      Result := High(OnceAnims) + 1;
-      SetLength(OnceAnims, Length(OnceAnims) + 16);
-    end;
-end;
-
-
-procedure g_GFX_OnceAnim (x, y: Integer; Anim: TAnimation; AnimType: Byte = 0);
-var
-  find_id: DWORD;
-begin
-  if not gpart_dbg_enabled then exit;
-
-  if (Anim = nil) then exit;
-
-  find_id := FindOnceAnim();
-
-  OnceAnims[find_id].AnimType := AnimType;
-  OnceAnims[find_id].Animation := TAnimation.Create(Anim.FramesID, Anim.Loop, Anim.Speed);
-  OnceAnims[find_id].Animation.Blending := Anim.Blending;
-  OnceAnims[find_id].Animation.alpha := Anim.alpha;
-  OnceAnims[find_id].x := x;
-  OnceAnims[find_id].y := y;
-end;
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 procedure g_GFX_Init ();
 begin
@@ -1612,12 +1584,6 @@ begin
   SetLength(Particles, MaxParticles);
   for a := 0 to High(Particles) do Particles[a].die();
   CurrentParticle := 0;
-
-  if (OnceAnims <> nil) then
-  begin
-    for a := 0 to High(OnceAnims) do OnceAnims[a].Animation.Free();
-    OnceAnims := nil;
-  end;
 
   awakeMap := nil;
   // why not?
@@ -1658,94 +1624,6 @@ begin
 
   // clear awake map
   awmClear();
-
-  if OnceAnims <> nil then
-  begin
-    for a := 0 to High(OnceAnims) do
-      if OnceAnims[a].Animation <> nil then
-      begin
-        OnceAnims[a].oldx := OnceAnims[a].x;
-        OnceAnims[a].oldy := OnceAnims[a].y;
-
-        case OnceAnims[a].AnimType of
-          ONCEANIM_SMOKE:
-            begin
-              if Random(3) = 0 then
-                OnceAnims[a].x := OnceAnims[a].x-1+Random(3);
-              if Random(2) = 0 then
-                OnceAnims[a].y := OnceAnims[a].y-Random(2);
-            end;
-        end;
-
-        if OnceAnims[a].Animation.Played then
-          begin
-            OnceAnims[a].Animation.Free();
-            OnceAnims[a].Animation := nil;
-          end
-        else
-          OnceAnims[a].Animation.Update();
-      end;
-  end;
 end;
-
-
-procedure g_GFX_Draw ();
-  var
-    a, len, fx, fy: Integer;
-begin
-  if not gpart_dbg_enabled then exit;
-
-  if (Particles <> nil) then
-  begin
-    glDisable(GL_TEXTURE_2D);
-         if (g_dbg_scale < 0.6) then glPointSize(1)
-    else if (g_dbg_scale > 1.3) then glPointSize(g_dbg_scale+1)
-    else glPointSize(2);
-    glDisable(GL_POINT_SMOOTH);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBegin(GL_POINTS);
-
-    len := High(Particles);
-    for a := 0 to len do
-    begin
-      with Particles[a] do
-      begin
-        if not alive then continue;
-        if (x >= sX) and (y >= sY) and (x <= sX+sWidth) and (sY <= sY+sHeight) then
-        begin
-          fx := nlerp(oldx, x, gLerpFactor);
-          fy := nlerp(oldy, y, gLerpFactor);
-          glColor4ub(red, green, blue, alpha);
-          glVertex2f(fx+0.37, fy+0.37);
-        end;
-      end;
-    end;
-
-    glEnd();
-
-    glDisable(GL_BLEND);
-  end;
-
-  if (OnceAnims <> nil) then
-  begin
-    len := High(OnceAnims);
-    for a := 0 to len do
-    begin
-      if (OnceAnims[a].Animation <> nil) then
-      begin
-        with OnceAnims[a] do
-        begin
-          fx := nlerp(oldx, x, gLerpFactor);
-          fy := nlerp(oldy, y, gLerpFactor);
-          Animation.Draw(x, y, TMirrorType.None);
-        end;
-      end;
-    end;
-  end;
-end;
-
 
 end.

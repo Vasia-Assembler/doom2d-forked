@@ -18,10 +18,7 @@ unit g_playermodel;
 
 interface
 
-uses
-  {$IFDEF USE_MEMPOOL}mempool,{$ENDIF}
-  MAPDEF, g_textures, g_basic, g_weapons, e_graphics, utils, g_gfx,
-  ImagingTypes, Imaging, ImagingUtility;
+  uses MAPDEF, g_animations, g_base, g_basic, g_weapons, utils;
 
 const
   A_STAND      = 0;
@@ -56,124 +53,138 @@ const
   MODELSOUND_PAIN = 0;
   MODELSOUND_DIE  = 1;
 
+  W_POS_NORMAL = 0;
+  W_POS_UP     = 1;
+  W_POS_DOWN   = 2;
+  W_POS_LAST   = W_POS_DOWN;
+
+  W_ACT_NORMAL = 0;
+  W_ACT_FIRE   = 1;
+  W_ACT_LAST   = W_ACT_FIRE;
+
+  FLAG_BASEPOINT: TDFPoint = (X:16; Y:43);
+
 type
-  TModelInfo = record
-    Name:        String;
-    Author:      String;
-    Description: String;
-    HaveWeapon:  Boolean;
+  TWeaponPoints = Array [WP_FIRST + 1..WP_LAST, A_STAND..A_LAST, TDirection.D_LEFT..TDirection.D_RIGHT] of Array of TDFPoint;
+
+  TModelTextures = Array [TDirection.D_LEFT..TDirection.D_RIGHT, A_STAND..A_LAST] of record
+    Resource: String;
+    Mask:     String;
+    Frames:   Integer;
+    Back:     Boolean;
   end;
 
+{$IFDEF ENABLE_GFX}
   TModelBlood = record
     R, G, B, Kind: Byte;
   end;
+{$ENDIF}
 
   TModelSound = record
     ID:    DWORD;
     Level: Byte;
   end;
 
-  TGibSprite = record
-    ID: DWORD;
-    MaskID: DWORD;
-    Rect: TRectWH;
-    OnlyOne: Boolean;
-  end;
-
   TModelSoundArray = Array of TModelSound;
-  TGibsArray = Array of TGibSprite;
-  TWeaponPoints = Array [WP_FIRST + 1..WP_LAST] of
-                  Array [A_STAND..A_LAST] of
-                  Array [TDirection.D_LEFT..TDirection.D_RIGHT] of Array of TDFPoint;
 
   TPlayerModel = class{$IFDEF USE_MEMPOOL}(TPoolObject){$ENDIF}
   private
-    FName:             String;
     FDirection:        TDirection;
     FColor:            TRGB;
-    FBlood:            TModelBlood;
     FCurrentAnimation: Byte;
-    FAnim:             Array [TDirection.D_LEFT..TDirection.D_RIGHT] of Array [A_STAND..A_LAST] of TAnimation;
-    FMaskAnim:         Array [TDirection.D_LEFT..TDirection.D_RIGHT] of Array [A_STAND..A_LAST] of TAnimation;
-    FWeaponPoints:     TWeaponPoints;
-    FPainSounds:       TModelSoundArray;
-    FDieSounds:        TModelSoundArray;
-    FSlopSound:        Byte;
+    FAnimState:        TAnimState;
     FCurrentWeapon:    Byte;
-    FDrawWeapon:       Boolean;
     FFlag:             Byte;
-    FFlagPoint:        TDFPoint;
-    FFlagAngle:        SmallInt;
-    FFlagAnim:         TAnimation;
-    FFire:             Boolean;
     FFireCounter:      Byte;
+    FID:               Integer;
 
   public
     destructor  Destroy(); override;
     procedure   ChangeAnimation(Animation: Byte; Force: Boolean = False);
-    function    GetCurrentAnimation: TAnimation;
-    function    GetCurrentAnimationMask: TAnimation;
     procedure   SetColor(Red, Green, Blue: Byte);
     procedure   SetWeapon(Weapon: Byte);
     procedure   SetFlag(Flag: Byte);
-    procedure   SetFire(Fire: Boolean);
+    procedure   SetFire (Fire: Boolean);
+    function    GetFire (): Boolean;
     function    PlaySound(SoundType, Level: Byte; X, Y: Integer): Boolean;
     procedure   Update();
-    procedure   Draw(X, Y: Integer; Alpha: Byte = 0);
+
+    {$IFDEF ENABLE_GFX}
+      function GetBlood (): TModelBlood;
+    {$ENDIF}
+
+    function GetName (): String;
 
   published
-    property    Fire: Boolean read FFire;
     property    Direction: TDirection read FDirection write FDirection;
     property    Animation: Byte read FCurrentAnimation;
     property    Weapon: Byte read FCurrentWeapon;
-    property    Name: String read FName;
 
   public
     property    Color: TRGB read FColor write FColor;
-    property    Blood: TModelBlood read FBlood;
+    property    AnimState: TAnimState read FAnimState;
+    property    CurrentAnimation: Byte read FCurrentAnimation;
+    property    CurrentWeapon: Byte read FCurrentWeapon;
+    property    Flag: Byte read FFlag;
+    property    ID: Integer read FID;
   end;
 
-procedure g_PlayerModel_LoadData();
+procedure g_PlayerModel_LoadAll;
 procedure g_PlayerModel_FreeData();
 function  g_PlayerModel_Load(FileName: String): Boolean;
 function  g_PlayerModel_GetNames(): SSArray;
-function  g_PlayerModel_GetInfo(ModelName: String): TModelInfo;
-function  g_PlayerModel_GetBlood(ModelName: String): TModelBlood;
 function  g_PlayerModel_Get(ModelName: String): TPlayerModel;
-function  g_PlayerModel_GetAnim(ModelName: String; Anim: Byte; var _Anim, _Mask: TAnimation): Boolean;
-function  g_PlayerModel_GetGibs(ModelName: String; var Gibs: TGibsArray): Boolean;
+function  g_PlayerModel_GetIndex (ModelName: String): Integer;
 
+{$IFDEF ENABLE_GFX}
+  function  g_PlayerModel_GetBlood(ModelName: String): TModelBlood;
+{$ENDIF}
+
+procedure g_PlayerModel_LoadFake (ModelName, FileName: String);
+
+(* --- private data --- *)
+
+  type
+    TPlayerModelInfo = record
+      Name:         String;
+      Author:       String;
+      Description:  String;
+      HaveWeapon:   Boolean;
+      ModelSpeed:   Array [A_STAND..A_PAIN] of Byte;
+      FlagPoint:    TDFPoint;
+      FlagAngle:    SmallInt;
+      WeaponPoints: TWeaponPoints;
+      PainSounds:   TModelSoundArray;
+      DieSounds:    TModelSoundArray;
+      SlopSound:    Byte;
+      {$IFDEF ENABLE_GFX}
+        Blood:        TModelBlood;
+      {$ENDIF}
+      // =======================
+      FileName:    String;
+      Anim:        TModelTextures;
+      {$IFDEF ENABLE_GIBS}
+        GibsCount:   Integer;
+        GibsResource:String;
+        GibsMask:    String;
+        GibsOnce:    Integer;
+      {$ENDIF}
+    end;
+
+  var
+    PlayerModelsArray: Array of TPlayerModelInfo;
 
 implementation
 
-uses
-  {$INCLUDE ../thirdparty/nogl/noGLuses.inc}
-  g_main, g_sound, g_console, SysUtils, g_player, CONFIG,
-  e_sound, g_options, g_map, Math, e_log, wadreader;
-
-type
-  TPlayerModelInfo = record
-    Info:         TModelInfo;
-    ModelSpeed:   Array [A_STAND..A_PAIN] of Byte;
-    FlagPoint:    TDFPoint;
-    FlagAngle:    SmallInt;
-    WeaponPoints: TWeaponPoints;
-    Gibs:         TGibsArray;
-    PainSounds:   TModelSoundArray;
-    DieSounds:    TModelSoundArray;
-    SlopSound:    Byte;
-    Blood:        TModelBlood;
-  end;
+  uses
+    {$IFDEF ENABLE_GFX}
+      g_gfx,
+    {$ENDIF}
+    g_sound, g_console, SysUtils, g_player, CONFIG,
+    e_sound, g_options, g_map, Math, e_log, wadreader
+  ;
 
 const
-  W_POS_NORMAL = 0;
-  W_POS_UP     = 1;
-  W_POS_DOWN   = 2;
-
-  W_ACT_NORMAL = 0;
-  W_ACT_FIRE   = 1;
-
-  FLAG_BASEPOINT: TDFPoint = (X:16; Y:43);
   FLAG_DEFPOINT:  TDFPoint = (X:32; Y:16);
   FLAG_DEFANGLE = -20;
   WEAPONBASE: Array [WP_FIRST + 1..WP_LAST] of TDFPoint =
@@ -192,26 +203,19 @@ const
   WeapNames: Array [WP_FIRST + 1..WP_LAST] of String =
              ('csaw', 'hgun', 'sg', 'ssg', 'mgun', 'rkt', 'plz', 'bfg', 'spl', 'flm');
 
-var
-  WeaponID: Array [WP_FIRST + 1..WP_LAST] of
-            Array [W_POS_NORMAL..W_POS_DOWN] of
-            Array [W_ACT_NORMAL..W_ACT_FIRE] of DWORD;
-  PlayerModelsArray: Array of TPlayerModelInfo;
-
-procedure g_PlayerModel_LoadData();
-var
-  a: Integer;
-begin
-  for a := WP_FIRST + 1 to WP_LAST do
+  function g_PlayerModel_GetIndex (ModelName: String): Integer;
+    var i: Integer;
   begin
-    g_Texture_CreateWAD(WeaponID[a][W_POS_NORMAL][W_ACT_NORMAL], GameWAD+':WEAPONS\'+UpperCase(WeapNames[a]));
-    g_Texture_CreateWAD(WeaponID[a][W_POS_NORMAL][W_ACT_FIRE], GameWAD+':WEAPONS\'+UpperCase(WeapNames[a])+'_FIRE');
-    g_Texture_CreateWAD(WeaponID[a][W_POS_UP][W_ACT_NORMAL], GameWAD+':WEAPONS\'+UpperCase(WeapNames[a])+'_UP');
-    g_Texture_CreateWAD(WeaponID[a][W_POS_UP][W_ACT_FIRE], GameWAD+':WEAPONS\'+UpperCase(WeapNames[a])+'_UP_FIRE');
-    g_Texture_CreateWAD(WeaponID[a][W_POS_DOWN][W_ACT_NORMAL], GameWAD+':WEAPONS\'+UpperCase(WeapNames[a])+'_DN');
-    g_Texture_CreateWAD(WeaponID[a][W_POS_DOWN][W_ACT_FIRE], GameWAD+':WEAPONS\'+UpperCase(WeapNames[a])+'_DN_FIRE');
+    Result := -1;
+    if PlayerModelsArray <> nil then
+    begin
+      i := 0;
+      while (i < Length(PlayerModelsArray)) and (PlayerModelsArray[i].Name <> ModelName) do
+        Inc(i);
+      if i < Length(PlayerModelsArray) then
+        Result := i
+    end
   end;
-end;
 
 function GetPoint(var str: String; var point: TDFPoint): Boolean;
 var
@@ -282,120 +286,51 @@ begin
   Result := True;
 end;
 
-procedure ExtAnimFromBaseAnim(MName: String; AIdx: Integer);
-const
-  CopyAnim: array [A_LASTBASE+1..A_LASTEXT] of Integer = (
-    A_WALK, A_WALK, A_WALK, A_WALK, A_WALK,
-    A_STAND, A_WALK, A_ATTACK, A_WALK, A_SEEUP, A_SEEDOWN,
-    A_ATTACKUP, A_ATTACKDOWN
-  );
-var
-  OIdx, W, I: Integer;
-  D: TDirection;
-  AName, OName: String;
-begin
-  // HACK: shitty workaround to duplicate base animations
-  //       in place of extended, replace with something better later
-
-  Assert((AIdx > A_LASTBASE) and (AIdx <= A_LASTEXT));
-  OIdx := CopyAnim[AIdx];
-
-  AName := MName + '_RIGHTANIM' + IntToStr(AIdx);
-  OName := MName + '_RIGHTANIM' + IntToStr(OIdx);
-  Assert(g_Frames_Dup(AName, OName));
-  Assert(g_Frames_Dup(AName + '_MASK', OName + '_MASK'));
-  AName := MName + '_LEFTANIM' + IntToStr(AIdx);
-  OName := MName + '_LEFTANIM' + IntToStr(OIdx);
-  if g_Frames_Exists(AName) then
+  procedure g_PlayerMode_ExtendPoints (id: Integer; AIdx: Integer);
+    const
+      CopyAnim: array [A_LASTBASE+1..A_LASTEXT] of Integer = (
+        A_WALK, A_WALK, A_WALK, A_WALK, A_WALK,
+        A_STAND, A_WALK, A_ATTACK, A_WALK, A_SEEUP, A_SEEDOWN,
+        A_ATTACKUP, A_ATTACKDOWN
+      );
+    var W, I, OIdx: Integer; D: TDirection;
   begin
-    g_Frames_Dup(AName, OName);
-    g_Frames_Dup(AName + '_MASK', OName + '_MASK');
-  end;
-
-  with PlayerModelsArray[High(PlayerModelsArray)] do
-  begin
-    for W := WP_FIRST + 1 to WP_LAST do
+    OIdx := CopyAnim[AIdx];
+    with PlayerModelsArray[id] do
     begin
-      for D := TDirection.D_LEFT to TDirection.D_RIGHT do
+      for W := WP_FIRST + 1 to WP_LAST do
       begin
-        SetLength(WeaponPoints[W, AIdx, D], Length(WeaponPoints[W, OIdx, D]));
-        for I := 0 to High(WeaponPoints[W, AIdx, D]) do
-          WeaponPoints[W, AIdx, D, I] := WeaponPoints[W, OIdx, D, I]
+        for D := TDirection.D_LEFT to TDirection.D_RIGHT do
+        begin
+          SetLength(WeaponPoints[W, AIdx, D], Length(WeaponPoints[W, OIdx, D]));
+          for I := 0 to High(WeaponPoints[W, AIdx, D]) do
+            WeaponPoints[W, AIdx, D, I] := WeaponPoints[W, OIdx, D, I]
+        end;
       end;
     end;
   end;
-end;
 
-function g_PlayerModel_CalcGibSize (pData: Pointer; dataSize, x, y, w, h: Integer): TRectWH;
-  var i, j: Integer; done: Boolean; img: TImageData;
-
-  function IsVoid (i, j: Integer): Boolean;
+  procedure g_PlayerModel_LoadFake (ModelName, FileName: String);
+    var id: Integer;
   begin
-    result := Byte((PByte(img.bits) + (y+j)*img.width*4 + (x+i)*4 + 3)^) = 0
+    SetLength(PlayerModelsArray, Length(PlayerModelsArray) + 1);
+    id := High(PlayerModelsArray);
+    PlayerModelsArray[id].Name := ModelName;
+    PlayerModelsArray[id].HaveWeapon := False;
+    PlayerModelsArray[id].FileName := FileName;
   end;
-
-begin
-  InitImage(img);
-  assert(LoadImageFromMemory(pData, dataSize, img));
-
-  (* trace x from right to left *)
-  done := false; i := 0;
-  while not done and (i < w) do
-  begin
-    j := 0;
-    while (j < h) and IsVoid(i, j) do inc(j);
-    done := (j < h) and (IsVoid(i, j) = false);
-    result.x := i;
-    inc(i);
-  end;
-
-  (* trace y from up to down *)
-  done := false; j := 0;
-  while not done and (j < h) do
-  begin
-    i := 0;
-    while (i < w) and IsVoid(i, j) do inc(i);
-    done := (i < w) and (IsVoid(i, j) = false);
-    result.y := j;
-    inc(j);
-  end;
-  
-  (* trace x from right to left *)
-  done := false; i := w - 1;
-  while not done and (i >= 0) do
-  begin
-    j := 0;
-    while (j < h) and IsVoid(i, j) do inc(j);
-    done := (j < h) and (IsVoid(i, j) = false);
-    result.width := i - result.x + 1;
-    dec(i);
-  end;
-
-  (* trace y from down to up *)
-  done := false; j := h - 1;
-  while not done and (j >= 0) do
-  begin
-    i := 0;
-    while (i < w) and IsVoid(i, j) do inc(i);
-    done := (i < w) and (IsVoid(i, j) = false);
-    result.height := j - result.y + 1;
-    dec(j);
-  end;
-
-  FreeImage(img);
-end;
 
 function g_PlayerModel_Load(FileName: string): Boolean;
 var
   ID: DWORD;
-  a, b, len, lenpd, lenpd2, aa, bb, f: Integer;
+  a, b, len, aa, bb, f: Integer;
   cc: TDirection;
   config: TConfig;
-  pData, pData2: Pointer;
+  pData: Pointer;
   WAD: TWADFile;
-  s, aname: string;
+  s: string;
   prefix: string;
-  ok, chk: Boolean;
+  ok, chk, chk2: Boolean;
 begin
   e_WriteLog(Format('Loading player model "%s"...', [FileName]), TMsgType.Notify);
 
@@ -432,50 +367,48 @@ begin
 
   prefix := FileName+':TEXTURES\';
 
-  with PlayerModelsArray[ID].Info do
-  begin
-    Name := s;
-    Author := config.ReadStr('Model', 'author', '');
-    Description := config.ReadStr('Model', 'description', '');
-  end;
+  PlayerModelsArray[ID].Name := s;
+  PlayerModelsArray[ID].Author := config.ReadStr('Model', 'author', '');
+  PlayerModelsArray[ID].Description := config.ReadStr('Model', 'description', '');
+  PlayerModelsArray[ID].FileName := FileName;
 
-  with PlayerModelsArray[ID] do
-  begin
-    Blood.R := MAX(0, MIN(255, config.ReadInt('Blood', 'R', 150)));
-    Blood.G := MAX(0, MIN(255, config.ReadInt('Blood', 'G', 0)));
-    Blood.B := MAX(0, MIN(255, config.ReadInt('Blood', 'B', 0)));
-    case config.ReadStr('Blood', 'Kind', 'NORMAL') of
-      'NORMAL': Blood.Kind := BLOOD_NORMAL;
-      'SPARKS': Blood.Kind := BLOOD_CSPARKS;
-      'COMBINE': Blood.Kind := BLOOD_COMBINE;
-    else
-      Blood.Kind := BLOOD_NORMAL
-    end
-  end;
+  {$IFDEF ENABLE_GFX}
+    with PlayerModelsArray[ID] do
+    begin
+      Blood.R := MAX(0, MIN(255, config.ReadInt('Blood', 'R', 150)));
+      Blood.G := MAX(0, MIN(255, config.ReadInt('Blood', 'G', 0)));
+      Blood.B := MAX(0, MIN(255, config.ReadInt('Blood', 'B', 0)));
+      case config.ReadStr('Blood', 'Kind', 'NORMAL') of
+        'NORMAL': Blood.Kind := BLOOD_NORMAL;
+        'SPARKS': Blood.Kind := BLOOD_CSPARKS;
+        'COMBINE': Blood.Kind := BLOOD_COMBINE;
+      else
+        Blood.Kind := BLOOD_NORMAL
+      end
+    end;
+  {$ENDIF}
 
   for b := A_STAND to A_LAST do
   begin
-    aname := s+'_RIGHTANIM'+IntToStr(b);
-    //e_LogWritefln('### MODEL FILE: [%s]', [prefix+config.ReadStr(AnimNames[b], 'resource', '')]);
-    if not (g_Frames_CreateWAD(nil, aname,
-                               prefix+config.ReadStr(AnimNames[b], 'resource', ''),
-                               64, 64, config.ReadInt(AnimNames[b], 'frames', 1),
-                               config.ReadBool(AnimNames[b], 'backanim', False)) and
-            g_Frames_CreateWAD(nil, aname+'_MASK',
-                               prefix+config.ReadStr(AnimNames[b], 'mask', ''),
-                               64, 64, config.ReadInt(AnimNames[b], 'frames', 1),
-                               config.ReadBool(AnimNames[b], 'backanim', False))) then
+    with PlayerModelsArray[ID].Anim[TDirection.D_RIGHT, b] do
     begin
-      if b <= A_LASTBASE then
+      Resource := config.ReadStr(AnimNames[b], 'resource', '');
+      Mask := config.ReadStr(AnimNames[b], 'mask', '');
+      Frames := config.ReadInt(AnimNames[b], 'frames', 1);
+      Back := config.ReadBool(AnimNames[b], 'backanim', False);
+      if (Resource = '') or (Mask = '') then
       begin
-        config.Free();
-        WAD.Free();
-        Exit;
-      end
-      else
-      begin
-        ExtAnimFromBaseAnim(s, b);
-        continue;
+        if b <= A_LASTBASE then
+        begin
+          config.Free();
+          WAD.Free();
+          Exit
+        end
+        else
+        begin
+          g_PlayerMode_ExtendPoints(ID, b);
+          continue
+        end
       end;
     end;
 
@@ -483,25 +416,16 @@ begin
       for bb := A_STAND to A_LAST do
         for cc := TDirection.D_LEFT to TDirection.D_RIGHT do
         begin
-          f := config.ReadInt(AnimNames[bb], 'frames', 1);
-          if config.ReadBool(AnimNames[bb], 'backanim', False) then
-            if f > 2 then f := 2*f-2;
+          f := PlayerModelsArray[ID].Anim[cc, bb].Frames;
+          if PlayerModelsArray[ID].Anim[cc, bb].Back and (f > 2) then
+            f := 2 * f - 2;
           SetLength(PlayerModelsArray[ID].WeaponPoints[aa, bb, cc], f);
         end;
 
-    if (config.ReadStr(AnimNames[b], 'resource2', '') <> '') and
-       (config.ReadStr(AnimNames[b], 'mask2', '') <> '') then
+    with PlayerModelsArray[ID].Anim[TDirection.D_LEFT, b] do
     begin
-      aname := s+'_LEFTANIM'+IntToStr(b);
-      g_Frames_CreateWAD(nil, aname,
-                         prefix+config.ReadStr(AnimNames[b], 'resource2', ''),
-                         64, 64, config.ReadInt(AnimNames[b], 'frames', 1),
-                         config.ReadBool(AnimNames[b], 'backanim', False));
-
-      g_Frames_CreateWAD(nil, aname+'_MASK',
-                         prefix+config.ReadStr(AnimNames[b], 'mask2', ''),
-                         64, 64, config.ReadInt(AnimNames[b], 'frames', 1),
-                         config.ReadBool(AnimNames[b], 'backanim', False));
+      Frames := PlayerModelsArray[ID].Anim[TDirection.D_RIGHT, b].Frames;
+      Back := PlayerModelsArray[ID].Anim[TDirection.D_RIGHT, b].Back;
     end;
 
     PlayerModelsArray[ID].ModelSpeed[b] := Max(1, config.ReadInt(AnimNames[b], 'waitcount', 1) div 3);
@@ -537,43 +461,39 @@ begin
 
     SlopSound := Min(Max(config.ReadInt('Sound', 'slop', 0), 0), 2);
 
-    SetLength(Gibs, ReadInt('Gibs', 'count', 0));
-
-    if (Gibs <> nil) and
-       (WAD.GetResource('TEXTURES/'+config.ReadStr('Gibs', 'resource', 'GIBS'), pData, lenpd)) and
-       (WAD.GetResource('TEXTURES/'+config.ReadStr('Gibs', 'mask', 'GIBSMASK'), pData2, lenpd2)) then
-    begin
-      for a := 0 to High(Gibs) do
-        if e_CreateTextureMemEx(pData, lenpd, Gibs[a].ID, a*32, 0, 32, 32) and
-          e_CreateTextureMemEx(pData2, lenpd2, Gibs[a].MaskID, a*32, 0, 32, 32) then
-        begin
-          //Gibs[a].Rect := e_GetTextureSize2(Gibs[a].ID);
-          Gibs[a].Rect := g_PlayerModel_CalcGibSize(pData, lenpd, a*32, 0, 32, 32);
-          with Gibs[a].Rect do
-            if Height > 3 then Height := Height-1-Random(2);
-          Gibs[a].OnlyOne := config.ReadInt('Gibs', 'once', -1) = a+1;
-        end;
-
-      FreeMem(pData);
-      FreeMem(pData2);
-    end;
+    {$IFDEF ENABLE_GIBS}
+      GibsCount := config.ReadInt('Gibs', 'count', 0);
+      GibsResource := config.ReadStr('Gibs', 'resource', 'GIBS');
+      GibsMask := config.ReadStr('Gibs', 'mask', 'GIBSMASK');
+      GibsOnce := config.ReadInt('Gibs', 'once', -1);
+    {$ENDIF}
 
     ok := True;
     for aa := WP_FIRST + 1 to WP_LAST do
       for bb := A_STAND to A_LAST do
         if not (bb in [A_DIE1, A_DIE2, A_PAIN]) then
         begin
-          chk := GetWeapPoints(config.ReadStr(AnimNames[bb], WeapNames[aa]+'_points', ''), aa, bb, TDirection.D_RIGHT,
-                               config.ReadInt(AnimNames[bb], 'frames', 0),
-                               config.ReadBool(AnimNames[bb], 'backanim', False),
-                               WeaponPoints);
+          chk := GetWeapPoints(
+            config.ReadStr(AnimNames[bb], WeapNames[aa] + '_points', ''),
+            aa,
+            bb,
+            TDirection.D_RIGHT,
+            Anim[TDirection.D_RIGHT, bb].Frames,
+            Anim[TDirection.D_RIGHT, bb].Back,
+            WeaponPoints
+          );
           if ok and (not chk) and (aa = WEAPON_FLAMETHROWER) then
           begin
             // workaround for flamethrower
-            chk := GetWeapPoints(config.ReadStr(AnimNames[bb], WeapNames[WEAPON_PLASMA]+'_points', ''), aa, bb, TDirection.D_RIGHT,
-                                 config.ReadInt(AnimNames[bb], 'frames', 0),
-                                 config.ReadBool(AnimNames[bb], 'backanim', False),
-                                 WeaponPoints);
+            chk := GetWeapPoints(
+              config.ReadStr(AnimNames[bb], WeapNames[WEAPON_PLASMA] + '_points', ''),
+              aa,
+              bb,
+              TDirection.D_RIGHT,
+              Anim[TDirection.D_RIGHT, bb].Frames,
+              Anim[TDirection.D_RIGHT, bb].Back,
+              WeaponPoints
+            );
             if chk then
             for f := 0 to High(WeaponPoints[aa, bb, TDirection.D_RIGHT]) do
             begin
@@ -616,26 +536,36 @@ begin
               end;
             end;
           end;
+
           ok := ok and (chk or (bb > A_LASTBASE));
 
-          if not GetWeapPoints(config.ReadStr(AnimNames[bb], WeapNames[aa]+'2_points', ''), aa, bb, TDirection.D_LEFT,
-                               config.ReadInt(AnimNames[bb], 'frames', 0),
-                               config.ReadBool(AnimNames[bb], 'backanim', False),
-                               WeaponPoints) then
+          chk2 := GetWeapPoints(
+            config.ReadStr(AnimNames[bb], WeapNames[aa] + '2_points', ''),
+            aa,
+            bb,
+            TDirection.D_LEFT,
+            Anim[TDirection.D_LEFT, bb].Frames,
+            Anim[TDirection.D_LEFT, bb].Back,
+            WeaponPoints
+          );
+          if not chk2 then
+          begin
             for f := 0 to High(WeaponPoints[aa, bb, TDirection.D_RIGHT]) do
             begin
               WeaponPoints[aa, bb, TDirection.D_LEFT, f].X := -WeaponPoints[aa, bb, TDirection.D_RIGHT, f].X;
               WeaponPoints[aa, bb, TDirection.D_LEFT, f].Y := WeaponPoints[aa, bb, TDirection.D_RIGHT, f].Y;
             end;
+          end;
 
           if not ok then Break;
         end;
     {if ok then g_Console_Add(Info.Name+' weapon points ok')
     else g_Console_Add(Info.Name+' weapon points fail');}
-    Info.HaveWeapon := ok;
+    PlayerModelsArray[ID].HaveWeapon := ok;
 
     s := config.ReadStr('Model', 'flag_point', '');
-    if not GetPoint(s, FlagPoint) then FlagPoint := FLAG_DEFPOINT;
+    if not GetPoint(s, FlagPoint) then
+      FlagPoint := FLAG_DEFPOINT;
 
     FlagAngle := config.ReadInt('Model', 'flag_angle', FLAG_DEFANGLE);
   end;
@@ -646,135 +576,27 @@ begin
   Result := True;
 end;
 
-function g_PlayerModel_Get(ModelName: String): TPlayerModel;
-var
-  a: Integer;
-  b: Byte;
-  ID, ID2: DWORD;
+function g_PlayerModel_Get (ModelName: String): TPlayerModel;
+  var a: Integer;
 begin
   Result := nil;
 
   if PlayerModelsArray = nil then Exit;
 
   for a := 0 to High(PlayerModelsArray) do
-    if AnsiLowerCase(PlayerModelsArray[a].Info.Name) = AnsiLowerCase(ModelName) then
+  begin
+    if AnsiLowerCase(PlayerModelsArray[a].Name) = AnsiLowerCase(ModelName) then
     begin
       Result := TPlayerModel.Create;
 
       with PlayerModelsArray[a] do
       begin
-        Result.FName := Info.Name;
-        Result.FBlood := Blood;
-
-        for b := A_STAND to A_LAST do
-        begin
-          if not (g_Frames_Get(ID, Info.Name+'_RIGHTANIM'+IntToStr(b)) and
-                  g_Frames_Get(ID2, Info.Name+'_RIGHTANIM'+IntToStr(b)+'_MASK')) then
-          begin
-            Result.Free();
-            Result := nil;
-            Exit;
-          end;
-
-          Result.FAnim[TDirection.D_RIGHT][b] := TAnimation.Create(ID, b in [A_STAND, A_WALK], ModelSpeed[b]);
-
-          Result.FMaskAnim[TDirection.D_RIGHT][b] := TAnimation.Create(ID2, b in [A_STAND, A_WALK], ModelSpeed[b]);
-
-          if g_Frames_Exists(Info.Name+'_LEFTANIM'+IntToStr(b)) and
-             g_Frames_Exists(Info.Name+'_LEFTANIM'+IntToStr(b)+'_MASK') then
-          if g_Frames_Get(ID, Info.Name+'_LEFTANIM'+IntToStr(b)) and
-             g_Frames_Get(ID2, Info.Name+'_LEFTANIM'+IntToStr(b)+'_MASK') then
-          begin
-            Result.FAnim[TDirection.D_LEFT][b] := TAnimation.Create(ID, b in [A_STAND, A_WALK], ModelSpeed[b]);
-
-            Result.FMaskAnim[TDirection.D_LEFT][b] := TAnimation.Create(ID2, b in [A_STAND, A_WALK], ModelSpeed[b]);
-          end;
-        end;
-
-        Result.FPainSounds := PainSounds;
-        Result.FDieSounds := DieSounds;
-        Result.FSlopSound := SlopSound;
-        Result.FDrawWeapon := Info.HaveWeapon;
-        Result.FWeaponPoints := WeaponPoints;
-
-        Result.FFlagPoint := FlagPoint;
-        Result.FFlagAngle := FlagAngle;
-
+        Result.FID := a;
+        Result.ChangeAnimation(A_STAND, True);
         Break;
       end;
-  end;
-end;
-
-function g_PlayerModel_GetAnim(ModelName: string; Anim: Byte; var _Anim, _Mask: TAnimation): Boolean;
-var
-  a: Integer;
-  c: Boolean;
-  ID: DWORD;
-begin
-  Result := False;
-
-  if PlayerModelsArray = nil then Exit;
-  for a := 0 to High(PlayerModelsArray) do
-    if PlayerModelsArray[a].Info.Name = ModelName then
-      with PlayerModelsArray[a] do
-      begin
-        if Anim in [A_STAND, A_WALK] then c := True else c := False;
-
-        if not g_Frames_Get(ID, Info.Name+'_RIGHTANIM'+IntToStr(Anim)) then
-          if not g_Frames_Get(ID, Info.Name+'_LEFTANIM'+IntToStr(Anim)) then Exit;
-
-        _Anim := TAnimation.Create(ID, c, ModelSpeed[Anim]);
-        _Anim.Speed := ModelSpeed[Anim];
-
-        if not g_Frames_Get(ID, Info.Name+'_RIGHTANIM'+IntToStr(Anim)+'_MASK') then
-          if not g_Frames_Get(ID, Info.Name+'_LEFTANIM'+IntToStr(Anim)+'_MASK') then Exit;
-
-        _Mask := TAnimation.Create(ID, c, ModelSpeed[Anim]);
-        _Mask.Speed := ModelSpeed[Anim];
-
-        Break;
-      end;
-
-  Result := True;
-end;
-
-function g_PlayerModel_GetGibs(ModelName: string; var Gibs: TGibsArray): Boolean;
-var
-  a, i, b: Integer;
-  c: Boolean;
-begin
-  Result := False;
-
-  if PlayerModelsArray = nil then Exit;
-  if gGibsCount = 0 then Exit;
-
-  c := False;
-
-  SetLength(Gibs, gGibsCount);
-
-  for a := 0 to High(PlayerModelsArray) do
-    if PlayerModelsArray[a].Info.Name = ModelName then
-    begin
-      for i := 0 to High(Gibs) do
-      begin
-        if c and (Length(PlayerModelsArray[a].Gibs) = 1) then
-        begin
-          SetLength(Gibs, i);
-          Break;
-        end;
-
-        repeat
-          b := Random(Length(PlayerModelsArray[a].Gibs));
-        until not (PlayerModelsArray[a].Gibs[b].OnlyOne and c);
-
-        Gibs[i] := PlayerModelsArray[a].Gibs[b];
-
-        if Gibs[i].OnlyOne then c := True;
-      end;
-
-      Result := True;
-      Break;
     end;
+  end;
 end;
 
 function g_PlayerModel_GetNames(): SSArray;
@@ -788,25 +610,11 @@ begin
   for i := 0 to High(PlayerModelsArray) do
   begin
     SetLength(Result, Length(Result)+1);
-    Result[High(Result)] := PlayerModelsArray[i].Info.Name;
+    Result[High(Result)] := PlayerModelsArray[i].Name;
   end;
 end;
 
-function g_PlayerModel_GetInfo(ModelName: string): TModelInfo;
-var
-  a: Integer;
-begin
-  FillChar(Result, SizeOf(Result), 0);
-  if PlayerModelsArray = nil then Exit;
-
-  for a := 0 to High(PlayerModelsArray) do
-    if PlayerModelsArray[a].Info.Name = ModelName then
-    begin
-      Result := PlayerModelsArray[a].Info;
-      Break;
-    end;
-end;
-
+{$IFDEF ENABLE_GFX}
 function g_PlayerModel_GetBlood(ModelName: string): TModelBlood;
 var
   a: Integer;
@@ -818,199 +626,55 @@ begin
   if PlayerModelsArray = nil then Exit;
 
   for a := 0 to High(PlayerModelsArray) do
-    if PlayerModelsArray[a].Info.Name = ModelName then
+    if PlayerModelsArray[a].Name = ModelName then
     begin
       Result := PlayerModelsArray[a].Blood;
       Break;
     end;
 end;
+{$ENDIF}
 
 procedure g_PlayerModel_FreeData();
-var
-  i: DWORD;
-  a, b, c: Integer;
+  var i, b: Integer;
 begin
-  for a := WP_FIRST + 1 to WP_LAST do
-    for b := W_POS_NORMAL to W_POS_DOWN do
-      for c := W_ACT_NORMAL to W_ACT_FIRE do
-        e_DeleteTexture(WeaponID[a][b][c]);
-
   e_WriteLog('Releasing models...', TMsgType.Notify);
 
   if PlayerModelsArray = nil then Exit;
 
   for i := 0 to High(PlayerModelsArray) do
+  begin
     with PlayerModelsArray[i] do
     begin
-      for a := A_STAND to A_LAST do
-      begin
-        g_Frames_DeleteByName(Info.Name+'_LEFTANIM'+IntToStr(a));
-        g_Frames_DeleteByName(Info.Name+'_LEFTANIM'+IntToStr(a)+'_MASK');
-        g_Frames_DeleteByName(Info.Name+'_RIGHTANIM'+IntToStr(a));
-        g_Frames_DeleteByName(Info.Name+'_RIGHTANIM'+IntToStr(a)+'_MASK');
-      end;
-
       if PainSounds <> nil then
         for b := 0 to High(PainSounds) do
           e_DeleteSound(PainSounds[b].ID);
-
       if DieSounds <> nil then
         for b := 0 to High(DieSounds) do
           e_DeleteSound(DieSounds[b].ID);
-
-      if Gibs <> nil then
-        for b := 0 to High(Gibs) do
-        begin
-          e_DeleteTexture(Gibs[b].ID);
-          e_DeleteTexture(Gibs[b].MaskID);
-        end;
     end;
-
+  end;
   PlayerModelsArray := nil;
 end;
 
 { TPlayerModel }
 
-procedure TPlayerModel.ChangeAnimation(Animation: Byte; Force: Boolean = False);
-begin
-  if not Force then if FCurrentAnimation = Animation then Exit;
-
-  FCurrentAnimation := Animation;
-
-  if (FDirection = TDirection.D_LEFT) and
-     (FAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) and
-     (FMaskAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
+  procedure TPlayerModel.ChangeAnimation (Animation: Byte; Force: Boolean = False);
+    var loop: Boolean; speed, count: Integer;
   begin
-    FAnim[TDirection.D_LEFT][FCurrentAnimation].Reset;
-    FMaskAnim[TDirection.D_LEFT][FCurrentAnimation].Reset;
-  end
-  else
-  begin
-    FAnim[TDirection.D_RIGHT][FCurrentAnimation].Reset;
-    FMaskAnim[TDirection.D_RIGHT][FCurrentAnimation].Reset;
+    if not Force then
+      if FCurrentAnimation = Animation then
+        Exit;
+    FCurrentAnimation := Animation;
+    loop := FCurrentAnimation in [A_STAND, A_WALK];
+    speed := PlayerModelsArray[FID].ModelSpeed[FCurrentAnimation];
+    count := PlayerModelsArray[FID].Anim[FDirection, FCurrentAnimation].Frames;
+    FAnimState := TAnimState.Create(loop, speed, count);
   end;
-end;
 
 destructor TPlayerModel.Destroy();
-var
-  a: Byte;
 begin
-  for a := A_STAND to A_LAST do
-  begin
-    FAnim[TDirection.D_LEFT][a].Free();
-    FMaskAnim[TDirection.D_LEFT][a].Free();
-    FAnim[TDirection.D_RIGHT][a].Free();
-    FMaskAnim[TDirection.D_RIGHT][a].Free();
-  end;
-
+  FAnimState.Invalidate;
   inherited;
-end;
-
-procedure TPlayerModel.Draw(X, Y: Integer; Alpha: Byte = 0);
-var
-  Mirror: TMirrorType;
-  pos, act: Byte;
-  p: TDFPoint;
-begin
-// Флаги:
-  if Direction = TDirection.D_LEFT then
-    Mirror := TMirrorType.None
-  else
-    Mirror := TMirrorType.Horizontal;
-
-  if (FFlag <> FLAG_NONE) and (FFlagAnim <> nil) and
-     (not (FCurrentAnimation in [A_DIE1, A_DIE2])) then
-  begin
-    p.X := IfThen(Direction = TDirection.D_LEFT,
-                  FLAG_BASEPOINT.X,
-                  64-FLAG_BASEPOINT.X);
-    p.Y := FLAG_BASEPOINT.Y;
-
-    FFlagAnim.DrawEx(X+IfThen(Direction = TDirection.D_LEFT, FFlagPoint.X-1, 2*FLAG_BASEPOINT.X-FFlagPoint.X+1)-FLAG_BASEPOINT.X,
-                     Y+FFlagPoint.Y-FLAG_BASEPOINT.Y+1, Mirror, p,
-                     IfThen(FDirection = TDirection.D_RIGHT, FFlagAngle, -FFlagAngle));
-  end;
-
-// Оружие:
-  if Direction = TDirection.D_RIGHT then
-    Mirror := TMirrorType.None
-  else
-    Mirror := TMirrorType.Horizontal;
-
-  if FDrawWeapon and
-    (not (FCurrentAnimation in [A_DIE1, A_DIE2, A_PAIN])) and
-    (FCurrentWeapon in [WP_FIRST + 1..WP_LAST]) then
-  begin
-    if FCurrentAnimation in [A_SEEUP, A_ATTACKUP] then
-      pos := W_POS_UP
-    else
-      if FCurrentAnimation in [A_SEEDOWN, A_ATTACKDOWN] then
-        pos := W_POS_DOWN
-      else
-        pos := W_POS_NORMAL;
-
-    if (FCurrentAnimation in [A_ATTACK, A_ATTACKUP, A_ATTACKDOWN]) or
-       FFire then
-      act := W_ACT_FIRE
-    else
-      act := W_ACT_NORMAL;
-
-    if Alpha < 201 then
-      e_Draw(WeaponID[FCurrentWeapon][pos][act],
-             X+FWeaponPoints[FCurrentWeapon, FCurrentAnimation, FDirection,
-                             FAnim[TDirection.D_RIGHT][FCurrentAnimation].CurrentFrame].X,
-             Y+FWeaponPoints[FCurrentWeapon, FCurrentAnimation, FDirection,
-                             FAnim[TDirection.D_RIGHT][FCurrentAnimation].CurrentFrame].Y,
-             0, True, False, Mirror);
-  end;
-
-// Модель:
-  if (FDirection = TDirection.D_LEFT) and
-     (FAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
-  begin
-    FAnim[TDirection.D_LEFT][FCurrentAnimation].Alpha := Alpha;
-    FAnim[TDirection.D_LEFT][FCurrentAnimation].Draw(X, Y, TMirrorType.None);
-  end
-  else
-  begin
-    FAnim[TDirection.D_RIGHT][FCurrentAnimation].Alpha := Alpha;
-    FAnim[TDirection.D_RIGHT][FCurrentAnimation].Draw(X, Y, Mirror);
-  end;
-
-// Маска модели:
-  e_Colors := FColor;
-
-  if (FDirection = TDirection.D_LEFT) and
-     (FMaskAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
-  begin
-    FMaskAnim[TDirection.D_LEFT][FCurrentAnimation].Alpha := Alpha;
-    FMaskAnim[TDirection.D_LEFT][FCurrentAnimation].Draw(X, Y, TMirrorType.None);
-  end
-  else
-  begin
-    FMaskAnim[TDirection.D_RIGHT][FCurrentAnimation].Alpha := Alpha;
-    FMaskAnim[TDirection.D_RIGHT][FCurrentAnimation].Draw(X, Y, Mirror);
-  end;
-
-  e_Colors.R := 255;
-  e_Colors.G := 255;
-  e_Colors.B := 255;
-end;
-
-function TPlayerModel.GetCurrentAnimation: TAnimation;
-begin
-  if (FDirection = TDirection.D_LEFT) and (FAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
-    Result := FAnim[TDirection.D_LEFT][FCurrentAnimation]
-  else
-    Result := FAnim[TDirection.D_RIGHT][FCurrentAnimation];
-end;
-
-function TPlayerModel.GetCurrentAnimationMask: TAnimation;
-begin
-  if (FDirection = TDirection.D_LEFT) and (FMaskAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
-    Result := FMaskAnim[TDirection.D_LEFT][FCurrentAnimation]
-  else
-    Result := FMaskAnim[TDirection.D_RIGHT][FCurrentAnimation];
 end;
 
 function TPlayerModel.PlaySound(SoundType, Level: Byte; X, Y: Integer): Boolean;
@@ -1023,33 +687,33 @@ begin
 
   if SoundType = MODELSOUND_PAIN then
   begin
-    if FPainSounds = nil then Exit;
+    if PlayerModelsArray[FID].PainSounds = nil then Exit;
 
-    for a := 0 to High(FPainSounds) do
-      if FPainSounds[a].Level = Level then
+    for a := 0 to High(PlayerModelsArray[FID].PainSounds) do
+      if PlayerModelsArray[FID].PainSounds[a].Level = Level then
       begin
-        SetLength(TempArray, Length(TempArray)+1);
-        TempArray[High(TempArray)] := FPainSounds[a].ID;
+        SetLength(TempArray, Length(TempArray) + 1);
+        TempArray[High(TempArray)] := PlayerModelsArray[FID].PainSounds[a].ID;
       end;
   end
   else
   begin
-    if (Level in [2, 3, 5]) and (FSlopSound > 0) then
+    if (Level in [2, 3, 5]) and (PlayerModelsArray[FID].SlopSound > 0) then
     begin
       g_Sound_PlayExAt('SOUND_MONSTER_SLOP', X, Y);
-      if FSlopSound = 1 then
+      if PlayerModelsArray[FID].SlopSound = 1 then
       begin
         Result := True;
         Exit;
       end;
     end;
-    if FDieSounds = nil then Exit;
+    if PlayerModelsArray[FID].DieSounds = nil then Exit;
 
-    for a := 0 to High(FDieSounds) do
-      if FDieSounds[a].Level = Level then
+    for a := 0 to High(PlayerModelsArray[FID].DieSounds) do
+      if PlayerModelsArray[FID].DieSounds[a].Level = Level then
       begin
-        SetLength(TempArray, Length(TempArray)+1);
-        TempArray[High(TempArray)] := FDieSounds[a].ID;
+        SetLength(TempArray, Length(TempArray) + 1);
+        TempArray[High(TempArray)] := PlayerModelsArray[FID].DieSounds[a].ID;
       end;
     if (TempArray = nil) and (Level = 5) then
     begin
@@ -1073,48 +737,94 @@ begin
   FColor.B := Blue;
 end;
 
-procedure TPlayerModel.SetFire(Fire: Boolean);
-begin
-  FFire := Fire;
-
-  if FFire then FFireCounter := FAnim[TDirection.D_RIGHT, A_ATTACK].Speed*FAnim[TDirection.D_RIGHT, A_ATTACK].TotalFrames
-  else FFireCounter := 0;
-end;
-
-procedure TPlayerModel.SetFlag(Flag: Byte);
-var
-  id: DWORD;
-begin
-  FFlag := Flag;
-
-  FFlagAnim.Free();
-  FFlagAnim := nil;
-
-  case Flag of
-    FLAG_RED: g_Frames_Get(id, 'FRAMES_FLAG_RED');
-    FLAG_BLUE: g_Frames_Get(id, 'FRAMES_FLAG_BLUE');
-    else Exit;
+  procedure TPlayerModel.SetFire (Fire: Boolean);
+  begin
+    if Fire then
+      FFireCounter := PlayerModelsArray[FID].ModelSpeed[A_ATTACK] * PlayerModelsArray[FID].Anim[TDirection.D_RIGHT, A_ATTACK].Frames + 1
+    else
+      FFireCounter := 0
   end;
 
-  FFlagAnim := TAnimation.Create(id, True, 8);
-end;
+  function TPlayerModel.GetFire (): Boolean;
+  begin
+    Result := FFireCounter > 0
+  end;
 
-procedure TPlayerModel.SetWeapon(Weapon: Byte);
-begin
-  FCurrentWeapon := Weapon;
-end;
+  procedure TPlayerModel.SetFlag (Flag: Byte);
+  begin
+    FFlag := Flag
+  end;
 
-procedure TPlayerModel.Update();
-begin
-  if (FDirection = TDirection.D_LEFT) and (FAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
-    FAnim[TDirection.D_LEFT][FCurrentAnimation].Update else FAnim[TDirection.D_RIGHT][FCurrentAnimation].Update;
+  procedure TPlayerModel.SetWeapon (Weapon: Byte);
+  begin
+    FCurrentWeapon := Weapon
+  end;
 
-  if (FDirection = TDirection.D_LEFT) and (FMaskAnim[TDirection.D_LEFT][FCurrentAnimation] <> nil) then
-    FMaskAnim[TDirection.D_LEFT][FCurrentAnimation].Update else FMaskAnim[TDirection.D_RIGHT][FCurrentAnimation].Update;
+{$IFDEF ENABLE_GFX}
+  function TPlayerModel.GetBlood (): TModelBlood;
+  begin
+    Result := PlayerModelsArray[FID].Blood
+  end;
+{$ENDIF}
 
-  if FFlagAnim <> nil then FFlagAnim.Update;
+  function TPlayerModel.GetName (): String;
+  begin
+    Result := PlayerModelsArray[FID].Name
+  end;
 
-  if FFireCounter > 0 then Dec(FFireCounter) else FFire := False;
-end;
+  procedure TPlayerModel.Update;
+  begin
+    if FAnimState.IsValid() then
+      FAnimState.Update;
+    if FFireCounter > 0 then
+      Dec(FFireCounter)
+  end;
+
+  procedure g_PlayerModel_LoadAll;
+    var
+      SR: TSearchRec;
+      knownFiles: array of AnsiString = nil;
+      found: Boolean;
+      wext, s: AnsiString;
+      f: Integer;
+  begin
+    // load models from all possible wad types, in all known directories
+    // this does a loosy job (linear search, ooph!), but meh
+    for wext in wadExtensions do
+    begin
+      for f := High(ModelDirs) downto Low(ModelDirs) do
+      begin
+        if (FindFirst(ModelDirs[f]+DirectorySeparator+'*'+wext, faAnyFile, SR) = 0) then
+        begin
+          repeat
+            found := false;
+            for s in knownFiles do
+            begin
+              if (strEquCI1251(forceFilenameExt(SR.Name, ''), forceFilenameExt(ExtractFileName(s), ''))) then
+              begin
+                found := true;
+                break;
+              end;
+            end;
+            if not found then
+            begin
+              SetLength(knownFiles, length(knownFiles)+1);
+              knownFiles[High(knownFiles)] := ModelDirs[f]+DirectorySeparator+SR.Name;
+            end;
+          until (FindNext(SR) <> 0);
+        end;
+        FindClose(SR);
+      end;
+    end;
+    if (length(knownFiles) = 0) then
+      raise Exception.Create('no player models found!');
+    if (length(knownFiles) = 1) then
+      e_LogWriteln('1 player model found.', TMsgType.Notify)
+    else
+      e_LogWritefln('%d player models found.', [Integer(length(knownFiles))], TMsgType.Notify);
+    for s in knownFiles do
+      if not g_PlayerModel_Load(s) then
+        e_LogWritefln('Error loading model "%s"', [s], TMsgType.Warning);
+  end;
 
 end.
