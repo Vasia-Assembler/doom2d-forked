@@ -216,16 +216,16 @@ uses
 {$IFDEF ENABLE_HOLMES}
   g_holmes in 'g_holmes.pas',
 
-  sdlcarcass in '../thidparty/flexui/sdlcarcass.pas',
-  //sdlstandalone in '../thidparty/flexui/sdlstandalone.pas',
+  sdlcarcass in '../thirdparty/flexui/sdlcarcass.pas',
+  //sdlstandalone in '../thirdparty/flexui/sdlstandalone.pas',
 
-  fui_wadread in '../thidparty/flexui/fui_wadread.pas',
-  fui_common in '../thidparty/flexui/fui_common.pas',
-  fui_gfx_gl in '../thidparty/flexui/fui_gfx_gl.pas',
-  fui_events in '../thidparty/flexui/fui_events.pas',
-  fui_style in '../thidparty/flexui/fui_style.pas',
-  fui_flexlay in '../thidparty/flexui/fui_flexlay.pas',
-  fui_ctls in '../thidparty/flexui/fui_ctls.pas',
+  fui_wadread in '../thirdparty/flexui/fui_wadread.pas',
+  fui_common in '../thirdparty/flexui/fui_common.pas',
+  fui_gfx in '../thirdparty/flexui/fui_gfx.pas',
+  fui_events in '../thirdparty/flexui/fui_events.pas',
+  fui_style in '../thirdparty/flexui/fui_style.pas',
+  fui_flexlay in '../thirdparty/flexui/fui_flexlay.pas',
+  fui_ctls in '../thirdparty/flexui/fui_ctls.pas',
 {$ENDIF}
 
   SysUtils, Classes;
