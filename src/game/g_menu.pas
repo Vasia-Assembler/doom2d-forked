@@ -189,7 +189,6 @@ begin
     TempScale := TGUIScroll(menu.GetControl('scScaleFactor')).Value;
     g_dbg_scale := TempScale + 1;
   end;
-  g_dbg_ignore_bounds := TGUISwitch(menu.GetControl('swIgnoreLevelBounds')).ItemIndex = 0;
   g_dbg_centered_camera := TGUISwitch(menu.GetControl('swCenteredCamera')).ItemIndex = 0;
 
 
@@ -677,8 +676,6 @@ begin
   TempScale := Round(g_dbg_scale - 1);
   TGUIScroll(menu.GetControl('scScaleFactor')).Value := TempScale;
 
-  with TGUISwitch(menu.GetControl('swIgnoreLevelBounds')) do
-    if g_dbg_ignore_bounds then ItemIndex := 0 else ItemIndex := 1;
 
   with TGUISwitch(menu.GetControl('swCenteredCamera')) do
     if g_dbg_centered_camera then ItemIndex := 0 else ItemIndex := 1;
@@ -2999,12 +2996,6 @@ begin
       Name := 'scScaleFactor';
       Max := 10;
       OnChange := ProcChangeGameSettings;
-    end;
-    with AddSwitch(_lc[I_MENU_GAME_IGNORE_LEVEL_BOUNDS]) do
-    begin
-      Name := 'swIgnoreLevelBounds';
-      AddItem(_lc[I_MENU_YES]);
-      AddItem(_lc[I_MENU_NO]);
     end;
     with AddSwitch(_lc[I_MENU_GAME_CENTERED_CAMERA]) do
     begin

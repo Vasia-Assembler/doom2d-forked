@@ -1648,7 +1648,7 @@ implementation
     ch := h;
 
     (* camera bounds *)
-    if g_dbg_ignore_bounds = false then
+    if not (g_dbg_centered_camera) then
     begin
       if w > gMapInfo.Width then
         cx := gMapInfo.Width div 2 - w div 2
@@ -1813,7 +1813,7 @@ initialization
   conRegVar('d_health', @DebugHealth, '', '');
   UseAccel := true;
   DebugCameraScale := 1.0;
-  FillOutsizeArea := true;
+  FillOutsizeArea := false;
   DebugFrames := false;
   DebugHealth := false;
 end.
