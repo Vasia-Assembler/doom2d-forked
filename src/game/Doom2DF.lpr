@@ -827,7 +827,7 @@ end;
 
   procedure InitPrep;
   begin
-    e_WriteLog('Doom 2D: Forever version ' + GAME_VERSION + ' proto ' + IntToStr(NET_PROTOCOL_VER), TMsgType.Notify);
+    e_WriteLog('Doom 2D: Forked version ' + GAME_VERSION + ' proto ' + IntToStr(NET_PROTOCOL_VER), TMsgType.Notify);
     if gDebugMode then
     begin
       e_WriteLog('Build arch: ' + g_GetBuildArch(), TMsgType.Notify);
@@ -1057,7 +1057,7 @@ end;
     {$IFDEF ENABLE_RENDER}
       r_Render_SetProcessLoadingCallback(@ProcessLoading);
     {$ENDIF}
-    g_Game_SetLoadingText(Format('Doom 2D: Forever %s', [GAME_VERSION]), 0, False);
+    g_Game_SetLoadingText(Format('Doom 2D: Forked %s', [GAME_VERSION]), 0, False);
     g_Game_SetLoadingText('', 0, False);
     {$IFDEF ENABLE_HOLMES}
       InitHolmes;
