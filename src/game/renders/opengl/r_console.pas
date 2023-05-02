@@ -132,7 +132,10 @@ implementation
 
     for i := 0 to High(MsgArray) do
       if MsgArray[i].time > 0 then
-        r_Draw_Text(MsgArray[i].msg, 0, y + ch * i, 255, 255, 255, 255, stdfont);
+      begin
+        if ChatTop then y := 0 + ch * i else y := gScreenHeight - ch*(Length(MsgArray) - i+2) - 1;
+        r_Draw_Text(MsgArray[i].msg, 44, y, 255, 255, 255, 255, stdfont);
+      end;
 
     if MessagesOnly = false then
     begin
@@ -168,7 +171,7 @@ initialization
   conRegVar('console_step', @ConsoleStep, 0.0, 1.0, 'set console animation speed', 'set console animation speed');
   conRegVar('console_trans', @ConsoleTrans, 0.0, 1.0, 'set console transparency', 'set console transparency');
 {$IFDEF ANDROID}
-  ChatTop := True;
+  ChatTop := False;
   ConsoleHeight := 0.35;
 {$ELSE}
   ChatTop := False;
