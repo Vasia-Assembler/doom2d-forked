@@ -348,7 +348,7 @@ var
   gInterReadyCount: Integer = 0;
   gMaxBots: Integer = 127;
 
-  g_dbg_centered_camera: Boolean = false;
+  g_dbg_centered_camera: Boolean = true;
   r_smallmap_h: Integer = 0; // 0: left; 1: center; 2: right
   r_smallmap_v: Integer = 2; // 0: top; 1: center; 2: bottom
 
