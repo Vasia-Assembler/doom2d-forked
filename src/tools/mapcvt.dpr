@@ -12,9 +12,9 @@ uses
   {$IFDEF USE_SDL2}
     SDL2 in '../thirdparty/sdl2/sdl2.pas',
   {$ENDIF}
-  sfs in '../sfs/sfs.pas',
-  sfsPlainFS in '../sfs/sfsPlainFS.pas',
-  sfsZipFS in '../sfs/sfsZipFS.pas',
+  sfs in '../thirdparty/sfs/sfs.pas',
+  sfsPlainFS in '../thirdparty/sfs/sfsPlainFS.pas',
+  sfsZipFS in '../thirdparty/sfs/sfsZipFS.pas',
   mempool in '../shared/mempool.pas',
   xstreams in '../shared/xstreams.pas',
   xparser in '../shared/xparser.pas',
