@@ -276,79 +276,49 @@ implementation
     var t: TGLTexture; s: AnsiString;
   begin
     ASSERT(p <> nil);
-
-    // hud area is 196 x 240 pixels
-    r_Common_DrawTexture(hud, x, y, hud.width, hud.height, TBasePoint.BP_LEFTUP);
-    r_Common_DrawText(p.name, x + 98, y + 16, 255, 0, 0, 255, smallfont, TBasePoint.BP_CENTER);
-
-    t := hudhp[R_BERSERK in p.FRulez];
-    r_Common_DrawTexture(t, x + 51, y + 61, t.width, t.height, TBasePoint.BP_CENTER);
-    r_Common_DrawTexture(hudap, x + 50, y + 85, hudap.width, hudap.height, TBasePoint.BP_CENTER);
-
-    r_Common_DrawText(IntToStr(MAX(0, p.health)), x + 174, y + 56, 255, 0, 0, 255, menufont, TBasePoint.BP_RIGHT);
-    r_Common_DrawText(IntToStr(MAX(0, p.armor)), x + 174, y + 84, 255, 0, 0, 255, menufont, TBasePoint.BP_RIGHT);
-
-    case p.CurrWeap of
-      WEAPON_KASTET, WEAPON_SAW: s := '--';
-      else s := IntToStr(p.GetAmmoByWeapon(p.CurrWeap));
-    end;
-    r_Common_DrawText(s, x + 174, y + 174, 255, 0, 0, 255, menufont, TBasePoint.BP_RIGHT);
-
-    if p.CurrWeap <= WP_LAST then
+    if p.health > 0 then
     begin
-      t := hudwp[p.CurrWeap];
-      r_Common_DrawTexture(t, x + 18, y + 160, t.width, t.height, TBasePoint.BP_LEFTUP);
+    r_Common_DrawText(p.name, x + 44, y + 10, 255, 255, 255, 255, smallfont, TBasePoint.BP_LEFT);
+    r_Draw_FillRect(x + 44, y + 20, x + 44 + 268, y + 20 + 16, 10, 10, 10, 240);
+    if R_BERSERK in p.FRulez then
+      r_Draw_FillRect(x + 44, y + 20, x + 44 + 268 * p.health div 200, y + 20 + 16, 139, 0, 0, 255)
+    else
+      r_Draw_FillRect(x + 44, y + 20, x + 44 + 268 * p.health div 200, y + 20 + 16, 196, 0, 0, 255);
     end;
-
-    if R_KEY_RED in p.FRulez then
-      r_Common_DrawTexture(hudkey[0], x + 76, y + 214, 16, 16, TBasePoint.BP_LEFTUP);
-    if R_KEY_GREEN in p.FRulez then
-      r_Common_DrawTexture(hudkey[1], x + 93, y + 214, 16, 16, TBasePoint.BP_LEFTUP);
-    if R_KEY_BLUE in p.FRulez then
-      r_Common_DrawTexture(hudkey[2], x + 110, y + 214, 16, 16, TBasePoint.BP_LEFTUP);
-
+    if p.armor > 0 then
+    begin
+      r_Draw_FillRect(x + 44, y + 20 + 16, x + 44 + 268, y + 20 + 16 + 16, 10, 10, 10, 240);
+      r_Draw_FillRect(x + 44, y + 20 + 16, x + 44 + 268 * p.armor div 200, y + 20 + 16 + 16, 185, 185, 185, 255);
+    end;
+    t := hudwp[p.CurrWeap];
+    r_Draw_FillRect(x + 44, y + 20 + 16 + 16, x + 44 + 268, y + 20 + 16 + 16 + 8, 10, 10, 10, 240);
+    if p.air > 0 then
+    begin
+      r_Draw_FillRect(x + 44, y + 20 + 16 + 16, x + 44 + 268 * p.air div AIR_MAX, y + 20 + 16 + 16 + 8, 0, 71, 171, 255);
+    end;
     if p.JetFuel > 0 then
     begin
-      r_Common_DrawTexture(hudair, x, y + 116, hudair.width, hudair.height, TBasePoint.BP_LEFTUP);
-      if p.air > 0 then
-        r_Draw_FillRect(x + 14, y + 116 + 4, x + 14 + 168 * p.air div AIR_MAX, y + 116 + 4 + 4, 0, 0, 196, 255);
-      r_Common_DrawTexture(hudjet, x, y + 126, hudjet.width, hudjet.height, TBasePoint.BP_LEFTUP);
-      r_Draw_FillRect(x + 14, y + 126 + 4, x + 14 + 168 * p.JetFuel div JET_MAX, y + 126 + 4 + 4, 208, 0, 0, 255);
-    end
-    else
-    begin
-      r_Common_DrawTexture(hudair, x, y + 124, hudair.width, hudair.height, TBasePoint.BP_LEFTUP);
-      if p.air > 0 then
-        r_Draw_FillRect(x + 14, y + 124 + 4, x + 14 + 168 * p.air div AIR_MAX, y + 124 + 4 + 4, 0, 0, 196, 255);
+      r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 8, x + 44 + 268, y + 20 + 16 + 16 + 8 + 8, 0, 0, 0, 240);
+      r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 8, x + 44 + 268 * p.JetFuel div JET_MAX, y + 20 + 16 + 16 + 8 + 8, 255, 192, 0, 255);
     end;
+    r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 16, x + 44 + 268, y + 20 + 16 + 16 + 16 + 16, 0, 0, 0, 240);
+    if (p.CurrWeap <> WEAPON_KASTET) and (p.CurrWeap <> WEAPON_SAW) then r_Common_DrawText(IntToStr(p.GetAmmoByWeapon(p.CurrWeap)), x + 44 + 268, y + 20 + 16 + 16 + 16, 255, 255, 255, 255, smallfont, TBasePoint.BP_RIGHTUP);
+    r_Common_DrawText(_lc[TStrings_Locale(Cardinal(I_GAME_WEAPON0) + p.CurrWeap)], x + 44, y + 20 + 16 + 16 + 16, 255, 255, 255, 255, smallfont, TBasePoint.BP_LEFTUP);
+    if R_KEY_RED in p.FRulez then
+      r_Common_DrawTexture(hudkey[0], x + 140, y + 20 + 16 + 16 + 16 + 16, 16, 16, TBasePoint.BP_LEFTUP);
+    if R_KEY_GREEN in p.FRulez then
+      r_Common_DrawTexture(hudkey[1], x + 156, y + 20 + 16 + 16 + 16 + 16, 16, 16, TBasePoint.BP_LEFTUP);
+    if R_KEY_BLUE in p.FRulez then
+      r_Common_DrawTexture(hudkey[2], x + 172, y + 20 + 16 + 16 + 16 + 16, 16, 16, TBasePoint.BP_LEFTUP);
   end;
 
   procedure r_Render_DrawHUDArea (x, y, w, h: Integer; p: TPlayer);
     var s: AnsiString; oldy: Integer;
   begin
-    r_Common_DrawTexture(hudbg, x, y, w, h, TBasePoint.BP_LEFTUP);
-
-    if p <> nil then
-    begin
-      oldy := y;
-      if h < 239 then y := y - 32; (* hack: hide nickname on 640x400 *)
-      r_Render_DrawHUD(x + w - 196 + 2, y, p);
-      if p.Spectator then
-      begin
-        r_Common_DrawText(_lc[I_PLAYER_SPECT], x + 4, y + 242, 255, 255, 255, 255, stdfont, TBasePoint.BP_LEFTUP);
-        r_Common_DrawText(_lc[I_PLAYER_SPECT2], x + 4, y + 258, 255, 255, 255, 255, stdfont, TBasePoint.BP_LEFTUP);
-        r_Common_DrawText(_lc[I_PLAYER_SPECT1], x + 4, y + 274, 255, 255, 255, 255, stdfont, TBasePoint.BP_LEFTUP);
-        if p.NoRespawn then
-          r_Common_DrawText(_lc[I_PLAYER_SPECT1S], x + 4, y + 290, 255, 255, 255, 255, stdfont, TBasePoint.BP_LEFTUP);
-      end;
-      y := oldy;
-    end;
-
-    if gShowPing and g_Game_IsClient then
-    begin
-      s := _lc[I_GAME_PING_HUD] + IntToStr(NetPeer.lastRoundTripTime) + _lc[I_NET_SLIST_PING_MS];
-      r_Common_DrawText(s, x + 4, y + 242, 255, 255, 255, 255, stdfont, TBasePoint.BP_LEFTUP);
-    end;
+  if p <> nil then
+  begin
+    r_Render_DrawHUD(x + 2, y, p);
+  end;
   end;
 
   procedure r_Render_DrawStatsView (x, y, w, h: Integer; p: TPlayer);
@@ -475,8 +445,8 @@ implementation
   begin
     r_Draw_GetRect(l, t, r, b);
     r_Draw_SetRect(x, y, x + w, y + h);
-    r_Render_DrawView(x, y, w - 196, h, p);
-    r_Render_DrawHUDArea(x + w - 196, y, 196, h, p);
+    r_Render_DrawView(x, y, w, h, p);
+    r_Render_DrawHUDArea(x, y, 196, h, p);
     r_Draw_SetRect(l, t, r, b);
   end;
 
