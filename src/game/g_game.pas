@@ -886,15 +886,7 @@ end;
 // ////////////////////////////////////////////////////////////////////////// //
 function conIsCheatsEnabled (): Boolean; inline;
 begin
-  result := false;
-  if g_Game_IsNet then exit;
-  if not gDebugMode then
-  begin
-    //if not gCheats then exit;
-    if not (gGameSettings.GameType in [GT_SINGLE, GT_CUSTOM]) then exit;
-    if not (gGameSettings.GameMode in [GM_COOP, GM_SINGLE]) then exit;
-  end;
-  result := true;
+  result := not g_Game_IsNet;
 end;
 
 // ////////////////////////////////////////////////////////////////////////// //
