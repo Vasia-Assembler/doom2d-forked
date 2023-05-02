@@ -1050,7 +1050,7 @@ implementation
             ax := IfThen(flip, 15 - p.Obj.Rect.X, p.Obj.Rect.X - 15); // ???
             ay := p.Obj.Rect.Y - 11;
             tex := t.GetTexture(frame);
-            r_Draw_TextureRepeat(tex, x + ax, y + ay, tex.width, tex.height, flip, 255, 255, 255, 255, false)
+            if p.PunchTime <> 0 then r_Draw_TextureRepeat(tex, x + ax, y + ay, tex.width, tex.height, flip, 255, 255, 255, 255, false);
           end;
         end;
       end;
