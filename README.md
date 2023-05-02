@@ -8,7 +8,12 @@ improvements in gameplay, graphics and logic.
 
 This is a fork of Doom 2D: Forever.
 
-![MegaDM](docs/images/screenshots/screenshot-megadm.png)
+<p align="center">
+    <img src="docs/images/screenshots/screenshot-superdm.png?raw=true" width="720">
+</p>
+<p align="center">
+    <img src="docs/images/screenshots/screenshot-doom2d.png?raw=true" width="360"> <img src="docs/images/screenshots/screenshot-zadoomka.png?raw=true" width="360">
+</p>
 
 ## Install
 
@@ -34,7 +39,3 @@ FMODEx.dll, ENet.dll, miniupnpc.dll), unless you choose to static link them.
 ## Run
 - If you've followed build instructions above, `../../build/bin/Doom2DF`
 - If Doom2DF is installed in the system PATH, `Doom2DF`
-
-## Screenshots
-![Castlevania.wad](docs/images/screenshots/screenshot-castlevania.png)
-![Prikolsoft.wad](docs/images/screenshots/screenshot-prikolsoft.png)
