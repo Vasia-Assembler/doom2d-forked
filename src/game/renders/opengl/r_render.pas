@@ -279,7 +279,7 @@ implementation
     if p.health > 0 then
     begin
     r_Common_DrawText(p.name, x + 44, y + 10, 255, 255, 255, 255, smallfont, TBasePoint.BP_LEFT);
-    r_Draw_FillRect(x + 44, y + 20, x + 44 + 268, y + 20 + 16, 0, 0, 0, 150);
+    r_Draw_FillRect(x + 44, y + 20, x + 44 + 268, y + 20 + 16, 10, 10, 10, 240);
     if R_BERSERK in p.FRulez then
       r_Draw_FillRect(x + 44, y + 20, x + 44 + 268 * p.health div 200, y + 20 + 16, 139, 0, 0, 255)
     else
@@ -287,23 +287,29 @@ implementation
     end;
     if p.armor > 0 then
     begin
-      r_Draw_FillRect(x + 44, y + 20 + 16, x + 44 + 268, y + 20 + 16 + 16, 0, 0, 0, 150);
+      r_Draw_FillRect(x + 44, y + 20 + 16, x + 44 + 268, y + 20 + 16 + 16, 10, 10, 10, 240);
       r_Draw_FillRect(x + 44, y + 20 + 16, x + 44 + 268 * p.armor div 200, y + 20 + 16 + 16, 185, 185, 185, 255);
     end;
     t := hudwp[p.CurrWeap];
-    r_Draw_FillRect(x + 44, y + 20 + 16 + 16, x + 44 + 268, y + 20 + 16 + 16 + 8, 0, 0, 0, 150);
+    r_Draw_FillRect(x + 44, y + 20 + 16 + 16, x + 44 + 268, y + 20 + 16 + 16 + 8, 10, 10, 10, 240);
     if p.air > 0 then
     begin
       r_Draw_FillRect(x + 44, y + 20 + 16 + 16, x + 44 + 268 * p.air div AIR_MAX, y + 20 + 16 + 16 + 8, 0, 71, 171, 255);
     end;
     if p.JetFuel > 0 then
     begin
-      r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 8, x + 44 + 268, y + 20 + 16 + 16 + 8 + 8, 0, 0, 0, 150);
-      r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 8, x + 44 + 268 * p.JetFuel div JET_MAX, y + 20 + 16 + 16 + 8 + 8, 255, 192, 0, 150);
+      r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 8, x + 44 + 268, y + 20 + 16 + 16 + 8 + 8, 0, 0, 0, 240);
+      r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 8, x + 44 + 268 * p.JetFuel div JET_MAX, y + 20 + 16 + 16 + 8 + 8, 255, 192, 0, 255);
     end;
-    r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 16, x + 44 + 268, y + 20 + 16 + 16 + 16 + 16, 0, 0, 0, 150);
+    r_Draw_FillRect(x + 44, y + 20 + 16 + 16 + 16, x + 44 + 268, y + 20 + 16 + 16 + 16 + 16, 0, 0, 0, 240);
     if (p.CurrWeap <> WEAPON_KASTET) and (p.CurrWeap <> WEAPON_SAW) then r_Common_DrawText(IntToStr(p.GetAmmoByWeapon(p.CurrWeap)), x + 44 + 268, y + 20 + 16 + 16 + 16, 255, 255, 255, 255, smallfont, TBasePoint.BP_RIGHTUP);
     r_Common_DrawText(_lc[TStrings_Locale(Cardinal(I_GAME_WEAPON0) + p.CurrWeap)], x + 44, y + 20 + 16 + 16 + 16, 255, 255, 255, 255, smallfont, TBasePoint.BP_LEFTUP);
+    if R_KEY_RED in p.FRulez then
+      r_Common_DrawTexture(hudkey[0], x + 140, y + 20 + 16 + 16 + 16 + 16, 16, 16, TBasePoint.BP_LEFTUP);
+    if R_KEY_GREEN in p.FRulez then
+      r_Common_DrawTexture(hudkey[1], x + 156, y + 20 + 16 + 16 + 16 + 16, 16, 16, TBasePoint.BP_LEFTUP);
+    if R_KEY_BLUE in p.FRulez then
+      r_Common_DrawTexture(hudkey[2], x + 172, y + 20 + 16 + 16 + 16 + 16, 16, 16, TBasePoint.BP_LEFTUP);
   end;
 
   procedure r_Render_DrawHUDArea (x, y, w, h: Integer; p: TPlayer);
