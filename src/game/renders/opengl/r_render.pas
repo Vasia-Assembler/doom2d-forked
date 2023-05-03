@@ -273,7 +273,7 @@ implementation
   end;
 
   procedure r_Render_DrawHUD (x, y: Integer; p: TPlayer);
-    var t: TGLTexture; s: AnsiString;
+    var t: TGLTexture;
   begin
     ASSERT(p <> nil);
     if p.health > 0 then
@@ -313,7 +313,6 @@ implementation
   end;
 
   procedure r_Render_DrawHUDArea (x, y, w, h: Integer; p: TPlayer);
-    var s: AnsiString; oldy: Integer;
   begin
   if p <> nil then
   begin

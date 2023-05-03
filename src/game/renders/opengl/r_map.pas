@@ -1083,6 +1083,8 @@ implementation
 
     if DebugFrames then
     begin
+      x := 0;
+      y := 0;
       r_Draw_Rect(
         x + p.obj.rect.x, // p.obj.x + p.obj.rect.x,
         y + p.obj.rect.y, // p.obj.y + p.obj.rect.y,
@@ -1717,7 +1719,7 @@ implementation
   end;
 
   procedure r_Map_Draw (x, y, w, h, camx, camy: Integer; player: TPlayer; out acx, acy: Integer);
-    var cx, cy, cw, ch, xx, yy, ww, hh, ml, mt, mr, mb, mcx, mcy: Integer; l, t, r, b: Integer;
+    var cx, cy, cw, ch, xx, yy, ww, hh: Integer; l, t, r, b: Integer;
   begin
     glPushMatrix;
     r_Draw_GetRect(l, t, r, b);
