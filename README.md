@@ -29,6 +29,7 @@ Doom 2D: Forked has a Flatpak manifest, available at (https://github.com/Challen
   bash script/game/download_essentials.sh ./build/bin
   cd src/game
   fpc -B -dUSE_SDLMIXER -FE../../build/bin -FU../../build/tmp Doom2DF.lpr
+  rm ../../build/tmp/*
 ```
 
 Windows binaries will require the appropriate DLLs (SDL2.dll, SDL2_mixer.dll or
