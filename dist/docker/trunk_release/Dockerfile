@@ -88,4 +88,4 @@ COPY . .
 
 WORKDIR /src/src/game
 
-RUN fpc -B -XX -CX -O3 -dUSE_OPENAL -dUSE_SDL2 -dUSE_VORBIS -dUSE_MODPLUG -dUSE_XMP -dUSE_MPG123 -dUSE_OPUS -al Doom2DF.lpr -oDoom2DF_release
+RUN fpc -B -O3 -CX -XX -dUSE_OPENAL -dUSE_SDL2 -dUSE_VORBIS -dUSE_MODPLUG -dUSE_XMP -dUSE_MPG123 -dUSE_OPUS -al Doom2DF.lpr -oDoom2DF_release
