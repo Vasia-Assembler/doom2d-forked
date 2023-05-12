@@ -1426,12 +1426,32 @@ implementation
     const
       factor = 120; (* size ratio between view and sky (120%) *)
       limit = 100;  (* max speed for parallax *)
+      res_factor = 4.0 / 3.0;
     var
-      msw, msh, mvw, mvh, svw, svh: LongInt;
+      msw, msh, mvw, mvh, svw, svh, bbw, bbh: LongInt;
+      s, rf, bw, bh: Double;
   begin
+    (* calc sky size *)
+    bw := sw;
+    bh := sh;
+    rf := Double(sw) / Double(sh);
+    if (rf > res_factor) then
+    begin
+      bw := Round(Double(bh) * res_factor);
+    end
+    else
+    begin
+      bh := Round(Double(bw) / res_factor);
+    end;
+    s := Max(gScreenWidth / bw, gScreenHeight / bh);
+    if (s < 1.0) then s := 1.0;
+    bbw := Round(bw * s);
+    bbh := Round(bh * s);
+
+    (* calc sky position *)
     msw := vw * factor div 100;
     msh := vh * factor div 100;
-    r_Common_CalcAspect(sw, sh, msw, msh, (sw / sh) <= (msw / msh), w, h);
+    r_Common_CalcAspect(bbw, bbh, msw, msh, (bbw / bbh) <= (msw / msh), w, h);
 
     (* calc x parallax or sky center on speed limit *)
     mvw := MAX(1, mw - vw);
