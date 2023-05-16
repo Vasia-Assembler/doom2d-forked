@@ -40,3 +40,24 @@ FMODEx.dll, ENet.dll, miniupnpc.dll), unless you choose to static link them.
 ## Run
 - If you've followed build instructions above, `../../build/bin/Doom2DF`
 - If Doom2DF is installed in the system PATH, `Doom2DF`
+
+
+## Changes in comparison with Forever
+
+- `renders_updated` experimental branch merged
+- `renders_updated`: Allow playing on `master` servers from `renders_updated`
+- `renders_updated`: Return preserve sky aspect ratio behavior from `main`
+- New HUD
+- Add flatpak build support
+- `renders_updated`: Fade background when paused as `master` does
+- `renders_updated`: Fix punch swing animation being played on the start of a round
+- Always allow cheat in non-multiplayer games
+- Centered camera (enabled by default)
+- Add clientside player model and model's color override
+- Remove player name length constraint
+- Remove visual clutter in console
+- Indicators are now drawn for all players, regardless of their team
+- Fix building on FPC trunk
+- Overhaul the repository structure
+- `RAMBO` cheat also gives berserk
+- `map` command without arguments now prints current map info
